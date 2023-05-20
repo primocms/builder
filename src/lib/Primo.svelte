@@ -1,20 +1,21 @@
 <script>
-	import '@fontsource/fira-code/index.css';
-	import IconButton from './components/IconButton.svelte';
-	import Editor from './views/editor/Editor.svelte';
-	import Modal from './views/modal/ModalContainer.svelte';
-	import modal from './stores/app/modal';
-	import * as modals from './views/modal';
-	import HSplitPane from './ui/HSplitPane.svelte';
-	import Sidebar from './Sidebar.svelte';
+	import { browser } from '$app/environment'
+	import '@fontsource/fira-code/index.css'
+	import IconButton from './components/IconButton.svelte'
+	import Editor from './views/editor/Editor.svelte'
+	import Modal from './views/modal/ModalContainer.svelte'
+	import modal from './stores/app/modal'
+	import * as modals from './views/modal'
+	import HSplitPane from './ui/HSplitPane.svelte'
+	import Sidebar from './Sidebar.svelte'
 
-	import { userRole } from './stores/app';
+	import { userRole } from './stores/app'
 
-	import { hydrate_active_data } from './stores/actions';
-	import en from './languages/en.json';
-	import es from './languages/es.json';
+	import { hydrate_active_data } from './stores/actions'
+	import en from './languages/en.json'
+	import es from './languages/es.json'
 
-	import { init, addMessages } from 'svelte-i18n';
+	import { init, addMessages } from 'svelte-i18n'
 
 	/** @type {{
    * site: import('$lib').Site
@@ -22,24 +23,24 @@
    * sections: Array<import('$lib').Section>
    * symbols: Array<import('$lib').Symbol>
   }} */
-	export let data;
+	export let data
 
-	export let role;
-	export let language = 'en';
+	export let role
+	export let language = 'en'
 
-	$: $userRole = role;
+	$: $userRole = role
 
-	addMessages('en', en);
-	addMessages('es', es);
+	addMessages('en', en)
+	addMessages('es', es)
 
 	init({
 		fallbackLocale: 'en',
 		initialLocale: language
-	});
+	})
 
-	hydrate_active_data(data);
+	hydrate_active_data(data)
 
-	$: activeModal = getActiveModal($modal.type);
+	$: activeModal = getActiveModal($modal.type)
 	function getActiveModal(modalType) {
 		return modalType
 			? {
@@ -48,36 +49,34 @@
 					PAGE_EDITOR: modals.PageEditor,
 					SITE_EDITOR: modals.SiteEditor
 			  }[modalType] || $modal.component
-			: null;
+			: null
 	}
 
-	let showing_sidebar = false;
+	let showing_sidebar = false
 
-	let leftPaneSize = browser ? (showing_sidebar ? window.innerWidth / 5 + `px` : '0px') : '200px';
+	let leftPaneSize = browser ? (showing_sidebar ? window.innerWidth / 5 + `px` : '0px') : '200px'
 	let rightPaneSize = browser
 		? showing_sidebar
 			? (window.innerWidth / 5) * 5 + 'px'
 			: 'auto'
-		: 'auto';
+		: 'auto'
 
 	$: if (parseInt(leftPaneSize) < 100) {
-		leftPaneSize = '20px';
-		rightPaneSize = '100%';
-		showing_sidebar = false;
+		leftPaneSize = '20px'
+		rightPaneSize = '100%'
+		showing_sidebar = false
 	} else if (parseInt(leftPaneSize) >= 100 && !showing_sidebar) {
-		reset();
+		reset()
 	}
 
 	function reset() {
-		leftPaneSize = browser ? window.innerWidth / 5 + 'px' : '0px';
-		rightPaneSize = browser ? (window.innerWidth / 5) * 5 + 'px' : '0px';
-		showing_sidebar = true;
+		leftPaneSize = browser ? window.innerWidth / 5 + 'px' : '0px'
+		rightPaneSize = browser ? (window.innerWidth / 5) * 5 + 'px' : '0px'
+		showing_sidebar = true
 	}
-
-	let siteLocked = false;
 </script>
 
-<HSplitPane bind:leftPaneSize bind:rightPaneSize>
+<HSplitPane bind:leftPaneSize bind:rightPaneSize style="margin-top:54px">
 	<div slot="left">
 		{#if showing_sidebar}
 			<Sidebar />
@@ -88,11 +87,10 @@
 		{/if}
 	</div>
 	<div slot="right">
+		<Editor />
 		<slot />
 	</div>
 </HSplitPane>
-
-<Editor />
 
 <Modal visible={!!activeModal}>
 	<svelte:component this={activeModal} {...$modal.componentProps} />
@@ -109,7 +107,22 @@
 </svelte:head>
 
 <style lang="postcss">
-	:global(#page, #primo-toolbar, #primo-modal) {
+	[slot='right'] {
+		width: 100%;
+	}
+	[slot='left'] {
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #121212;
+		color: white;
+	}
+	.expand {
+		height: 100%;
+		display: flex;
+	}
+	:global(html) {
 		--primo-color-brand: #35d994;
 		--primo-color-brand-dark: #097548;
 		--primo-color-white: white;
