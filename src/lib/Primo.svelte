@@ -25,7 +25,7 @@
   }} */
 	export let data
 
-	export let role
+	export let role = 'DEV'
 	export let language = 'en'
 
 	$: $userRole = role
