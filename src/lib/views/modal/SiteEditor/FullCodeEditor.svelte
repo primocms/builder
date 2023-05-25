@@ -1,9 +1,9 @@
 <script context="module">
   import { writable } from 'svelte/store'
 
-  const leftPaneSize = writable('33%')
-  const centerPaneSize = writable('33%')
-  const rightPaneSize = writable('33%')
+  const leftPaneSize = writable('50%')
+  const centerPaneSize = writable('0')
+  const rightPaneSize = writable('50%')
 
   const activeTabs = writable({
     html: true,
@@ -31,14 +31,13 @@
 
   if (!$$props.js) {
     $leftPaneSize = '50%'
-    $centerPaneSize = '50%'
+    $rightPaneSize = '50%'
     $activeTabs = { ...$activeTabs, js: false }
   }
 
   if (!import.meta.env.SSR) {
     Mousetrap.bind(['mod+1'], () => toggleTab(0))
     Mousetrap.bind(['mod+2'], () => toggleTab(1))
-    Mousetrap.bind(['mod+3'], () => toggleTab(2))
   }
 
   let activeTab = 0
@@ -52,8 +51,7 @@
   function toggleTab(tab) {
     const tabName = {
       0: 'html',
-      1: 'css',
-      2: 'js',
+      1: 'css'
     }[tab]
     $activeTabs = {
       ...$activeTabs,
@@ -64,8 +62,7 @@
     if (!nActive) return
     const panelWidth = 100 / nActive
     $leftPaneSize = $activeTabs['html'] ? `${panelWidth}%` : '0'
-    $centerPaneSize = $activeTabs['css'] ? `${panelWidth}%` : '0'
-    $rightPaneSize = $activeTabs['js'] ? `${panelWidth}%` : '0'
+    $rightPaneSize = $activeTabs['css'] ? `${panelWidth}%` : '0'
   }
 </script>
 
@@ -113,23 +110,11 @@
         on:save
         on:refresh
       />
-    {:else}
-      <CodeMirror
-        on:tab-switch={() => toggleTab(2)}
-        bind:selection={selections['js']}
-        bind:value={js}
-        docs="https://docs.primo.so/development#javascript"
-        mode="javascript"
-        on:change={() => dispatch('jsChange')}
-        on:save
-        on:refresh
-      />
     {/if}
   </div>
 {:else}
   <HSplitPane
     hideLeftOverflow={true}
-    hideRightPanel={!$$props.js}
     bind:leftPaneSize={$leftPaneSize}
     bind:centerPaneSize={$centerPaneSize}
     bind:rightPaneSize={$rightPaneSize}
@@ -157,9 +142,9 @@
         on:refresh
       />
     </div>
-    <div slot="center" class="tabs">
+    <div slot="right" class="tabs">
       <button
-        class:tab-hidden={$centerPaneSize <= '0'}
+        class:tab-hidden={$rightPaneSize <= '0'}
         on:click={() => toggleTab(1)}
       >
         {#if $showKeyHint}
@@ -175,28 +160,6 @@
         mode="css"
         docs="https://docs.primo.so/development#css"
         on:change={() => dispatch('cssChange')}
-        on:save
-        on:refresh
-      />
-    </div>
-    <div slot="right" class="tabs">
-      <button
-        class:tab-hidden={$rightPaneSize <= '0'}
-        on:click={() => toggleTab(2)}
-      >
-        {#if $showKeyHint}
-          <span>&#8984; 3</span>
-        {:else}
-          <span>JS</span>
-        {/if}
-      </button>
-      <CodeMirror
-        on:tab-switch={({ detail }) => toggleTab(detail)}
-        bind:selection={selections['js']}
-        bind:value={js}
-        mode="javascript"
-        docs="https://docs.primo.so/development#javascript"
-        on:change={() => dispatch('jsChange')}
         on:save
         on:refresh
       />
