@@ -22,7 +22,7 @@
 	import en from '../../languages/en.json'
 	import { init, addMessages } from 'svelte-i18n'
 	import { supabase } from '$lib/supabase'
-	import { track, locked_blocks } from '$lib/realtime'
+	// import { track, locked_blocks } from '$lib/realtime'
 	import { invalidate } from '$app/navigation'
 	import { browser } from '$app/environment'
 
@@ -130,18 +130,18 @@
 	})
 
 	async function lock_block(block_id) {
-		track({
-			active_block: block_id,
-			user: data.user
-		})
+		// track({
+		// 	active_block: block_id,
+		// 	user: data.user
+		// })
 	}
 
 	function unlock_block() {
 		// workaround to prevent issue when unlocking immediately before locking when switching from one block to another
 		setTimeout(() => {
-			track({
-				active_block: null
-			})
+			// track({
+			// 	active_block: null
+			// })
 		}, 100)
 	}
 </script>
@@ -160,7 +160,6 @@
 	{#each $sections.sort((a, b) => a.index - b.index) as block, i (block.id)}
 		<Block
 			{i}
-			locked={find($locked_blocks, ['block_id', block.id])}
 			{block}
 			on:lock={() => lock_block(block.id)}
 			on:unlock={() => unlock_block()}
@@ -168,6 +167,16 @@
 				sections_mounted++
 			}}
 		/>
+		<!-- <Block
+			{i}
+			locked={find($locked_blocks, ['block_id', block.id])}
+			{block}
+			on:lock={() => lock_block(block.id)}
+			on:unlock={() => unlock_block()}
+			on:mount={() => {
+				sections_mounted++
+			}}
+		/> -->
 	{/each}
 </div>
 {@html html_below || ''}
@@ -187,6 +196,7 @@
 		align-items: center;
 		justify-content: center;
 		z-index: 5;
+		pointer-events: none;
 
 		--Spinner-color: var(--primo-color-brand);
 		--Spinner-color-opaque: rgba(248, 68, 73, 0.2);

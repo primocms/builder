@@ -10,6 +10,7 @@ import { update as update_site, content, site } from './data/site'
 import { timeline } from './data'
 import { buildStaticPage } from './helpers'
 import { supabase } from '$lib/supabase'
+import {dataChanged, storageChanged} from '$lib/database'
 import { swap_array_item_index } from '$lib/utilities'
 import { v4 as uuidv4 } from 'uuid';
 import {Page} from '../const'
@@ -29,15 +30,12 @@ export async function hydrate_active_data(data) {
 export function undo_change() {
   const { current } = get(timeline)
   current?.undoing(current.data)
-
-  const undone = timeline.undo();
-  // hydrate_active_data(undone.data)
+  timeline.undo();
 }
 
 /** @returns {void} */
 export function redo_change() {
   const { data, doing } = timeline.redo()
-  // hydrate_active_data(data)
   doing(data)
 }
 
@@ -144,13 +142,12 @@ export const active_page = {
     await update_timeline({
       doing: async () => {
         stores.sections.set(new_sections)
-        const res = await supabase.from('sections').upsert(new_sections.map(s => ({ ...s, symbol: s.symbol.id })))
-        console.log({res})
+        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
       },
       undoing: async () => {
         stores.sections.set(original_sections)
-        await supabase.from('sections').delete().eq('id', new_section.id)
-        await supabase.from('sections').upsert(original_sections)
+        await dataChanged({ table: 'sections', action: 'delete', id: new_section.id })
+        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
       }
     })
     update_page_preview()
@@ -187,16 +184,16 @@ export const active_page = {
         ])
         stores.sections.set(new_sections)
 
-        await supabase.from('symbols').insert(new_symbol)
-        await supabase.from('sections').upsert(new_sections.map(s => ({ ...s, symbol: s.symbol.id })))
+        await dataChanged({ table: 'symbols', action: 'insert', data: new_symbol })
+        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
       },
       undoing: async () => {
         stores.symbols.update(store => store.filter(s => s.id !== new_symbol.id))
         stores.sections.set(original_sections)
 
-        await supabase.from('sections').delete().eq('id', new_section.id)
-        await supabase.from('sections').upsert(original_sections.map(s => ({ ...s, symbol: s.symbol.id })))
-        await supabase.from('symbols').delete().eq('id', new_symbol.id)
+        await dataChanged({ table: 'sections', action: 'delete', id: new_section.id })
+        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
+        await dataChanged({ table: 'symbols', action: 'delete', id: new_symbol.id })
       }
     })
     update_page_preview()
@@ -224,15 +221,15 @@ export const active_page = {
         stores.sections.set(updated_sections)
         if (!block_being_replaced) return
         await Promise.all([
-          block_being_replaced && supabase.from('sections').update({ index: block_being_moved.index }).eq('id', block_being_replaced.id),
-          supabase.from('sections').update({ index: to }).eq('id', block_being_moved.id)
+          dataChanged({ table: 'sections', action: 'update', id: block_being_replaced.id, data: { index: block_being_moved.index } }),
+          dataChanged({ table: 'sections', action: 'update', id: block_being_moved.id, data: { index: to } })
         ])
       },
       undoing: async () => {
         stores.sections.set(original_sections)
         await Promise.all([
-          block_being_replaced && supabase.from('sections').update({ index: block_being_replaced.index }).eq('id', block_being_replaced.id),
-          supabase.from('sections').update({ index: block_being_moved.index }).eq('id', block_being_moved.id)
+          dataChanged({ table: 'sections', action: 'update', id: block_being_replaced.id, data: { index: block_being_replaced.index } }),
+          dataChanged({ table: 'sections', action: 'update', id: block_being_moved.id, data: { index: block_being_moved.index }})
         ])
       }
     })
@@ -255,13 +252,11 @@ export const active_page = {
     await update_timeline({
       doing: async () => {
         stores.sections.set(new_sections)
-        await supabase
-          .from('sections')
-          .upsert(new_sections.map(s => ({ ...s, symbol: s.symbol.id })))
+        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
       },
       undoing: async () => {
         stores.sections.set(original_sections)
-        supabase.from('sections').delete().eq('id', new_block.id)
+        await dataChanged({ table: 'sections', action: 'delete', id: new_block.id })
       }
     })
     update_page_preview()
@@ -273,16 +268,13 @@ export const active_page = {
     await update_timeline({
       doing: async () => {
         stores.sections.set(new_sections)
-        await supabase.from('sections').delete().eq('id', block.id)
-        await supabase.from('sections').upsert(new_sections.map(s => ({ ...s, symbol: s.symbol.id })))
+        await dataChanged({ table: 'sections', action: 'delete', id: block.id })
+        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
       },
       undoing: async () => {
         stores.sections.set(original_sections)
-        await supabase.from('sections').insert({
-          ...block,
-          symbol: block.symbol.id
-        })
-        await supabase.from('sections').upsert(original_sections.map(s => ({ ...s, symbol: s.symbol.id })))
+        await dataChanged({ table: 'sections', action: 'insert', data: { ...block, symbol: block.symbol.id } })
+        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
       }
     })
     update_page_preview()
@@ -293,11 +285,11 @@ export const active_page = {
     await update_timeline({
       doing: async () => {
         activePage.set(obj)
-        await supabase.from('pages').update(obj).eq('id', current_page.id)
+        await dataChanged({ table: 'pages', action: 'update', id: current_page.id, data: obj })
       },
       undoing: async () => {
         activePage.set(current_page)
-        await supabase.from('pages').update(current_page).eq('id', current_page.id)
+        await dataChanged({ table: 'pages', action: 'update', id: current_page.id, data: current_page })
       }
     })
     update_page_preview()
@@ -327,16 +319,24 @@ export const pages = {
     await update_timeline({
       doing: async () => {
         stores.pages.update(store => [...store, new_page])
-        await supabase.from('pages').insert({
-          ...new_page,
-          site: get(site)['id'],
-          created_at: new Date().toISOString()
-        }).select().single(),
-        await supabase.from('sections').insert(new_sections)
+        await dataChanged({
+          table: 'pages',
+          action: 'insert',
+          data: { 
+            ...new_page,
+            site: get(site)['id'],
+            created_at: new Date().toISOString()
+          }
+        })
+        await dataChanged({
+          table: 'sections',
+          action: 'insert',
+          data: new_sections.map(s => ({ ...s, symbol: s.symbol.id }))
+        })
       },
       undoing: async () => {
         stores.pages.set(original_pages)
-        await supabase.from('pages').delete().eq('id', new_page.id)
+        await dataChanged({ table: 'pages', action: 'delete', id: new_page.id })
       }
     })
   },
@@ -357,7 +357,7 @@ export const pages = {
             child_pages.map(async page => {
               const { data: sections_to_delete = [] } = await supabase.from('sections').delete().eq('page', page.id).select()
               deleted_sections = sections_to_delete ? [...deleted_sections, ...sections_to_delete] : deleted_sections
-              await supabase.from('pages').delete().eq('id', page.id).select()
+              await dataChanged({ table: 'pages', action: 'delete', id: page.id })
             })
           ) 
         }
@@ -365,7 +365,7 @@ export const pages = {
         // Delete page
         const { data: sections_to_delete } = await supabase.from('sections').delete().eq('page', page_id)
         deleted_sections = sections_to_delete ? [...deleted_sections, ...sections_to_delete] : deleted_sections
-        await supabase.from('pages').delete().eq('id', page_id)
+        await dataChanged({ table: 'pages', action: 'delete', id: page_id })
 
         // Go to home page if active page is deleted
         if (get(activePageID) === page_id) {
@@ -374,8 +374,8 @@ export const pages = {
       },
       undoing: async () => {
         stores.pages.set(original_pages)
-        await supabase.from('pages').insert(deleted_pages)
-        await supabase.from('sections').insert(deleted_sections)
+        await dataChanged({ table: 'pages', action: 'insert', data: deleted_pages })
+        await dataChanged({ table: 'sections', action: 'insert', data: deleted_sections })
       }
     })
   },
@@ -387,11 +387,11 @@ export const pages = {
     await update_timeline({
       doing: async () => {
         stores.pages.set(updated_pages)
-        await supabase.from('pages').update(obj).eq('id', page_id)
+        await dataChanged({ table: 'pages', action: 'update', id: page_id, data: obj })
       },
       undoing: async () => {
         stores.pages.set(current_pages)
-        await supabase.from('pages').update(original_page).eq('id', page_id)
+        await dataChanged({ table: 'pages', action: 'update', id: page_id, data: original_page })
       }
     })
   }
@@ -400,10 +400,28 @@ export const pages = {
 export async function update_page_preview(page = get(activePage.default)) {
   const preview = await buildStaticPage({ page, no_js: true })
   if (page.url === 'index') {
-    await supabase.storage.from('sites').upload(`${get(stores.site).id}/${page.id}/index.html`, preview, { upsert: true })
-    await supabase.storage.from('sites').upload(`${get(stores.site).id}/preview.html`, preview, { upsert: true })
+    await storageChanged({
+      bucket: 'sites',
+      action: 'upload',
+      key: `${get(stores.site).id}/${page.id}/index.html`,
+      file: preview,
+      options: { upsert: true }
+    })
+    await storageChanged({
+      bucket: 'sites',
+      action: 'upload',
+      key: `${get(stores.site).id}/preview.html`,
+      file: preview,
+      options: { upsert: true }
+    })
   } else {
-    await supabase.storage.from('sites').upload(`${get(stores.site).id}/${page.id}/index.html`, preview, { upsert: true })
+    await storageChanged({
+      bucket: 'sites',
+      action: 'upload',
+      key: `${get(stores.site).id}/${page.id}/index.html`,
+      file: preview,
+      options: { upsert: true }
+    })
   }
 }
 
@@ -455,18 +473,18 @@ export async function update_section_content(section, updated_content) {
   await update_timeline({
     doing: async () => {
       stores.sections.update(store => store.map(s => s.id === section.id ? { ...s, content: updated_content } : s))
-      await supabase.from('sections').update({ content: updated_content }).eq('id', section.id)
+      await dataChanged({ table: 'sections', action: 'update', id: section.id, data: { content: updated_content } })
       if (should_update_symbol) {
         stores.symbols.update(store => store.map(s => s.id === section.symbol.id ? { ...s, content: updated_symbol_content } : s))
-        await supabase.from('symbols').update({ content: updated_symbol_content }).eq('id', section.symbol.id)
+        await dataChanged({ table: 'symbols', action: 'update', id: section.symbol.id, data: { content: updated_symbol_content } })
       }
     },
     undoing: async () => {
       stores.sections.set(original_sections)
-      await supabase.from('sections').update({ content: original_content }).eq('id', section.id)
+      await dataChanged({ table: 'sections', action: 'update', id: section.id, data: { content: original_content } })
       if (should_update_symbol) {
         stores.symbols.update(store => store.map(s => s.id === section.symbol.id ? { ...s, content: original_symbol_content } : s))
-        supabase.from('symbols').update({ content: original_symbol_content }).eq('id', section.symbol.id)
+        await dataChanged({ table: 'symbols', action: 'update', id: section.symbol.id, data: { content: original_symbol_content } })
       }
     }
   })

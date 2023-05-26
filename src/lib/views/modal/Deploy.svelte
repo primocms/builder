@@ -1,4 +1,5 @@
 <script>
+	import { invalidate } from '$app/navigation'
   import Icon from '@iconify/svelte'
   import _ from 'lodash-es'
   import axios from 'axios'
@@ -13,6 +14,7 @@
   import { page } from '$app/stores'
   import { push_site, buildSiteBundle } from './Deploy'
   import PrimaryButton from '$lib/ui/PrimaryButton.svelte'
+  import {dataChanged} from '$lib/database'
 
   let stage = 'INITIAL'
 
@@ -34,10 +36,13 @@
     if (data) {
       github_account = data
       stage = 'CONNECT_REPO'
-      const res = await supabase
-        .from('config')
-        .update({ value: github_token, options: { user: github_account } })
-        .eq('id', 'github_token')
+      await dataChanged({
+        table: 'config',
+        action: 'update',
+        id: 'github_token',
+        data: { value: github_token, options: { user: github_account } },
+      })
+      invalidate('app:data')
     }
   }
 
@@ -93,6 +98,13 @@
     })
     stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
     loading = false
+    await dataChanged({
+      table: 'sites',
+      action: 'update',
+      id: $page.data.site.id,
+      data: { active_deployment }
+    })
+    invalidate('app:data')
   }
 
   async function deploy_to_repo() {
@@ -101,12 +113,15 @@
       token: github_token,
       repo: repo_name || active_deployment.repo.full_name,
     })
-    await supabase
-      .from('sites')
-      .update({ active_deployment })
-      .eq('id', $page.data.site.id)
+    await dataChanged({
+      table: 'sites',
+      action: 'update',
+      id: $page.data.site.id,
+      data: { active_deployment }
+    })
     stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
     loading = false
+    invalidate('app:data')
   }
 
   let user_repos = []

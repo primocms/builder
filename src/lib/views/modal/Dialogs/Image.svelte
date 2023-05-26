@@ -6,7 +6,7 @@
   import imageCompression from 'browser-image-compression'
   import PrimaryButton from '../../../components/buttons/PrimaryButton.svelte'
   import Spinner from '../../../components/misc/Spinner.svelte'
-  import { supabase } from '$lib/supabase'
+  // import { supabase } from '$lib/supabase'
   import { page } from '$app/stores'
 
   const defaultValue = {
@@ -45,25 +45,25 @@
       let size = new Blob([compressed]).size
 
       const key = `${$page.data.site.id}/${image.name + image.lastModified}`
-      const { data, error } = await supabase.storage
-        .from('images')
-        .upload(key, compressed)
+      // const { data, error } = await supabase.storage
+      //   .from('images')
+      //   .upload(key, compressed)
 
-      if (data || error?.statusCode === '409') {
-        const { data: res } = supabase.storage.from('images').getPublicUrl(key)
+      // if (data || error?.statusCode === '409') {
+      //   // const { data: res } = supabase.storage.from('images').getPublicUrl(key)
 
-        imagePreview = res.publicUrl
+      //   imagePreview = res.publicUrl
 
-        setValue({
-          url: res.publicUrl,
-          size: Math.round(size / 1000),
-        })
+      //   setValue({
+      //     url: res.publicUrl,
+      //     size: Math.round(size / 1000),
+      //   })
 
-        loading = false
-        dispatch('input')
-      } else {
-        loading = false
-      }
+      //   loading = false
+      //   dispatch('input')
+      // } else {
+      //   loading = false
+      // }
     }
   }
 
