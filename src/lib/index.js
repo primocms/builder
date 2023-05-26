@@ -12,6 +12,7 @@ import { Page, Site } from './const'
 import PrimoFieldTypes from './field-types'
 import {validate_site_structure_v2} from './converter'
 import PrimoPage from './views/editor/Page.svelte'
+import {subscribe, storage_subscribe} from './database'
 
 import * as utils from './utils'
 import * as components from './components'
@@ -23,6 +24,8 @@ const stores = {
 }
 
 export {
+  subscribe,
+  storage_subscribe,
   locale,
   site,
   content,

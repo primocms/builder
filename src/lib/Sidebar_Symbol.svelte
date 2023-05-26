@@ -224,9 +224,6 @@
 						changeName(e.target.textContent);
 					}
 				}}
-				on:keyup={(e) => {
-					changeName(e.target.textContent);
-				}}
 			>
 				{symbol.name}
 			</div>
