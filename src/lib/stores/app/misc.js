@@ -22,3 +22,5 @@ export const hoveredBlock = writable({
   position: '',
   active: false
 })
+
+export const locked_blocks = writable([])

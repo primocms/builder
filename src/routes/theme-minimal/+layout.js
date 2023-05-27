@@ -20,6 +20,9 @@ export async function load(event) {
       ...section,
       symbol: symbols.find(symbol => symbol.id === section.symbol)
     })),
-    symbols
+    symbols,
+    config: {
+      github_token: {}
+    }
   }
 }

@@ -1,11 +1,11 @@
-let listeners = [];
+let listener = () => {}
 
 export function subscribe(fn) {
-  listeners.push(fn);
+  listener = fn
 }
 
-export function unsubscribe(fn) {
-  listeners = listeners.filter(listener => listener !== fn);
+export function unsubscribe() {
+  listener = null
 }
 
 /**
@@ -18,21 +18,30 @@ export function unsubscribe(fn) {
  * }} payload - The data that changed
  */
 export async function dataChanged(payload) {
-  // When data changes, notify all listeners
-  await Promise.all(listeners.map(listener => listener(payload)));
+  // When data changes, notify the listener
+  return await listener(payload)
 }
 
-let storage_listeners = [];
+let storage_listener = () => {}
 
 export function storage_subscribe(fn) {
-  storage_listeners.push(fn);
+  storage_listener = fn
 }
 
 export function storage_unsubscribe(fn) {
-  storage_listeners = storage_listeners.filter(listener => listener !== fn);
+  storage_listener = null
 }
 
-export function storageChanged(payload) {
+export async function storageChanged(payload) {
   // When data changes, notify all listeners
-  storage_listeners.forEach(listener => listener(payload));
+  return await storage_listener(payload)
+}
+
+
+let realtime_listener = () => {}
+export function realtime_subscribe(fn) {
+  realtime_listener = fn
+}
+export async function realtimeChanged(payload) {
+  return await realtime_listener(payload)
 }

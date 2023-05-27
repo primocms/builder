@@ -1,4 +1,5 @@
 import Number from './Number.svelte'
+import Image from './Image.svelte'
 import Markdown from './Markdown.svelte'
 import Switch from './Switch.svelte'
 import URL from './URL.svelte'
@@ -30,6 +31,11 @@ export default [
     id: 'markdown',
     label: 'Markdown',
     component: Markdown
+  },
+  {
+    id: 'image',
+    label: 'Image',
+    component: Image
   },
   {
     id: 'number',

@@ -2,7 +2,7 @@ import {get} from 'svelte/store'
 import pages from '$lib/stores/data/pages'
 import axios from 'axios'
 import beautify from 'js-beautify'
-import { supabase } from '$lib/supabase'
+import { dataChanged } from '$lib/database.js'
 import { buildStaticPage } from '$lib/stores/helpers'
 import _ from 'lodash-es'
 import {page} from '$app/stores'
@@ -93,11 +93,12 @@ export async function buildSiteBundle({ pages }) {
 
   async function buildPageTree(page) {
     const { url } = page
-    const { data: sections } = await supabase
-      .from('sections')
-      .select()
-      .eq('page', page.id)
-      .order('index', { ascending: true })
+    const sections = await dataChanged({
+      table: 'sections',
+      action: 'select',
+      match: { page: page.id },
+      order: ['index', { ascending: true }],
+    })
 
     const { html, js } = await buildStaticPage({
       page,
