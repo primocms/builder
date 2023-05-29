@@ -68,7 +68,7 @@
 	let local_component = is_symbol ? cloneDeep(component) : cloneDeep(component.symbol) // local copy of component to modify & save
 
 	let local_content = cloneDeep(
-		component.content || {
+		getComponentData({ component, include_all_locales: true }) || {
 			en: {}
 		}
 	) // local copy of component content to modify & save
@@ -79,14 +79,6 @@
 		...local_content[$locale]
 	}
 
-	function getSymbolPlaceholders(fields) {
-		return _chain(fields)
-			.keyBy('key')
-			.mapValues((f) => {
-				return f.default || getCachedPlaceholder(f)
-			})
-			.value()
-	}
 	$: setupComponent($locale) // swap content out of on-screen fields
 	function setupComponent(loc) {
 		fields = getFieldValues(fields, loc)
@@ -280,7 +272,7 @@
 
 		const FinalSymbol = {
 			...local_component,
-			content: local_content,
+			content: is_symbol ? local_content : component.symbol.content, // only save symbol content if editing symbol
 			fields: fields.map((field) => {
 				delete field.value
 				return field

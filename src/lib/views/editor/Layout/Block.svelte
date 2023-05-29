@@ -139,12 +139,11 @@
 			const rect = node.getBoundingClientRect()
 			node.style.position = 'fixed'
 			node.style.left = `${rect.left}px`
-			node.style.right = `${rect.left + rect.width}px`
+			// node.style.right = `${rect.left + rect.width}px` // not working right
 			node.style.top = `${toolbarHeight}px` // toolbarHeight missing 8px for some reason
 		}
 
 		function resetButtons(node) {
-			console.log('resetting')
 			node.style.position = 'absolute'
 			node.style.top = '0px'
 			node.style.left = '0px'
