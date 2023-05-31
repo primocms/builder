@@ -68,14 +68,14 @@
 	let local_component = is_symbol ? cloneDeep(component) : cloneDeep(component.symbol) // local copy of component to modify & save
 
 	let local_content = cloneDeep(
-		getComponentData({ component, include_all_locales: true }) || {
+		getComponentData({ component, include_all_locales: true, include_parent_data: false }) || {
 			en: {}
 		}
 	) // local copy of component content to modify & save
 
 	// component data w/ page/site data included (for compilation)
 	$: data = {
-		...getPageData({}), // pass in page data for page head
+		...getPageData({ loc: $locale }), // pass in page data for page head
 		...local_content[$locale]
 	}
 
