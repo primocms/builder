@@ -52,7 +52,7 @@
 			: null
 	}
 
-	let showing_sidebar = false
+	let showing_sidebar = true
 
 	let leftPaneSize = browser ? (showing_sidebar ? window.innerWidth / 5 + `px` : '0px') : '200px'
 	let rightPaneSize = browser
