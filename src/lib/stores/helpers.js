@@ -184,7 +184,7 @@ export function get_content_with_static(component, symbol) {
         const default_content = symbol.content?.[locale]?.[field.key]
         return {
           key: field.key,
-          value: default_content || (fallback === 'placeholder' ? getPlaceholderValue(field) : getEmptyValue(field))
+          value: default_content || getEmptyValue(field)
         }
       }
     })
