@@ -232,7 +232,7 @@
 		}
 	}
 	/* prevent weird spacing when setting grid columns on #page */
-	:global([data-block] > div:first-child) {
+	:global([data-block] > div.node) {
 		min-height: 3rem;
 	}
 	.hover-state {

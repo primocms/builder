@@ -68,7 +68,7 @@
 	let local_component = is_symbol ? cloneDeep(component) : cloneDeep(component.symbol) // local copy of component to modify & save
 
 	let local_content = cloneDeep(
-		getComponentData({ component, include_all_locales: true, include_parent_data: false }) || {
+		component.content || {
 			en: {}
 		}
 	) // local copy of component content to modify & save

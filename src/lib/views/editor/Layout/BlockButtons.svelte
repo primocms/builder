@@ -6,6 +6,7 @@
 
 	const dispatch = createEventDispatcher()
 
+	export let block
 	export let i
 	export let node = null
 
@@ -18,6 +19,9 @@
 		<div class="component-button">
 			<button on:click={() => dispatch('edit-content')}>
 				<Icon icon="material-symbols:edit-square-outline-rounded" />
+			</button>
+			<button on:click={() => dispatch('edit-code')}>
+				<Icon icon="ph:code-bold" />
 			</button>
 		</div>
 		<div class="top-right">

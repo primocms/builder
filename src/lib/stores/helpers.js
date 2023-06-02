@@ -161,40 +161,39 @@ export function getComponentData({
     ...page_content,
     ...component_final_content
   } : component_final_content
+}
 
-
-  function get_content_with_static(component, symbol) {
-    const content = Object.keys(symbol.content).map(locale => {
-      const value = _chain(symbol.fields)
-      .map(field => {
-        const field_value = component.content?.[locale]?.[field.key]
-        // if field is static, use value from symbol content
-        if (field.is_static) {
-          const symbol_value = symbol.content?.[locale]?.[field.key]
-          return {
-            key: field.key,
-            value: symbol_value
-          }
-        } else if (field_value !== undefined) {
-          return {
-            key: field.key,
-            value: field_value
-          }
-        } else {
-          const default_content = symbol.content?.[locale]?.[field.key]
-          return {
-            key: field.key,
-            value: default_content || (fallback === 'placeholder' ? getPlaceholderValue(field) : getEmptyValue(field))
-          }
+export function get_content_with_static(component, symbol) {
+  const content = Object.keys(symbol.content).map(locale => {
+    const value = _chain(symbol.fields)
+    .map(field => {
+      const field_value = component.content?.[locale]?.[field.key]
+      // if field is static, use value from symbol content
+      if (field.is_static) {
+        const symbol_value = symbol.content?.[locale]?.[field.key]
+        return {
+          key: field.key,
+          value: symbol_value
         }
-      })
-      .keyBy('key')
-      .mapValues('value')
-      .value();
-      return { key: locale, value }
+      } else if (field_value !== undefined) {
+        return {
+          key: field.key,
+          value: field_value
+        }
+      } else {
+        const default_content = symbol.content?.[locale]?.[field.key]
+        return {
+          key: field.key,
+          value: default_content || (fallback === 'placeholder' ? getPlaceholderValue(field) : getEmptyValue(field))
+        }
+      }
     })
-    return _.chain(content).keyBy('key').mapValues('value').value();
-  }
+    .keyBy('key')
+    .mapValues('value')
+    .value();
+    return { key: locale, value }
+  })
+  return _.chain(content).keyBy('key').mapValues('value').value();
 }
 
 export function getPageData({

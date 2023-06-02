@@ -24,7 +24,7 @@
 	import CopyButton from './CopyButton.svelte'
 	import modal from '$lib/stores/app/modal'
 	import { converter } from '$lib/field-types/Markdown.svelte'
-	import { getComponentData } from '$lib/stores/helpers'
+	import { get_content_with_static } from '$lib/stores/helpers'
 
 	const dispatch = createEventDispatcher()
 
@@ -82,11 +82,8 @@
 
 	$: symbol = block.symbol
 
-	$: component_data = getComponentData({
-		component: block,
-		include_parent_data: false,
-		loc: $locale
-	})
+	let component_data = get_content_with_static(block, block.symbol)[$locale]
+	$: component_data = get_content_with_static(block, block.symbol)[$locale]
 
 	let html = ''
 	let css = ''
@@ -367,6 +364,7 @@
 			element.style.outline = '0'
 			element.setAttribute(`data-key`, key)
 			element.contentEditable = true
+			let updated_url = url
 
 			let rect
 			element.onkeydown = (e) => {
@@ -379,7 +377,7 @@
 			element.onblur = (e) => {
 				dispatch('unlock')
 				save_edited_value(key, {
-					url: element.href,
+					url: updated_url,
 					label: element.innerText
 				})
 			}
@@ -398,6 +396,7 @@
 				form.onsubmit = (e) => {
 					e.preventDefault()
 					element.href = input.value
+					updated_url = input.value
 					save_edited_value(key, {
 						url: input.value,
 						label: element.innerText
@@ -415,6 +414,12 @@
 		async function set_editable_text({ element, key = '' }) {
 			element.style.outline = '0'
 			element.setAttribute(`data-key`, key)
+			element.onkeydown = (e) => {
+				if (e.code === 'Enter') {
+					e.preventDefault()
+					e.target.blur()
+				}
+			}
 			element.onblur = (e) => {
 				dispatch('unlock')
 				save_edited_value(key, e.target.innerText)
@@ -427,10 +432,7 @@
 		}
 	}
 
-	let local_component_data = getComponentData({
-		component: block,
-		include_parent_data: false
-	})
+	let local_component_data = _.cloneDeep(component_data)
 	$: hydrateComponent(component_data)
 	async function hydrateComponent(data) {
 		if (!component) return
@@ -440,6 +442,9 @@
 		} else if (!_.isEqual(data, local_component_data)) {
 			// TODO: re-render the component if `data` doesn't match its fields (e.g. when removing a component field to add to the page)
 			component.$set(data)
+			// sometimes data hydration doesn't work on some fields,
+			// maybe workaround is to check the node for the correct value and set them manually
+			// or check if values exist and if not just re-compile component
 			setTimeout(make_content_editable, 200)
 			local_component_data = _.cloneDeep(data)
 		}
@@ -559,7 +564,7 @@
 	</div>
 {/if}
 
-<div bind:this={node} />
+<div class="node" bind:this={node} />
 {#if error}
 	<pre>
     {@html error}

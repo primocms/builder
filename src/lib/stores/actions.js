@@ -73,19 +73,12 @@ export const symbols = {
     await update_timeline({
       doing: async () => {
 
-        stores.symbols.update(store => store.map(symbol => symbol.id === updated_symbol.id ? ({
-          ...symbol,
-          ...updated_symbol
-        }) : symbol))
+        stores.symbols.update(store => store.map(symbol => symbol.id === updated_symbol.id ? updated_symbol : symbol))
 
-        stores.sections.update(store => store.map(section => ({
-          ...section,
-          symbol: section.symbol.id === updated_symbol.id ? {
-            ...section.symbol,
-            ...updated_symbol
-          } : section.symbol
-        })))
-        await dataChanged({
+        // Update static content & symbol in sections
+        stores.sections.update(store => store.map(section => (section.symbol.id === updated_symbol.id) ? { ...section, symbol: updated_symbol } : section))
+
+        dataChanged({
           table: 'symbols',
           action: 'update',
           data: updated_symbol,
