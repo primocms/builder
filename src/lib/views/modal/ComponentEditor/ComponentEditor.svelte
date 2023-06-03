@@ -12,7 +12,7 @@
 <script>
 	import { setContext } from 'svelte'
 	import { _ as C } from 'svelte-i18n'
-	import { cloneDeep, find, isEqual, chain as _chain } from 'lodash-es'
+	import _, { cloneDeep, find, isEqual, chain as _chain } from 'lodash-es'
 	import HSplitPane from './HSplitPane.svelte'
 	import { getPlaceholderValue, getEmptyValue } from '../../../utils'
 	import ModalHeader from '../ModalHeader.svelte'
@@ -74,9 +74,13 @@
 	) // local copy of component content to modify & save
 
 	// component data w/ page/site data included (for compilation)
-	$: data = {
-		...getPageData({ loc: $locale }), // pass in page data for page head
-		...local_content[$locale]
+	$: data = get_data($locale, local_content)
+
+	function get_data(loc, content) {
+		return {
+			...getPageData({ loc }), // pass in page data for page head
+			...content[loc]
+		}
 	}
 
 	$: setupComponent($locale) // swap content out of on-screen fields
@@ -87,27 +91,47 @@
 	// hydrate fields with content (placeholder if passed component is a Symbol)
 	function getFieldValues(fields, loc) {
 		return fields.map((field) => {
-			if (component.type === 'symbol') {
-				const field_value = component.content?.[loc]?.[field.key]
-				const value = field_value !== undefined ? field_value : getCachedPlaceholder(field)
-				return {
-					...field,
-					value
-				}
-			} else {
-				const field_value = local_content[loc]?.[field.key]
-				const value = field_value !== undefined ? field_value : getCachedPlaceholder(field)
-				return {
-					...field,
-					value
-				}
+			const field_value = local_content[loc]?.[field.key]
+			const value = field_value !== undefined ? field_value : getCachedPlaceholder(field)
+			return {
+				...field,
+				value
 			}
 		})
 	}
 
 	// Ensure all content keys match field keys
-	$: component.type !== 'symbol' && syncFieldKeys(fields)
-	$: component.type !== 'symbol' && syncLocales($content)
+	$: syncFieldKeys(fields)
+	$: syncLocales($content)
+
+	async function syncFieldKeys(fields) {
+		const updated_local_content = _.cloneDeep(local_content)
+		removeNonexistantKeys() // delete keys from content that do not appear in fields
+		addMissingKeys() // add keys that do appear in fields
+		local_content = updated_local_content
+
+		// Remove content when field deleted
+		function removeNonexistantKeys() {
+			Object.keys(local_content[$locale]).forEach((key) => {
+				if (!find(fields, ['key', key])) {
+					Object.keys(local_content).forEach((loc) => {
+						delete updated_local_content[loc][key]
+					})
+				}
+			})
+			refreshPreview()
+		}
+
+		function addMissingKeys() {
+			fields.forEach((field) => {
+				if (local_content[$locale][field.key] === undefined) {
+					Object.keys(local_content).forEach((loc) => {
+						updated_local_content[loc][field.key] = getEmptyValue(field)
+					})
+				}
+			})
+		}
+	}
 
 	function syncLocales(content) {
 		// runs when adding new locale from ComponentEditor
@@ -119,37 +143,6 @@
 				}
 			}
 		})
-	}
-
-	function syncFieldKeys(fields) {
-		removeNonexistantKeys() // delete keys from content that do not appear in fields
-		addMissingKeys() // add keys that do appear in fields
-
-		function addMissingKeys() {
-			let updatedContent = cloneDeep(local_content)
-			fields.forEach((field) => {
-				if (local_content[$locale][field.key] === undefined) {
-					Object.keys(local_content).forEach((loc) => {
-						updatedContent[loc][field.key] = getEmptyValue(field)
-					})
-				}
-			})
-			local_content = updatedContent
-		}
-
-		// Remove content when field deleted
-		function removeNonexistantKeys() {
-			let updatedContent = cloneDeep(local_content)
-			Object.keys(local_content[$locale]).forEach((key) => {
-				if (!find(fields, ['key', key])) {
-					Object.keys(local_content).forEach((loc) => {
-						delete updatedContent[loc][key]
-					})
-				}
-			})
-			local_content = updatedContent
-			refreshPreview()
-		}
 	}
 
 	function saveLocalContent() {
@@ -189,6 +182,8 @@
 
 	let componentApp // holds compiled component
 	let compilationError // holds compilation error
+
+	$: compilationError && data && refreshPreview() // recompile when there's a compilation error & data changes
 
 	// ensure placeholder values always conform to form
 	// TODO: do for remaining fields

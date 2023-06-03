@@ -138,12 +138,14 @@ export function getEmptyValue(field) {
     url: ''
   }
   else if (field.type === 'url') return ''
+  else if (field.type === 'select') return ''
+  else if (field.type === 'switch') return true
   else {
     console.warn('No placeholder set for field type', field.type)
     return ''
   }
 
   function getGroupValue(field) {
-    return _chain(field.fields).keyBy('key').mapValues((field) => getPlaceholderValue(field)).value()
+    return _chain(field.fields).keyBy('key').mapValues((field) => getEmptyValue(field)).value()
   }
 }

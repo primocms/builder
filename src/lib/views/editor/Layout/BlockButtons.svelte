@@ -2,11 +2,11 @@
 	import { createEventDispatcher } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import sections from '../../../stores/data/sections'
+	import { userRole } from '$lib/stores/app/misc'
 	import Icon from '@iconify/svelte'
 
 	const dispatch = createEventDispatcher()
 
-	export let block
 	export let i
 	export let node = null
 
@@ -20,9 +20,11 @@
 			<button on:click={() => dispatch('edit-content')}>
 				<Icon icon="material-symbols:edit-square-outline-rounded" />
 			</button>
-			<button on:click={() => dispatch('edit-code')}>
-				<Icon icon="ph:code-bold" />
-			</button>
+			{#if $userRole === 'DEV'}
+				<button on:click={() => dispatch('edit-code')}>
+					<Icon icon="ph:code-bold" />
+				</button>
+			{/if}
 		</div>
 		<div class="top-right">
 			<button on:click={() => dispatch('delete')} class="button-delete">

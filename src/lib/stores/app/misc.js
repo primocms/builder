@@ -4,7 +4,7 @@ export const saved = writable(true)
 
 export const showingIDE = writable(false)
 
-export const userRole = writable('developer')
+export const userRole = writable('DEV')
 
 export const showKeyHint = writable(false)
 
