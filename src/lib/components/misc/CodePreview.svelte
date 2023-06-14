@@ -287,9 +287,10 @@
 
 			display: grid;
 			gap: 0.5rem;
-			background: var(--color-gray-9);
+			background: white;
 			border: 2px solid var(--color-gray-8);
 			padding: 0.75rem 1rem;
+			overflow: auto;
 
 			pre {
 				display: block;
