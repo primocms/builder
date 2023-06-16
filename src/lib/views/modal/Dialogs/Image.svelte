@@ -37,17 +37,17 @@
 		if (files.length > 0) {
 			const image = files[0]
 
-			const compressed = await imageCompression(image, {
-				maxSizeMB: 0.5
-			})
-			let size = new Blob([compressed]).size
+			// const compressed = await imageCompression(image, {
+			// 	maxSizeMB: 0.5
+			// })
+			let size = new Blob([image]).size
 
 			const key = `${$page.data.site.id}/${image.name + image.lastModified}`
 			const url = await storageChanged({
 				bucket: 'images',
 				action: 'upload',
 				key,
-				file: compressed
+				file: image
 			})
 
 			if (url) {
