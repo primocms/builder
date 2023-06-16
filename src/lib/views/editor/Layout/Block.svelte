@@ -182,8 +182,9 @@
 	bind:this={node}
 	in:fade={{ duration: 100 }}
 	class:locked
+	class="section"
 	data-block={block.symbol.id}
-	id="block-{block.id}"
+	id="section-{block.id.split('-')[0]}"
 	on:mouseenter={() => (hovering = true)}
 	on:mouseleave={() => (hovering = false)}
 >
@@ -224,7 +225,7 @@
 {/if}
 
 <style lang="postcss">
-	[data-block] {
+	.section {
 		position: relative;
 		transition: 0.1s;
 		&.locked {
@@ -232,7 +233,7 @@
 		}
 	}
 	/* prevent weird spacing when setting grid columns on #page */
-	:global([data-block] > div.node) {
+	:global(.section > div.node) {
 		min-height: 3rem;
 	}
 	.hover-state {
