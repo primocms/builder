@@ -68,12 +68,11 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
         loc: locale
       })
       const { css, error } = await processors.css(postcss || '')
+      const section_id = section.id.split('-')[0]
       return {
         html: `
-          <div class="section" id="section-${section.id}">
-            <div class="component">
-              ${html} 
-            </div>
+          <div class="section" id="section-${section_id}">
+            ${html} 
           </div>`,
         js,
         css,
