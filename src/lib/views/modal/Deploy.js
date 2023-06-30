@@ -107,15 +107,31 @@ export async function buildSiteBundle({ pages }) {
     })
     const formattedHTML = await beautify.html(html)
 
+    let parent_urls = []
     const parent = pages.find(p => p.id === page.parent)
 
+    if(parent) {
+      let no_more_parents = false
+      let grandparent = parent
+      parent_urls.push(parent.url)
+      while (!no_more_parents){
+        grandparent = pages.find(p => p.id === grandparent.parent)
+        if (!grandparent) {
+          no_more_parents = true
+        } else {
+          parent_urls.unshift(grandparent.url)
+        }
+      }
+      
+    }
+    
     let path
     let full_url = url
     if (url === 'index' || url === '404') {
       path = `${url}.html`
     } else if (parent){
-      path = `${parent.url}/${url}/index.html`
-      full_url = `${parent.url}/${url}`
+      path = `${parent_urls.join('/')}/${url}/index.html`
+      full_url = `${parent_urls.join('/')}/${url}`
     } else {
       path = `${url}/index.html`
     }
@@ -192,7 +208,7 @@ export async function buildSiteBundle({ pages }) {
         content: `<!DOCTYPE html>
         <html lang="en">
           <head>
-            <meta http-equiv="Refresh" content="0; url='${get(page).url.href}'" />
+            <meta http-equiv="Refresh" content="0; url='${get(page).url.origin}/${get(page).params.site}'" />
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Primo</title>

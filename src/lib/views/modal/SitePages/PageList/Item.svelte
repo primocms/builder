@@ -5,6 +5,7 @@
   import { createEventDispatcher, getContext } from 'svelte'
   const dispatch = createEventDispatcher()
   import modal from '$lib/stores/app/modal'
+  import pages from '$lib/stores/data/pages'
   import { id as activePageID } from '$lib/stores/app/activePage'
   import { url as site_url } from '$lib/stores/data/site'
   import { pages as actions } from '$lib/stores/actions'
@@ -21,9 +22,12 @@
   export let at_root_level = true
 
   let editing_page = false
-  const full_url = parent
-    ? `/${$site_url}/${parent.url}/${page.url}`
-    : `/${$site_url}/${page.url}`
+  /** @type {string[]}*/
+  export let parent_urls = []
+
+  const full_url = parent 
+    ? `/${$site_url}/${parent_urls.join('/')}/${page.url}`
+    :`/${$site_url}/${page.url}`
 
   let showing_children = true
   $: has_children = children.length > 0
@@ -102,17 +106,16 @@
     <button
       class="edit"
       class:active={editing_page}
+      title="Rename"
       on:click={() => (editing_page = !editing_page)}
     >
       <Icon icon="clarity:edit-solid" />
     </button>
-    {#if at_root_level}
-      <button on:click={() => (creating_page = true)}>
+    {#if page.url !== 'index'}
+      <button title="Create Subpage" on:click={() => (creating_page = true)}>
         <Icon icon="akar-icons:plus" />
       </button>
-    {/if}
-    {#if page.url !== 'index'}
-      <button on:click={() => dispatch('delete', page)}>
+      <button title="Delete Page" on:click={() => dispatch('delete', page)}>
         <Icon icon="fluent:delete-20-filled" />
       </button>
     {/if}
@@ -132,15 +135,17 @@
 {#if showing_children && has_children}
   <ul class="page-list child" transition:slide|local={{ duration: 100 }}>
     {#each children as subpage}
+    {@const subchildren = $pages.filter((p) => p.parent === subpage.id)}
       <li>
         <svelte:self
           parent={page}
           page={subpage}
+          parent_urls={[...parent_urls, page.url]}
+          children={subchildren}
           active={$activePageID === subpage.id}
           at_root_level={false}
-          on:edit
-          on:add
           on:delete
+          on:create
         />
       </li>
     {/each}

@@ -44,12 +44,26 @@
     }
   }
 
-  function getPageUrl(page, loc) {
+  function getPageUrl(page, loc, pages) {
     const prefix = loc === 'en' ? '/' : `/${loc}/`
     if (page.url === 'index') {
       return prefix
     } else {
-      return prefix + page.url
+      let parent_urls = []
+      if(page.parent) {
+        let no_more_parents = false
+        let grandparent = pages.find(p => p.id === page.parent)
+        parent_urls.push(grandparent.url)
+        while (!no_more_parents){
+          grandparent = pages.find(p => p.id === grandparent.parent)
+          if (!grandparent) {
+            no_more_parents = true
+          } else {
+            parent_urls.unshift(grandparent.url)
+          }
+        }
+      }
+      return parent_urls.length ? prefix + parent_urls.join('/') + '/' + page.url : prefix + page.url
     }
   }
 </script>
@@ -78,9 +92,10 @@
           on:change={() => dispatch('input')}
         >
           {#each $pages as page}
-            <option value={getPageUrl(page, $locale)}>
+            {@const page_url = getPageUrl(page, $locale, $pages)}
+            <option value={page_url}>
               {page.name}
-              <pre>({getPageUrl(page, $locale)})</pre>
+              <pre>({page_url})</pre>
             </option>
             <!-- TODO: Fix this -->
             <!-- {#if page.pages.length > 0}

@@ -44,7 +44,7 @@
 {#if !creating_page}
   <PrimaryButton
     on:click={() => (creating_page = true)}
-    label="Create Page"
+    label="Create Top Level Page"
     icon="akar-icons:plus"
   />
 {/if}
