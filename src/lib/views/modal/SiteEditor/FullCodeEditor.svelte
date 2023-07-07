@@ -27,7 +27,7 @@
 
   export let html = ''
   export let css = ''
-  export let js = ''
+  export const js = ''
 
   if (!$$props.js) {
     $leftPaneSize = '50%'
