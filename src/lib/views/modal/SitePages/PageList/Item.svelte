@@ -19,7 +19,7 @@
   export let page
   export let children = []
   export let active
-  export let at_root_level = true
+  let at_root_level = true
 
   let editing_page = false
   /** @type {string[]}*/
@@ -218,11 +218,6 @@
         color: var(--primo-color-brand);
       }
     }
-  }
-
-  .slot {
-    background: #1c1c1c;
-    margin: 0 1rem;
   }
 
   ul.page-list {

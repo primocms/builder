@@ -1,5 +1,5 @@
+@tailwind base;
 .primo-reset {
-  @tailwind base;
   direction: ltr;
   color-scheme: dark;
 }
