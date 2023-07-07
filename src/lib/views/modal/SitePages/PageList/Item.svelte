@@ -19,7 +19,7 @@
   export let page
   export let children = []
   export let active
-  export let at_root_level = true
+  let at_root_level = true
 
   let editing_page = false
   /** @type {string[]}*/
