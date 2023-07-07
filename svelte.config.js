@@ -12,10 +12,13 @@ const config = {
 		// See https://kit.svelte.dev/docs/adapters for more information about adapters.
 		adapter: adapter()
 	},
-	onwarn: (warning, handler) => {
-		if(warning.filename.includes('svelte-json-tree')) {return}
-		handler(warning);
-	}
+	vitePlugin: {
+		inspector: true,
+	},
+  onwarn: (warning, handler) => {
+    if(warning.filename.includes('svelte-json-tree')) {return}
+    handler(warning);
+	}    
 };
 
 export default config;
