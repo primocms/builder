@@ -16,7 +16,6 @@
   export let placeholder = ''
   export let variants = ''
   export let type = 'text'
-  export let autofocus = false
 
   // Note: Svelte seems to have some issues with two-way binding, so if this is acting up it's probably that
 </script>
@@ -30,7 +29,6 @@
       {value}
       {type}
       {placeholder}
-      {autofocus}
       on:input={({ target }) => {
         value = target.value
         dispatch('input', value)
