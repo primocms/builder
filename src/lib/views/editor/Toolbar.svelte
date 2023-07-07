@@ -95,12 +95,6 @@
     border-bottom: 1px solid var(--color-gray-8);
   }
 
-  button.create-preview {
-    padding: 0 0.5rem;
-    background: var(--primo-color-codeblack);
-    border-radius: var(--primo-border-radius);
-  }
-
   .left {
     /* width: 100%; */
     display: flex;
