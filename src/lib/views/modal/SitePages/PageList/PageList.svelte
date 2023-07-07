@@ -61,17 +61,5 @@
       border-top: 1px solid #222;
     }
   }
-  #duplicate label {
-    display: flex;
-    gap: 0.5rem;
-    margin: 0.25rem 0;
-  }
-  form {
-    padding: 0.25rem;
-    display: grid;
-    gap: 0.5rem;
-    max-width: 450px;
-    padding: 0.825rem 1.125rem;
-    margin-bottom: 0.5rem;
-  }
+
 </style>
