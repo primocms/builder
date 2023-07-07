@@ -220,11 +220,6 @@
     }
   }
 
-  .slot {
-    background: #1c1c1c;
-    margin: 0 1rem;
-  }
-
   ul.page-list {
     margin: 0 1rem 1rem 1rem;
     background: #323334;
