@@ -3,7 +3,6 @@
 	import Icon from '@iconify/svelte'
 
 	const dispatch = createEventDispatcher()
-	import imageCompression from 'browser-image-compression'
 	import PrimaryButton from '../../../components/buttons/PrimaryButton.svelte'
 	import Spinner from '../../../components/misc/Spinner.svelte'
 	import { storageChanged } from '$lib/database'

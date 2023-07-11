@@ -365,7 +365,6 @@
 			element.setAttribute(`data-key`, key)
 			element.contentEditable = true
 			let updated_url = url
-
 			let rect
 			element.onkeydown = (e) => {
 				if (e.code === 'Enter') {
@@ -374,13 +373,13 @@
 					link_editor_is_visible = false
 				}
 			}
-			element.onblur = (e) => {
-				dispatch('unlock')
-				save_edited_value(key, {
-					url: updated_url,
-					label: element.innerText
-				})
-			}
+			// element.onblur = (e) => {
+			// 	dispatch('unlock')
+			// 	save_edited_value(key, {
+			// 		url: updated_url,
+			// 		label: element.innerText
+			// 	})
+			// }
 			element.addEventListener('click', async () => {
 				rect = element.getBoundingClientRect()
 
@@ -398,9 +397,10 @@
 					element.href = input.value
 					updated_url = input.value
 					save_edited_value(key, {
-						url: input.value,
+						url: updated_url,
 						label: element.innerText
 					})
+					set_editable_link({ element, key, url: updated_url })
 					link_editor_is_visible = false
 				}
 

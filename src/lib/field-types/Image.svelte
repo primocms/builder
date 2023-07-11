@@ -1,10 +1,8 @@
 <script>
 	import { createEventDispatcher } from 'svelte'
-	import imageCompression from 'browser-image-compression'
 	import TextInput from '$lib/ui/TextInput.svelte'
 	import Spinner from '$lib/ui/Spinner.svelte'
 	import { page } from '$app/stores'
-	import { supabase } from '$lib/supabase'
 	import { storageChanged } from '$lib/database'
 
 	const dispatch = createEventDispatcher()

@@ -328,12 +328,16 @@
 		border-radius: 0.25rem;
 		height: 100%;
 		font-size: var(--font-size-2);
+		color: #858585;
 
 		&::placeholder {
 			color: var(--color-gray-7);
 		}
 		&:focus {
 			outline: 0;
+			border: 1px solid #b5b5b5;
+			transition: 0.3s;
+			color: #b6b6b6;
 		}
 	}
 </style>
