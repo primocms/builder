@@ -81,9 +81,8 @@
 	}
 
 	$: symbol = block.symbol
-
 	let component_data = get_content_with_static(block, block.symbol)[$locale]
-	$: component_data = get_content_with_static(block, block.symbol)[$locale]
+	$: component_data = get_content_with_static(block, symbol)[$locale]
 
 	let html = ''
 	let css = ''
