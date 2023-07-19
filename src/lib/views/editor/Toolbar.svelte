@@ -1,41 +1,47 @@
 <script>
-	import { onMount } from 'svelte'
+	import { _ as C } from 'svelte-i18n'
 	import { find as _find } from 'lodash-es'
 	import ToolbarButton from './ToolbarButton.svelte'
 	import LocaleSelector from './LocaleSelector.svelte'
 	import { timeline } from '../../stores/data'
+	import sections from '../../stores/data/sections'
 	import { undo_change, redo_change } from '../../stores/actions'
 	import { PrimoButton } from '../../components/buttons'
 	import site from '../../stores/data/site'
-	import { id as pageID } from '../../stores/app/activePage'
 	import { page } from '$app/stores'
+	import modal from '../../stores/app/modal'
 
-	export let buttons
-
-	let mounted = false
-	onMount(() => {
-		mounted = true
-	})
-
-	let channel
-	$: if (!import.meta.env.SSR) {
-		channel = new BroadcastChannel('site_preview')
-	}
-
-	async function showPreview() {
-		channel.onmessage = ({ data }) => {
-			if (data === 'READY') {
-				channel.postMessage({
-					site: $site,
-					pageID: $pageID
-				})
+	const buttons = [
+		{
+			id: 'toolbar--pages',
+			title: $C('Pages'),
+			svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M10 19q-.425 0-.713-.288T9 18q0-.425.288-.713T10 17h10q.425 0 .713.288T21 18q0 .425-.288.713T20 19H10Zm0-6q-.425 0-.713-.288T9 12q0-.425.288-.713T10 11h10q.425 0 .713.288T21 12q0 .425-.288.713T20 13H10Zm0-6q-.425 0-.713-.288T9 6q0-.425.288-.713T10 5h10q.425 0 .713.288T21 6q0 .425-.288.713T20 7H10ZM5 20q-.825 0-1.413-.588T3 18q0-.825.588-1.413T5 16q.825 0 1.413.588T7 18q0 .825-.588 1.413T5 20Zm0-6q-.825 0-1.413-.588T3 12q0-.825.588-1.413T5 10q.825 0 1.413.588T7 12q0 .825-.588 1.413T5 14Zm0-6q-.825 0-1.413-.588T3 6q0-.825.588-1.413T5 4q.825 0 1.413.588T7 6q0 .825-.588 1.413T5 8Z"/></svg>',
+			onclick: () => modal.show('SITE_PAGES', {}, { hideLocaleSelector: true, maxWidth: '600px' }),
+			showSwitch: false
+		},
+		[
+			{
+				id: 'toolbar--page',
+				title: 'Page',
+				label: 'Page',
+				svg: '<svg width="10" height="16" viewBox="0 0 12 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.425" y="0.925" width="10.4834" height="14.15" rx="1.575" fill="#121212"/><rect x="2.41675" y="3.625" width="2" height="2" fill="#D9D9D9"/><rect x="2.41675" y="7.125" width="6" height="0.75" fill="#D9D9D9"/><rect x="2.41675" y="9.375" width="5" height="0.75" fill="#D9D9D9"/><rect x="2.41675" y="11.625" width="6.5" height="0.75" fill="#D9D9D9"/><rect x="0.425" y="0.925" width="10.4834" height="14.15" rx="1.575" stroke="#CECECE" stroke-width="0.85"/></svg>',
+				onclick: () => modal.show('PAGE_EDITOR', {}, { showSwitch: true })
+			},
+			{
+				id: 'toolbar--site',
+				svg: `<svg width="12" height="18" viewBox="0 0 15 18" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.50831" y="0.925" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="3.50831" y="0.925" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/><rect x="2.09169" y="2.34199" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="2.09169" y="2.34199" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/><rect x="0.675" y="3.75801" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="2.66669" y="6.4165" width="2" height="2" fill="#D9D9D9"/><rect x="2.66669" y="9.6665" width="5.75" height="0.75" fill="#D9D9D9"/><rect x="2.66669" y="11.6665" width="5" height="0.75" fill="#D9D9D9"/><rect x="2.66669" y="13.6665" width="6.5" height="0.75" fill="#D9D9D9"/><rect x="0.675" y="3.75801" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/></svg>`,
+				title: 'Site',
+				label: 'Site',
+				onclick: () => modal.show('SITE_EDITOR', {}, { showSwitch: true })
 			}
-		}
-		window.primo.createPopup()
-	}
+		]
+	]
+
+	$: pageEmpty =
+		$sections && $sections.length <= 1 && $sections.length > 0 && $sections[0]['type'] === 'options'
 </script>
 
-<nav aria-label="toolbar" id="primo-toolbar" class="primo-reset" class:mounted>
+<nav aria-label="toolbar" id="primo-toolbar" class="primo-reset">
 	<div class="menu-container">
 		<div class="left">
 			<PrimoButton on:signOut />
@@ -68,7 +74,13 @@
 				<ToolbarButton id="redo" title="Redo" icon="material-symbols:redo" on:click={redo_change} />
 			{/if}
 			<LocaleSelector />
-			<slot />
+			<ToolbarButton
+				type="primo"
+				label="Deploy"
+				active={false}
+				on:click={() => modal.show('DEPLOY', {}, { maxWidth: '450px', hideLocaleSelector: true })}
+				disabled={pageEmpty}
+			/>
 		</div>
 	</div>
 </nav>
@@ -81,12 +93,6 @@
 		top: 0;
 		z-index: 99999999;
 		border-bottom: 1px solid var(--color-gray-8);
-	}
-
-	button.create-preview {
-		padding: 0 0.5rem;
-		background: var(--primo-color-codeblack);
-		border-radius: var(--primo-border-radius);
 	}
 
 	.left {
