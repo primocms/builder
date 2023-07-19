@@ -6,7 +6,7 @@
 	import PrimaryButton from '../../../components/buttons/PrimaryButton.svelte'
 	import Spinner from '../../../components/misc/Spinner.svelte'
 	import { storageChanged } from '$lib/database'
-	import { site } from '$lib/stores/data'
+	import site from '$lib/stores/data/site'
 
 	const defaultValue = {
 		alt: '',

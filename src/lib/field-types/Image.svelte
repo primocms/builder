@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte'
 	import TextInput from '$lib/ui/TextInput.svelte'
 	import Spinner from '$lib/ui/Spinner.svelte'
-	import { site } from '$lib/stores/data'
+	import site from '$lib/stores/data/site'
 	import { storageChanged } from '$lib/database'
 
 	const dispatch = createEventDispatcher()

@@ -9,7 +9,7 @@
 	import TextInput from '$lib/ui/TextInput.svelte'
 	import Select from '$lib/ui/inputs/Select.svelte'
 	import modal from '$lib/stores/app/modal'
-	import { site } from '$lib/stores/data'
+	import site from '$lib/stores/data/site'
 	import pages from '$lib/stores/data/pages'
 	import { page } from '$app/stores'
 	import { push_site, buildSiteBundle } from './Deploy'
