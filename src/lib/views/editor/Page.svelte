@@ -11,6 +11,7 @@
 	import { updatePreview } from '../../stores/actions'
 	import {
 		id as pageID,
+		name as pageName,
 		url as pageURL,
 		fields as pageFields,
 		code as pageCode,
@@ -43,6 +44,7 @@
 		$sections = page_data.sections
 
 		$pageID = page_data.id
+		$pageName = page_data.name
 		$pageURL = page_data.url
 		$pageFields = page_data.fields
 		$pageCode = page_data.code
