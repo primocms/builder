@@ -1,31 +1,31 @@
 <script context="module">
-	import { writable } from 'svelte/store';
-	const mouse_position = writable({ x: 0, y: 0 });
+	import { writable } from 'svelte/store'
+	const mouse_position = writable({ x: 0, y: 0 })
 </script>
 
 <script>
-	import { onMount, createEventDispatcher, tick } from 'svelte';
-	const dispatch = createEventDispatcher();
-	import modal from '$lib/stores/app/modal';
-	import { hoveredBlock, showingIDE } from '$lib/stores/app/misc';
-	import { page } from '$app/stores';
-	import { draggable } from '@neodrag/svelte';
-	import { positions } from '$lib/views/editor/Layout/ComponentNode.svelte';
-	import MenuPopup from '$lib/components/MenuPopup.svelte';
-	import IconButton from '$lib/components/IconButton.svelte';
-	import Block from './BlockItem.svelte';
-	import sections from '$lib/stores/data/sections';
+	import { onMount, createEventDispatcher, tick } from 'svelte'
+	const dispatch = createEventDispatcher()
+	import modal from '$lib/stores/app/modal'
+	import { hoveredBlock, showingIDE, userRole } from '$lib/stores/app/misc'
+	import { page } from '$app/stores'
+	import { draggable } from '@neodrag/svelte'
+	import { positions } from '$lib/views/editor/Layout/ComponentNode.svelte'
+	import MenuPopup from '$lib/components/MenuPopup.svelte'
+	import IconButton from '$lib/components/IconButton.svelte'
+	import Block from './BlockItem.svelte'
+	import sections from '$lib/stores/data/sections'
 
-	export let symbol;
-	export let controls_enabled = true;
+	export let symbol
+	export let controls_enabled = true
 
 	let coordinates = {
 		x: 0,
 		y: 0
-	};
+	}
 
 	function edit_symbol_content(symbol) {
-		$showingIDE = false;
+		$showingIDE = false
 		modal.show(
 			'COMPONENT_EDITOR',
 			{
@@ -37,8 +37,8 @@
 						label: `Save Block`,
 						icon: 'fas fa-check',
 						onclick: (symbol) => {
-							dispatch('edit_content', symbol);
-							modal.hide();
+							dispatch('edit_content', symbol)
+							modal.hide()
 						}
 					}
 				}
@@ -46,11 +46,11 @@
 			{
 				showSwitch: true
 			}
-		);
+		)
 	}
 
 	function edit_symbol_code(symbol) {
-		$showingIDE = true;
+		$showingIDE = true
 		modal.show(
 			'COMPONENT_EDITOR',
 			{
@@ -62,8 +62,8 @@
 						label: `Save Block`,
 						icon: 'fas fa-check',
 						onclick: (symbol) => {
-							dispatch('edit_code', symbol);
-							modal.hide();
+							dispatch('edit_code', symbol)
+							modal.hide()
 						}
 					}
 				}
@@ -71,44 +71,44 @@
 			{
 				showSwitch: true
 			}
-		);
+		)
 	}
 
 	function on_drag(e) {
-		dragging = true;
+		dragging = true
 
 		// const block_center = rect.y + rect.height / 2;
-		const mouse_y = $mouse_position.y || 0;
-		const mouse_x = $mouse_position.x || 0;
+		const mouse_y = $mouse_position.y || 0
+		const mouse_x = $mouse_position.x || 0
 
 		// determine if block_center is within the range of the positions
 		let [matching_block] = $positions.filter((position) => {
-			const within_left = mouse_x > position.left;
-			const above_bottom = mouse_y > position.top;
-			const below_top = mouse_y < position.bottom;
-			return within_left && above_bottom && below_top;
-		});
+			const within_left = mouse_x > position.left
+			const above_bottom = mouse_y > position.top
+			const below_top = mouse_y < position.bottom
+			return within_left && above_bottom && below_top
+		})
 
 		// if no matching block, check if hovering below last block
 		if (!matching_block && $positions.length > 0) {
 			// hovering below last block
-			const last_block = $positions.at(-1);
+			const last_block = $positions.at(-1)
 			if (mouse_y > last_block.bottom) {
-				matching_block = last_block;
-				dragging_over_block = true;
+				matching_block = last_block
+				dragging_over_block = true
 			} else {
-				$hoveredBlock = { i: 0, id: null, position: '', active: false };
-				dragging_over_block = false;
-				return;
+				$hoveredBlock = { i: 0, id: null, position: '', active: false }
+				dragging_over_block = false
+				return
 			}
 		} else {
-			dragging_over_block = true;
-			$hoveredBlock = { ...$hoveredBlock, i: 0 };
+			dragging_over_block = true
+			$hoveredBlock = { ...$hoveredBlock, i: 0 }
 		}
 
-		const top = matching_block?.top || 0;
-		const bottom = matching_block?.bottom || 0;
-		const center = top + (bottom - top) / 2;
+		const top = matching_block?.top || 0
+		const bottom = matching_block?.bottom || 0
+		const center = top + (bottom - top) / 2
 
 		if (mouse_y > top && mouse_y < center) {
 			// mouse is in top half of block
@@ -117,7 +117,7 @@
 				...matching_block,
 				position: 'top',
 				active: true
-			};
+			}
 			// set active_hover store with block above and below hover point
 			// from block, show dropzone above or below
 		} else if (mouse_y > center) {
@@ -127,31 +127,31 @@
 				...matching_block,
 				position: 'bottom',
 				active: true
-			};
+			}
 		} else {
-			$hoveredBlock = { i: 0, id: null, position: '', active: false };
+			$hoveredBlock = { i: 0, id: null, position: '', active: false }
 		}
 	}
 
-	let name_el;
+	let name_el
 
 	// move cursor to end of name
 	$: if (name_el) {
-		const range = document.createRange();
-		const sel = window.getSelection();
-		range.setStart(name_el, 1);
-		range.collapse(true);
+		const range = document.createRange()
+		const sel = window.getSelection()
+		range.setStart(name_el, 1)
+		range.collapse(true)
 
-		sel?.removeAllRanges();
-		sel?.addRange(range);
+		sel?.removeAllRanges()
+		sel?.addRange(range)
 	}
 
-	let renaming = false;
+	let renaming = false
 	async function toggle_name_input() {
-		renaming = !renaming;
+		renaming = !renaming
 		// workaround for inability to see cursor when div empty
 		if (symbol.name === '') {
-			symbol.name = 'Block';
+			symbol.name = 'Block'
 		}
 	}
 
@@ -159,51 +159,51 @@
 		dispatch('edit', {
 			...symbol,
 			name: new_name
-		});
-		renaming = false;
+		})
+		renaming = false
 	}
 
 	// keep height of symbol to prevent jumping
-	let element;
+	let element
 
-	let symbol_element;
-	let height = null;
-	let width = null;
-	let top = null;
+	let symbol_element
+	let height = null
+	let width = null
+	let top = null
 
 	function set_dimensions() {
-		height = element.offsetHeight + 'px';
-		width = element.offsetWidth + 'px';
-		const rect = symbol_element.getBoundingClientRect();
-		top = rect.top + 'px';
+		height = element.offsetHeight + 'px'
+		width = element.offsetWidth + 'px'
+		const rect = symbol_element.getBoundingClientRect()
+		top = rect.top + 'px'
 	}
 
 	function reset_dimensions() {
-		dragging = false;
+		dragging = false
 		$hoveredBlock = {
 			...$hoveredBlock,
 			active: false
-		};
-		coordinates = { x: 0, y: 0 };
-		height = null;
-		width = null;
-		top = null;
+		}
+		coordinates = { x: 0, y: 0 }
+		height = null
+		width = null
+		top = null
 	}
 
-	let dragging = false;
-	let dragging_over_block = false;
+	let dragging = false
+	let dragging_over_block = false
 
 	function on_drag_end() {
 		if (dragging_over_block || $sections.length === 0) {
-			dispatch('add_to_page');
+			dispatch('add_to_page')
 		}
-		reset_dimensions();
+		reset_dimensions()
 	}
 </script>
 
 <svelte:window
 	on:mousemove={(event) => {
-		$mouse_position = { x: event.x, y: event.y };
+		$mouse_position = { x: event.x, y: event.y }
 	}}
 />
 
@@ -219,9 +219,9 @@
 				on:blur={toggle_name_input}
 				on:keydown={(e) => {
 					if (e.code === 'Enter') {
-						e.preventDefault();
-						e.target.blur();
-						changeName(e.target.textContent);
+						e.preventDefault()
+						e.target.blur()
+						changeName(e.target.textContent)
 					}
 				}}
 			>
@@ -238,7 +238,7 @@
 					icon="material-symbols:edit-square-outline-rounded"
 					on:click={() => edit_symbol_content(symbol)}
 				/>
-				{#if $page.data.user.role === 'DEV'}
+				{#if $userRole === 'DEV'}
 					<IconButton icon="material-symbols:code" on:click={() => edit_symbol_code(symbol)} />
 				{/if}
 				<MenuPopup
@@ -278,8 +278,8 @@
 		use:draggable={{ position: coordinates }}
 		on:neodrag={on_drag}
 		on:neodrag:start={() => {
-			dragging = true;
-			set_dimensions();
+			dragging = true
+			set_dimensions()
 		}}
 		on:neodrag:end={on_drag_end}
 	>

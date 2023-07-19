@@ -1,105 +1,104 @@
 <script>
-	import _ from 'lodash-es';
-	import fileSaver from 'file-saver';
-	import axios from 'axios';
-	import { page } from '$app/stores';
-	import { hoveredBlock } from './stores/app/misc';
-	import site from './stores/data/site';
-	import sections from './stores/data/sections';
-	import symbols from './stores/data/symbols';
-	import Icon from '@iconify/svelte';
-	import { Symbol } from './const';
-	import Sidebar_Symbol from './Sidebar_Symbol.svelte';
-	import { symbols as symbol_actions, active_page } from './stores/actions';
-	import { v4 as uuidv4 } from 'uuid';
-	import { validate_symbol } from '$lib/converter';
+	import _ from 'lodash-es'
+	import fileSaver from 'file-saver'
+	import axios from 'axios'
+	import { hoveredBlock, userRole } from './stores/app/misc'
+	import site from './stores/data/site'
+	import sections from './stores/data/sections'
+	import symbols from './stores/data/symbols'
+	import Icon from '@iconify/svelte'
+	import { Symbol } from './const'
+	import Sidebar_Symbol from './Sidebar_Symbol.svelte'
+	import { symbols as symbol_actions, active_page } from './stores/actions'
+	import { v4 as uuidv4 } from 'uuid'
+	import { validate_symbol } from '$lib/converter'
 
-	let active_tab = 'site';
+	let active_tab = 'site'
 
 	async function create_symbol() {
-		const symbol = Symbol();
+		const symbol = Symbol()
 		await symbol_actions.create({
 			...symbol,
 			name: 'New Block',
 			site: $site.id
-		});
+		})
 	}
 
 	async function update_symbol(symbol) {
-		await symbol_actions.update(symbol);
+		await symbol_actions.update(symbol)
 	}
 
 	async function delete_symbol(symbol) {
-		symbol_actions.delete(symbol);
+		symbol_actions.delete(symbol)
 	}
 
 	async function duplicate_symbol(symbol, index) {
-		const new_symbol = _.cloneDeep(symbol);
-		new_symbol.id = uuidv4();
-		delete new_symbol.created_at;
-		new_symbol.name = `${new_symbol.name} (copy)`;
+		const new_symbol = _.cloneDeep(symbol)
+		new_symbol.id = uuidv4()
+		delete new_symbol.created_at
+		new_symbol.name = `${new_symbol.name} (copy)`
 		symbol_actions.create(
 			{
 				...new_symbol,
 				site: $site.id
 			},
 			index
-		);
+		)
 	}
 
 	async function upload_symbol({ target }) {
-		var reader = new window.FileReader();
+		var reader = new window.FileReader()
 		reader.onload = async function ({ target }) {
-			if (typeof target.result !== 'string') return;
+			if (typeof target.result !== 'string') return
 			try {
-				const uploaded = JSON.parse(target.result);
-				const validated = validate_symbol(uploaded);
+				const uploaded = JSON.parse(target.result)
+				const validated = validate_symbol(uploaded)
 				await symbol_actions.create({
 					...validated,
 					id: uuidv4(),
 					site: $site.id
-				});
+				})
 			} catch (error) {
-				console.error(error);
+				console.error(error)
 			}
-		};
-		reader.readAsText(target.files[0]);
+		}
+		reader.readAsText(target.files[0])
 	}
 
 	async function download_symbol(symbol) {
-		const copied_symbol = _.cloneDeep(symbol);
-		delete copied_symbol.type;
-		const json = JSON.stringify(copied_symbol);
-		var blob = new Blob([json], { type: 'application/json' });
-		fileSaver.saveAs(blob, `${copied_symbol.name || copied_symbol.id}.json`);
+		const copied_symbol = _.cloneDeep(symbol)
+		delete copied_symbol.type
+		const json = JSON.stringify(copied_symbol)
+		var blob = new Blob([json], { type: 'application/json' })
+		fileSaver.saveAs(blob, `${copied_symbol.name || copied_symbol.id}.json`)
 	}
 
 	async function get_primo_blocks() {
 		const { data } = await axios.get(
 			'https://raw.githubusercontent.com/mateomorris/primo-library/main/primo.json'
-		);
-		return data.symbols;
+		)
+		return data.symbols
 	}
 
 	async function add_to_page(symbol) {
 		if ($hoveredBlock.id === null || $sections.length === 0) {
 			// no blocks on page, add to top
-			await active_page.add_block(symbol, 0);
+			await active_page.add_block(symbol, 0)
 		} else if ($hoveredBlock.position === 'top') {
-			await active_page.add_block(symbol, $hoveredBlock.i);
+			await active_page.add_block(symbol, $hoveredBlock.i)
 		} else {
-			await active_page.add_block(symbol, $hoveredBlock.i + 1);
+			await active_page.add_block(symbol, $hoveredBlock.i + 1)
 		}
 	}
 
 	async function add_primo_block(symbol) {
 		if ($hoveredBlock.id === null || $sections.length === 0) {
 			// no blocks on page, add to top
-			await active_page.add_primo_block(symbol, 0);
+			await active_page.add_primo_block(symbol, 0)
 		} else if ($hoveredBlock.position === 'top') {
-			await active_page.add_primo_block(symbol, $hoveredBlock.i);
+			await active_page.add_primo_block(symbol, $hoveredBlock.i)
 		} else {
-			await active_page.add_primo_block(symbol, $hoveredBlock.i + 1);
+			await active_page.add_primo_block(symbol, $hoveredBlock.i + 1)
 		}
 	}
 </script>
@@ -116,7 +115,7 @@
 	{#if active_tab === 'site'}
 		{#if $symbols.length > 0}
 			<div class="primo-buttons">
-				{#if $page.data.user.role === 'DEV'}
+				{#if $userRole === 'DEV'}
 					<button class="primo-button" on:click={create_symbol}>
 						<Icon icon="mdi:plus" />
 					</button>
