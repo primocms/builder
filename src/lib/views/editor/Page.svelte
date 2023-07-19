@@ -23,7 +23,7 @@
 	import { init, addMessages } from 'svelte-i18n'
 	import { realtimeChanged } from '$lib/database'
 
-	export let data
+	export let page
 
 	let html_head = ''
 	let html_below = ''
@@ -36,11 +36,11 @@
 
 	let element
 
-	$: set_page_content(data.page)
+	$: set_page_content(page)
 	async function set_page_content(page_data) {
 		if (!page_data) return
 		await tick()
-		$sections = data.sections
+		$sections = page_data.sections
 
 		$pageID = page_data.id
 		$pageURL = page_data.url

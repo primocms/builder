@@ -19,7 +19,7 @@ import {Page} from '../const'
  * @param {import('$lib').Site_Data} data - Combined data object from the server
  */
 export async function hydrate_active_data(data) {
-  stores.sections.set(data.sections)
+  // stores.sections.set(data.sections)
   stores.pages.set(data.pages)
   stores.symbols.set(data.symbols)
   update_site(data.site)
