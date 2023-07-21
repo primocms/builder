@@ -18,6 +18,8 @@
 
 	let stage = 'INITIAL'
 
+	$: console.log({ $site })
+
 	let active_deployment = $site.active_deployment
 	if (active_deployment) {
 		stage = 'CONNECT_REPO__ACTIVE'
