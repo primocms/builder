@@ -112,8 +112,7 @@
 
 	async function lock_block(block_id) {
 		realtimeChanged({
-			active_block: block_id,
-			user: data.user
+			active_block: block_id
 		})
 	}
 
