@@ -8,7 +8,7 @@
 	import { undo_change, redo_change } from '../../stores/actions'
 	import { PrimoButton } from '../../components/buttons'
 	import site from '../../stores/data/site'
-	import { page } from '$app/stores'
+	import { name as page_name } from '../../stores/app/activePage'
 	import modal from '../../stores/app/modal'
 
 	const buttons = [
@@ -64,7 +64,7 @@
 		</div>
 		<div class="site-name">
 			<span class="site">{$site.name} /</span>
-			<span class="page">{$page.name}</span>
+			<span class="page">{$page_name}</span>
 		</div>
 		<div class="right">
 			{#if !$timeline.first}
