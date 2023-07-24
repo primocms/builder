@@ -65,13 +65,6 @@
 		}
 	}
 
-	.block-id {
-		background: rgba(250, 0, 0, 0.2);
-		display: inline;
-		height: 2rem;
-		pointer-events: all;
-	}
-
 	.top-right {
 		display: flex;
 	}

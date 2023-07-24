@@ -80,7 +80,8 @@
       background: var(--primo-color-brand);
       color: var(--primo-color-black);
     }
-
+  }
+  button{
     &[type='submit'] {
       width: 100%;
     }
