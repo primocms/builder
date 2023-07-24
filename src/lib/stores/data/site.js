@@ -7,6 +7,7 @@ export const name = writable('');
 export const fields = writable([]);
 export const code = writable(Site().code);
 export const content = writable(Site().content);
+export const active_deployment = writable(null);
 
 export function update(props) {
 	if (props.id) {
@@ -27,11 +28,14 @@ export function update(props) {
 	if (props.content) {
 		content.set(props.content);
 	}
+	if (props.active_deployment) {
+		active_deployment.set(props.active_deployment);
+	}
 }
 
 // conveniently get the entire site
 /** @type {import('svelte/store').Readable<import('$lib').Site>} */
-export const site = derived([id, url, name, code, fields, content], ([id, url, name, code, fields, content]) => {
+export const site = derived([id, url, name, code, fields, content, active_deployment], ([id, url, name, code, fields, content, active_deployment]) => {
 	return {
 		id,
 		url,
@@ -39,6 +43,7 @@ export const site = derived([id, url, name, code, fields, content], ([id, url, n
 		code,
 		fields,
 		content,
+		active_deployment
 	};
 });
 

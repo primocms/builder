@@ -107,8 +107,6 @@
 		document.querySelector('#page')?.removeEventListener('scroll', positionBlock)
 	}
 
-	let mounted = false
-
 	async function positionBlock() {
 		// await tick()
 		if (!node || !container || !hovering) return
@@ -214,7 +212,6 @@
 		on:lock
 		on:unlock
 		on:mount={() => {
-			mounted = true
 			dispatch('mount')
 		}}
 	/>

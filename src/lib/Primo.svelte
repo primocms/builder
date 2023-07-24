@@ -2,7 +2,7 @@
 	import { browser } from '$app/environment'
 	import '@fontsource/fira-code/index.css'
 	import IconButton from './components/IconButton.svelte'
-	import Editor from './views/editor/Editor.svelte'
+	import Toolbar from './views/editor/Toolbar.svelte'
 	import Modal from './views/modal/ModalContainer.svelte'
 	import modal from './stores/app/modal'
 	import * as modals from './views/modal'
@@ -87,7 +87,7 @@
 		{/if}
 	</div>
 	<div slot="right">
-		<Editor />
+		<Toolbar />
 		<slot />
 	</div>
 </HSplitPane>

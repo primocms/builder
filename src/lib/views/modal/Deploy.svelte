@@ -9,6 +9,7 @@
 	import TextInput from '$lib/ui/TextInput.svelte'
 	import Select from '$lib/ui/inputs/Select.svelte'
 	import modal from '$lib/stores/app/modal'
+	import site from '$lib/stores/data/site'
 	import pages from '$lib/stores/data/pages'
 	import { page } from '$app/stores'
 	import { push_site, buildSiteBundle } from './Deploy'
@@ -17,7 +18,9 @@
 
 	let stage = 'INITIAL'
 
-	let active_deployment = $page.data.site.active_deployment
+	$: console.log({ $site })
+
+	let active_deployment = $site.active_deployment
 	if (active_deployment) {
 		stage = 'CONNECT_REPO__ACTIVE'
 	}
@@ -65,7 +68,7 @@
 		loading = true
 		await build_files()
 		const toDownload = await create_site_zip()
-		saveAs(toDownload, `${$page.data.site.name}.zip`)
+		saveAs(toDownload, `${$site.name}.zip`)
 		modal.hide()
 
 		async function create_site_zip() {
@@ -100,7 +103,7 @@
 		await dataChanged({
 			table: 'sites',
 			action: 'update',
-			id: $page.data.site.id,
+			id: $site.id,
 			data: { active_deployment }
 		})
 		invalidate('app:data')
@@ -115,7 +118,7 @@
 		await dataChanged({
 			table: 'sites',
 			action: 'update',
-			id: $page.data.site.id,
+			id: $site.id,
 			data: { active_deployment }
 		})
 		stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
@@ -209,8 +212,13 @@
 	{:else if stage === 'CONNECT_GITHUB'}
 		<div class="container">
 			<p>
-				This is how you connect to github. Set up an account and do this, see the docs for more
-				details.
+				Enter your Github token to deploy sites to your account. See the <a
+					target="blank"
+					href="https://docs.primocms.org/publishing"
+				>
+					docs
+				</a>
+				for more details.
 			</p>
 			<div>
 				<p>Enter API Token</p>
@@ -336,6 +344,10 @@
 	.container {
 		display: grid;
 		gap: 1rem;
+
+		a {
+			text-decoration: underline;
+		}
 	}
 	.account-card {
 		display: flex;

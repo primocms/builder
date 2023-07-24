@@ -19,7 +19,7 @@ import {Page} from '../const'
  * @param {import('$lib').Site_Data} data - Combined data object from the server
  */
 export async function hydrate_active_data(data) {
-  stores.sections.set(data.sections)
+  // stores.sections.set(data.sections)
   stores.pages.set(data.pages)
   stores.symbols.set(data.symbols)
   update_site(data.site)
@@ -483,8 +483,8 @@ export async function update_section_content(section, updated_content) {
   const original_content = _.cloneDeep(section.content)
 
   // Update static content in symbol
-  const original_symbol_content = _.cloneDeep(section.symbol.content)
-  const updated_symbol_content = _.cloneDeep(section.symbol.content)
+  const original_symbol = _.cloneDeep(section.symbol)
+  const updated_symbol = _.cloneDeep(section.symbol)
 
   let should_update_symbol = false
   Object.entries(updated_content).forEach(
@@ -496,8 +496,8 @@ export async function update_section_content(section, updated_content) {
         ])
         if (matching_field.is_static) {
           should_update_symbol = true
-          updated_symbol_content[locale_key] = {
-            ...updated_symbol_content[locale_key],
+          updated_symbol.content[locale_key] = {
+            ...updated_symbol.content[locale_key],
             [field_key]: field_value,
           }
         }
@@ -507,19 +507,19 @@ export async function update_section_content(section, updated_content) {
 
   await update_timeline({
     doing: async () => {
-      stores.sections.update(store => store.map(s => s.id === section.id ? { ...s, content: updated_content } : s))
+      stores.sections.update(store => store.map(s => s.id === section.id ? { ...s, content: updated_content, symbol: updated_symbol } : s))
       await dataChanged({ table: 'sections', action: 'update', id: section.id, data: { content: updated_content } })
       if (should_update_symbol) {
-        stores.symbols.update(store => store.map(s => s.id === section.symbol.id ? { ...s, content: updated_symbol_content } : s))
-        await dataChanged({ table: 'symbols', action: 'update', id: section.symbol.id, data: { content: updated_symbol_content } })
+        stores.symbols.update(store => store.map(s => s.id === section.symbol.id ? updated_symbol : s))
+        await dataChanged({ table: 'symbols', action: 'update', id: section.symbol.id, data: { content: updated_symbol.content } })
       }
     },
     undoing: async () => {
       stores.sections.set(original_sections)
       await dataChanged({ table: 'sections', action: 'update', id: section.id, data: { content: original_content } })
       if (should_update_symbol) {
-        stores.symbols.update(store => store.map(s => s.id === section.symbol.id ? { ...s, content: original_symbol_content } : s))
-        await dataChanged({ table: 'symbols', action: 'update', id: section.symbol.id, data: { content: original_symbol_content } })
+        stores.symbols.update(store => store.map(s => s.id === section.symbol.id ? { ...s, content: original_symbol.content } : s))
+        await dataChanged({ table: 'symbols', action: 'update', id: section.symbol.id, data: { content: original_symbol.content } })
       }
     }
   })
