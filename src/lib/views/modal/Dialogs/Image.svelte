@@ -3,11 +3,10 @@
 	import Icon from '@iconify/svelte'
 
 	const dispatch = createEventDispatcher()
-	import imageCompression from 'browser-image-compression'
 	import PrimaryButton from '../../../components/buttons/PrimaryButton.svelte'
 	import Spinner from '../../../components/misc/Spinner.svelte'
 	import { storageChanged } from '$lib/database'
-	import { page } from '$app/stores'
+	import site from '$lib/stores/data/site'
 
 	const defaultValue = {
 		alt: '',
@@ -42,7 +41,7 @@
 			// })
 			let size = new Blob([image]).size
 
-			const key = `${$page.data.site.id}/${image.name + image.lastModified}`
+			const key = `${$site.id}/${image.name + image.lastModified}`
 			const url = await storageChanged({
 				bucket: 'images',
 				action: 'upload',

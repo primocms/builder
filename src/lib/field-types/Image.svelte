@@ -1,10 +1,8 @@
 <script>
 	import { createEventDispatcher } from 'svelte'
-	import imageCompression from 'browser-image-compression'
 	import TextInput from '$lib/ui/TextInput.svelte'
 	import Spinner from '$lib/ui/Spinner.svelte'
-	import { page } from '$app/stores'
-	import { supabase } from '$lib/supabase'
+	import site from '$lib/stores/data/site'
 	import { storageChanged } from '$lib/database'
 
 	const dispatch = createEventDispatcher()
@@ -44,7 +42,7 @@
 			// })
 			let size = new Blob([image]).size
 
-			const key = `${$page.data.site.id}/${image.lastModified + image.name}`
+			const key = `${$site.id}/${image.lastModified + image.name}`
 			const url = await storageChanged({
 				bucket: 'images',
 				action: 'upload',

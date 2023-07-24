@@ -143,11 +143,9 @@ export function getComponentData({
   page = get(activePage),
   site = get(activeSite),
   loc = get(locale),
-  fallback = 'placeholder',
   include_parent_data = true,
   include_all_locales = false
 }) {
-
   const component_content = get_content_with_static(component, symbol)
   const component_locale_content = component_content[loc]
   const component_final_content = include_all_locales ? component_content : component_locale_content

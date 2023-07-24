@@ -1,6 +1,6 @@
 {
 	"name": "@primocms/builder",
-	"version": "0.0.10",
+	"version": "0.0.20",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
@@ -52,7 +52,6 @@
 		"@tiptap/starter-kit": "^2.0.0-beta.183",
 		"autosize": "^5.0.1",
 		"axios": "^0.26.0",
-		"browser-image-compression": "^1.0.17",
 		"codemirror": "^6.0.1",
 		"file-saver": "^2.0.5",
 		"idb-keyval": "^6.1.0",
