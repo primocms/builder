@@ -20,20 +20,12 @@
 	import sections from '../../stores/data/sections'
 	import { processCode, processCSS, wrapInStyleTags } from '../../utils'
 	import { getPageData } from '../../stores/helpers'
-	import en from '../../languages/en.json'
-	import { init, addMessages } from 'svelte-i18n'
 	import { realtimeChanged } from '$lib/database'
 
 	export let page
 
 	let html_head = ''
 	let html_below = ''
-
-	addMessages('en', en)
-	init({
-		fallbackLocale: 'en',
-		initialLocale: 'en'
-	})
 
 	let element
 

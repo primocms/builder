@@ -18,8 +18,6 @@
 
 	let stage = 'INITIAL'
 
-	$: console.log({ $site })
-
 	let active_deployment = $site.active_deployment
 	if (active_deployment) {
 		stage = 'CONNECT_REPO__ACTIVE'
@@ -98,6 +96,7 @@
 			token: github_token,
 			repo: repo.full_name
 		})
+		$site = { ...$site, active_deployment }
 		stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
 		loading = false
 		await dataChanged({

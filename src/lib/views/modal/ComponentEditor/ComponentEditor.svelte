@@ -11,7 +11,6 @@
 
 <script>
 	import { setContext } from 'svelte'
-	import { _ as C } from 'svelte-i18n'
 	import _, { cloneDeep, find, isEqual, chain as _chain } from 'lodash-es'
 	import HSplitPane from './HSplitPane.svelte'
 	import { getPlaceholderValue, getEmptyValue } from '../../../utils'
@@ -28,7 +27,7 @@
 	import { content, code as siteCode } from '../../../stores/data/site'
 	import { code as pageCode } from '../../../stores/app/activePage'
 	import { showingIDE } from '../../../stores/app'
-	import { getPageData, getComponentData } from '../../../stores/helpers'
+	import { getPageData } from '../../../stores/helpers'
 	import { tick } from 'svelte'
 
 	// TODO: separate into Symbol Editor and Section Editor
@@ -238,12 +237,12 @@
 	const tabs = [
 		{
 			id: 'code',
-			label: $C('Code'),
+			label: 'Code',
 			icon: 'code'
 		},
 		{
 			id: 'fields',
-			label: $C('Fields'),
+			label: 'Fields',
 			icon: 'database'
 		}
 	]

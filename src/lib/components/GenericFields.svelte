@@ -1,8 +1,7 @@
 <script>
-	import { createEventDispatcher, getContext } from 'svelte'
+	import { createEventDispatcher } from 'svelte'
 	import Icon from '@iconify/svelte'
 	import { find, cloneDeep, chain as _chain, set as _set, get as _get } from 'lodash-es'
-	import { _ as C } from 'svelte-i18n'
 	import { Card } from './misc'
 	import { createUniqueID } from '$lib/utilities'
 
@@ -185,7 +184,7 @@
 		{/each}
 		<button class="field-button" on:click={addField} {disabled}>
 			<Icon icon="fa-solid:plus" />
-			<span>{$C('Add a Field')}</span>
+			<span>Add a Field</span>
 		</button>
 	{:else}
 		{#each fields as field}
@@ -208,10 +207,10 @@
 			{/if}
 		{:else}
 			<p class="empty-description">
-				{#if $userRole === 'developer'}
-					{$C('component_editor.no_fields_dev')}
+				{#if $userRole === 'DEV'}
+					When you create fields, they'll be editable from here
 				{:else}
-					{$C('component_editor.no_fields_content')}
+					When the site developer creates fields, they'll be editable from here
 				{/if}
 			</p>
 		{/each}

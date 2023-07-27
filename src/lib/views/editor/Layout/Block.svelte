@@ -192,15 +192,12 @@
 				<LockedOverlay {locked} />
 			{:else}
 				<BlockButtons
-					{block}
 					{i}
 					bind:node={buttons}
 					on:delete={delete_block}
 					on:duplicate={duplicate_block}
 					on:edit-code={() => edit_component(true)}
 					on:edit-content={() => edit_component()}
-					optionsAbove={hasOptionsAbove(i, $sections)}
-					optionsBelow={hasOptionsBelow(i, $sections)}
 					on:moveUp={() => active_page.move_block(block, i - 1)}
 					on:moveDown={() => active_page.move_block(block, i + 1)}
 				/>{/if}

@@ -12,10 +12,6 @@
 	import { userRole } from './stores/app'
 
 	import { hydrate_active_data } from './stores/actions'
-	import en from './languages/en.json'
-	import es from './languages/es.json'
-
-	import { init, addMessages } from 'svelte-i18n'
 
 	/** @type {{
    * site: import('$lib').Site
@@ -26,17 +22,8 @@
 	export let data
 
 	export let role = 'DEV'
-	export let language = 'en'
 
 	$: $userRole = role
-
-	addMessages('en', en)
-	addMessages('es', es)
-
-	init({
-		fallbackLocale: 'en',
-		initialLocale: language
-	})
 
 	hydrate_active_data(data)
 

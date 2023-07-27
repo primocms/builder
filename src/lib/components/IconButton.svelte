@@ -1,11 +1,9 @@
 <script>
-	import Icon from '@iconify/svelte';
-	import { createEventDispatcher } from 'svelte';
-	const dispatch = createEventDispatcher();
+	import Icon from '@iconify/svelte'
 
-	export let icon = 'carbon:overflow-menu-vertical';
-	export let color = null;
-	let clicked = false;
+	export let icon = 'carbon:overflow-menu-vertical'
+	export let color = null
+	let clicked = false
 </script>
 
 <button class="show-menu" class:active={clicked} on:click style:color>
