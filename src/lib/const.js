@@ -132,7 +132,7 @@ export const Site = ({ url, name } = { url: 'default', name: 'Default' }) => ({
 })
 
 
-export const locales = [
+export const languages = [
   {
     key: "af",
     name: "Afrikaans",

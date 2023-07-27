@@ -1,34 +1,35 @@
 <script>
-	import _, { chain as _chain } from 'lodash-es';
-	import { fade } from 'svelte/transition';
-	import * as Popper from '@popperjs/core';
-	import { getComponentData, getSymbolUseInfo } from '$lib/stores/helpers';
+	import _, { chain as _chain } from 'lodash-es'
+	import { fade } from 'svelte/transition'
+	import * as Popper from '@popperjs/core'
+	import { getComponentData, getSymbolUseInfo } from '$lib/stores/helpers'
 
-	import IFrame from '$lib/views/modal/ComponentLibrary/IFrame.svelte';
-	import { processCode, processCSS } from '$lib/utils';
-	import { code as siteCode } from '$lib/stores/data/site';
-	import { code as pageCode } from '$lib/stores/app/activePage';
+	import IFrame from '$lib/views/modal/ComponentLibrary/IFrame.svelte'
+	import { processCode, processCSS } from '$lib/utils'
+	import { code as siteCode } from '$lib/stores/data/site'
+	import { code as pageCode } from '$lib/stores/app/activePage'
+	import { locale } from '$lib/stores/app/misc'
 
-	export let symbol;
-	export let name = symbol.name || '';
-	export let buttons = [];
-	export let action = null;
+	export let symbol
+	export let name = symbol.name || ''
+	export let buttons = []
+	export let action = null
 
-	let height = 0;
+	let height = 0
 
-	let componentCode;
-	let cachedSymbol = {};
-	$: compile_component_code(symbol);
+	let componentCode
+	let cachedSymbol = {}
+	$: compile_component_code(symbol, $locale)
 	async function compile_component_code(symbol) {
 		if (
 			_.isEqual(cachedSymbol.code, symbol.code) &&
 			_.isEqual(cachedSymbol.content, symbol.content)
 		) {
-			return;
+			return
 		}
 
-		const component_data = getComponentData({ component: symbol });
-		const parent_css = await processCSS($siteCode.css + $pageCode.css);
+		const component_data = getComponentData({ component: symbol, loc: 'en' })
+		const parent_css = await processCSS($siteCode.css + $pageCode.css)
 		let res = await processCode({
 			component: {
 				...symbol.code,
@@ -41,22 +42,22 @@
 			},
 			buildStatic: true,
 			hydrated: false
-		});
-		res.css = res.css + parent_css;
-		componentCode = res;
-		cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content });
+		})
+		res.css = res.css + parent_css
+		componentCode = res
+		cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content })
 	}
 
-	const info = getSymbolUseInfo(symbol.id);
-	let button_node;
-	let tooltip_node;
+	const info = getSymbolUseInfo(symbol.id)
+	let button_node
+	let tooltip_node
 	$: if (tooltip_node) {
 		Popper.createPopper(button_node, tooltip_node, {
 			placement: 'top'
-		});
+		})
 	}
 
-	let active;
+	let active
 </script>
 
 {#if buttons.length === 1 && action}
@@ -67,8 +68,8 @@
 		id="component-{symbol.id}"
 		style="height:{height + 32}px"
 		on:click={() => {
-			active = true;
-			action.onclick();
+			active = true
+			action.onclick()
 		}}
 		class:active
 	>
@@ -107,8 +108,8 @@
 			<div class="primary-action" class:active>
 				<button
 					on:click={() => {
-						active = true;
-						action.onclick();
+						active = true
+						action.onclick()
 					}}
 				>
 					<IFrame bind:height {componentCode} />

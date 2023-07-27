@@ -87,11 +87,17 @@ export async function buildSiteBundle({ pages }) {
   let all_sections = []
   let all_pages = []
 
-  const page_files = await Promise.all(pages.map((page) => buildPageTree(page)))
+  const page_files = await Promise.all(pages.map((page) => {
 
-  return buildSiteTree(page_files)
+    return Promise.all(Object.keys(page.content).map((language) => {
+      return buildPageTree(page, language)
+    }))
 
-  async function buildPageTree(page) {
+  }))
+
+  return buildSiteTree(page_files.flat())
+
+  async function buildPageTree(page, language) {
     const { url } = page
     const sections = await dataChanged({
       table: 'sections',
@@ -104,13 +110,14 @@ export async function buildSiteBundle({ pages }) {
       page,
       page_sections: sections,
       separateModules: true,
+      locale: language
     })
     const formattedHTML = await beautify.html(html)
 
     let parent_urls = []
     const parent = pages.find(p => p.id === page.parent)
 
-    if(parent) {
+    if (parent) {
       let no_more_parents = false
       let grandparent = parent
       parent_urls.push(parent.url)
@@ -122,7 +129,6 @@ export async function buildSiteBundle({ pages }) {
           parent_urls.unshift(grandparent.url)
         }
       }
-      
     }
     
     let path
@@ -136,6 +142,12 @@ export async function buildSiteBundle({ pages }) {
       path = `${url}/index.html`
     }
 
+    // add language prefix
+    if (language !== 'en') {
+      path = `${language}/${path}`
+      full_url = `${language}/${full_url}`
+    }
+
     all_sections = [ ...all_sections, ...sections ]
     all_pages = [ ...all_pages, page ]
 
@@ -146,7 +158,12 @@ export async function buildSiteBundle({ pages }) {
       },
     ]
 
-    if (js) {
+    if (js && language !== 'en') {
+      page_tree.push({
+        path: url === 'index' ? `${language}/_module.js` : `${full_url}/_module.js`,
+        content: js,
+      })
+    } else if (js) {
       page_tree.push({
         path: url === 'index' ? '_module.js' : `${full_url}/_module.js`,
         content: js,
@@ -211,10 +228,10 @@ export async function buildSiteBundle({ pages }) {
             <meta http-equiv="Refresh" content="0; url='${get(page).url.origin}/${get(page).params.site}'" />
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Primo</title>
+            <title>Edit site</title>
           </head>
           <body style="margin:0">
-            <h1 style="font-family:sans-serif">redirecting to Primo server</h1>
+            <h1 style="font-family:sans-serif;text-align:center;">redirecting to Primo server</h1>
           </body>
         </html>
         `

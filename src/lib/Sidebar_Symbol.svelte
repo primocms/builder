@@ -4,7 +4,7 @@
 </script>
 
 <script>
-	import { onMount, createEventDispatcher, tick } from 'svelte'
+	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 	import modal from '$lib/stores/app/modal'
 	import { hoveredBlock, showingIDE, userRole } from '$lib/stores/app/misc'

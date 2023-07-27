@@ -143,12 +143,9 @@ export function getComponentData({
   page = get(activePage),
   site = get(activeSite),
   loc = get(locale),
-  include_parent_data = true,
-  include_all_locales = false
+  include_parent_data = true
 }) {
-  const component_content = get_content_with_static(component, symbol)
-  const component_locale_content = component_content[loc]
-  const component_final_content = include_all_locales ? component_content : component_locale_content
+  const component_content = get_content_with_static({ component, symbol, loc })
 
   const site_content = site.content[loc]
   const page_content = page.content[loc]
@@ -156,18 +153,19 @@ export function getComponentData({
   return include_parent_data ? {
     ...site_content,
     ...page_content,
-    ...component_final_content
-  } : component_final_content
+    ...component_content
+  } : component_content
 }
 
-export function get_content_with_static(component, symbol) {
-  const content = Object.keys(symbol.content).map(locale => {
-    const value = _chain(symbol.fields)
+export function get_content_with_static({ component, symbol, loc = get(locale) } ) {
+
+
+  const content = _chain(symbol.fields)
     .map(field => {
-      const field_value = component.content?.[locale]?.[field.key]
+      const field_value = component.content?.[loc]?.[field.key]
       // if field is static, use value from symbol content
       if (field.is_static) {
-        const symbol_value = symbol.content?.[locale]?.[field.key]
+        const symbol_value = symbol.content?.[loc]?.[field.key]
         return {
           key: field.key,
           value: symbol_value
@@ -178,7 +176,7 @@ export function get_content_with_static(component, symbol) {
           value: field_value
         }
       } else {
-        const default_content = symbol.content?.[locale]?.[field.key]
+        const default_content = symbol.content?.[loc]?.[field.key]
         return {
           key: field.key,
           value: default_content || getEmptyValue(field)
@@ -188,9 +186,8 @@ export function get_content_with_static(component, symbol) {
     .keyBy('key')
     .mapValues('value')
     .value();
-    return { key: locale, value }
-  })
-  return _.chain(content).keyBy('key').mapValues('value').value();
+
+  return content
 }
 
 export function getPageData({

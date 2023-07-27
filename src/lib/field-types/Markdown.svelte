@@ -26,7 +26,7 @@
 		}
 	}
 
-	let value = field.value.markdown
+	$: value = field.value.markdown
 	$: parseContent(value)
 
 	let element
