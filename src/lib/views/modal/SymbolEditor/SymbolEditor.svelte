@@ -24,7 +24,6 @@
 	import { processCode, processCSS, wrapInStyleTags } from '../../../utils'
 	import { locale, onMobile } from '../../../stores/app/misc'
 
-	import symbols from '../../../stores/data/symbols'
 	import * as actions from '../../../stores/actions'
 	import { content, code as siteCode } from '../../../stores/data/site'
 	import { code as pageCode } from '../../../stores/app/activePage'
@@ -32,18 +31,16 @@
 	import { getPageData } from '../../../stores/helpers'
 	import { tick } from 'svelte'
 
-	/** @type {import('$lib').Section} */
-	export let component
+	/** @type {import('$lib').Symbol} */
+	export let symbol
 
 	export let header = {
-		label: 'Create Component',
+		label: 'Create Symbol',
 		icon: 'fas fa-code',
 		button: {
 			icon: 'fas fa-plus',
 			label: 'Add to page',
-			onclick: (component) => {
-				console.warn('Component not going anywhere', component)
-			}
+			onclick: (symbol) => {}
 		}
 	}
 
@@ -63,35 +60,23 @@
 	}
 
 	// local copy of component to modify & save
-	let local_component = cloneDeep($symbols.find((s) => s.id === component.symbol))
+	let local_component = cloneDeep(symbol)
 
-	const symbol = cloneDeep($symbols.find((s) => s.id === component.symbol))
-
-	let local_code = symbol.code
+	let local_code = cloneDeep(symbol.code)
 
 	// on-screen fields w/ values included
-	let fields = symbol.fields
+	let fields = cloneDeep(symbol.fields)
 
 	// local copy of component content to modify & save
 	let local_content = get_local_content()
 	function get_local_content() {
 		let final_content = {}
-		symbol.fields.forEach((field) => {
-			if (field.is_static) {
-				final_content = {
-					...final_content,
-					[$locale]: {
-						...final_content[$locale],
-						[field.key]: symbol.content[$locale][field.key] || getCachedPlaceholder(field)
-					}
-				}
-			} else {
-				final_content = {
-					...final_content,
-					[$locale]: {
-						...final_content[$locale],
-						[field.key]: component.content[$locale][field.key] || getCachedPlaceholder(field)
-					}
+		fields.forEach((field) => {
+			final_content = {
+				...final_content,
+				[$locale]: {
+					...final_content[$locale],
+					[field.key]: symbol.content[$locale][field.key] || getCachedPlaceholder(field)
 				}
 			}
 		})
@@ -287,39 +272,14 @@
 
 		if (!disableSave) {
 			// parse content - static content gets saved to symbol, dynamic content gets saved to instance
-			const updated_symbol_content = symbol.content
-			const updated_section_content = {}
-
-			Object.entries(local_content).forEach(([language_key, language_content]) => {
-				Object.entries(language_content).forEach(([field_key, field_value]) => {
-					const matching_field = fields.find((field) => field.key === field_key)
-					if (matching_field.is_static) {
-						updated_symbol_content[language_key] = {
-							...updated_symbol_content[language_key],
-							[field_key]: field_value
-						}
-					} else {
-						updated_section_content[language_key] = {
-							...updated_section_content[language_key],
-							[field_key]: field_value
-						}
-					}
-				})
-			})
 
 			// code & fields gets saved to symbol
 			actions.symbols.update({
 				...symbol,
 				code: local_code,
-				content: updated_symbol_content,
-				fields: fields.map((field) => {
-					delete field.value
-					return field
-				})
+				content: local_content,
+				fields
 			})
-
-			// non-static content gets saved to section
-			actions.update_section_content(component, updated_section_content)
 
 			header.button.onclick()
 		}
@@ -329,7 +289,7 @@
 <ModalHeader
 	{...header}
 	warn={() => {
-		if (!isEqual(local_component, component.symbol || component)) {
+		if (!isEqual(local_component, symbol)) {
 			const proceed = window.confirm('Undrafted changes will be lost. Continue?')
 			return proceed
 		} else return true

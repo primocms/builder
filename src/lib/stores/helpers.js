@@ -58,7 +58,7 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
       }
     })(),
     ...page_sections.map(async section => {
-      const symbol = typeof (section.symbol) === 'object' ? section.symbol : _find(page_symbols, ['id', section.symbol])
+      const symbol = page_symbols.find(symbol => symbol.id === section.symbol)
       const { html, css: postcss, js } = symbol.code
       const data = getComponentData({
         component: section,
@@ -139,26 +139,39 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
 // Include static content alongside the component's content
 export function getComponentData({
   component,
-  symbol = Object.hasOwn(component, 'fields') && component ? component : component.symbol,
+  symbol = get(symbols).find(symbol => symbol.id === component.symbol),
   page = get(activePage),
   site = get(activeSite),
   loc = get(locale),
   include_parent_data = true
 }) {
-  const component_content = get_content_with_static({ component, symbol, loc })
+
+	let component_content = {}
+  symbol.fields.forEach((field) => {
+    if (field.is_static || !component) {
+      component_content = {
+        ...component_content,
+        [field.key]: symbol.content[loc][field.key] || getEmptyValue(field)
+      }
+    } else {
+      component_content = {
+        ...component_content,
+        [field.key]: component.content[loc][field.key] || getEmptyValue(field)
+      }
+    }
+  })
 
   const site_content = site.content[loc]
   const page_content = page.content[loc]
 
-  return include_parent_data ? {
+  return include_parent_data ? _.cloneDeep({
     ...site_content,
     ...page_content,
     ...component_content
-  } : component_content
+  }) : _.cloneDeep(component_content)
 }
 
 export function get_content_with_static({ component, symbol, loc = get(locale) } ) {
-
 
   const content = _chain(symbol.fields)
     .map(field => {
@@ -187,7 +200,7 @@ export function get_content_with_static({ component, symbol, loc = get(locale) }
     .mapValues('value')
     .value();
 
-  return content
+  return _.cloneDeep(content)
 }
 
 export function getPageData({

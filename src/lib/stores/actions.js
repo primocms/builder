@@ -73,18 +73,15 @@ export const symbols = {
   },
   update: async (updated_symbol) => {
 
-    const original_symbol = _.cloneDeep(find(get(stores.symbols), { id: updated_symbol.id }))
     const original_symbols = _.cloneDeep(get(stores.symbols))
+    const original_symbol = _.cloneDeep(original_symbols.find(symbol => symbol.id === updated_symbol.id))
     const original_sections = _.cloneDeep(get(stores.sections))
 
     if (_.isEqual(original_symbol, updated_symbol)) return
     await update_timeline({
       doing: async () => {
 
-        stores.symbols.update(store => store.map(symbol => symbol.id === updated_symbol.id ? updated_symbol : symbol))
-
-        // Update static content & symbol in sections
-        stores.sections.update(store => store.map(section => (section.symbol.id === updated_symbol.id) ? { ...section, symbol: updated_symbol } : section))
+        stores.symbols.update(store => store.map(symbol => symbol.id === updated_symbol.id ? { ...symbol, ...updated_symbol } : symbol))
 
         dataChanged({
           table: 'symbols',
@@ -114,7 +111,7 @@ export const symbols = {
 
     await update_timeline({
       doing: async () => {
-        stores.sections.update(store => store.filter(section => section.symbol.id !== symbol_to_delete.id))
+        stores.sections.update(store => store.filter(section => section.symbol !== symbol_to_delete.id))
         
         deleted_sections = await dataChanged({
           table: 'sections',
@@ -168,7 +165,7 @@ export const active_page = {
       index: position,
       page: get(activePageID),
       content: symbol.content,
-      symbol
+      symbol: symbol.id
     }
 
     const new_sections = [
@@ -180,12 +177,12 @@ export const active_page = {
     await update_timeline({
       doing: async () => {
         stores.sections.set(new_sections)
-        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
+        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol })) })
       },
       undoing: async () => {
         stores.sections.set(original_sections)
         await dataChanged({ table: 'sections', action: 'delete', id: new_section.id })
-        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
+        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections.map(s => ({ ...s, symbol: s.symbol })) })
       }
     })
     update_page_preview()
@@ -212,7 +209,7 @@ export const active_page = {
       index: position,
       page: get(activePageID),
       content: symbol.content,
-      symbol: new_symbol
+      symbol: new_symbol.id
     }
 
     const new_sections = [
@@ -231,14 +228,14 @@ export const active_page = {
         stores.sections.set(new_sections)
 
         await dataChanged({ table: 'symbols', action: 'insert', data: new_symbol })
-        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
+        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol })) })
       },
       undoing: async () => {
         stores.symbols.update(store => store.filter(s => s.id !== new_symbol.id))
         stores.sections.set(original_sections)
 
         await dataChanged({ table: 'sections', action: 'delete', id: new_section.id })
-        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
+        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections.map(s => ({ ...s, symbol: s.symbol })) })
         await dataChanged({ table: 'symbols', action: 'delete', id: new_symbol.id })
       }
     })
@@ -298,7 +295,7 @@ export const active_page = {
     await update_timeline({
       doing: async () => {
         stores.sections.set(new_sections)
-        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
+        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol })) })
       },
       undoing: async () => {
         stores.sections.set(original_sections)
@@ -315,12 +312,12 @@ export const active_page = {
       doing: async () => {
         stores.sections.set(new_sections)
         await dataChanged({ table: 'sections', action: 'delete', id: block.id })
-        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
+        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol })) })
       },
       undoing: async () => {
         stores.sections.set(original_sections)
-        await dataChanged({ table: 'sections', action: 'insert', data: { ...block, symbol: block.symbol.id } })
-        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections.map(s => ({ ...s, symbol: s.symbol.id })) })
+        await dataChanged({ table: 'sections', action: 'insert', data: { ...block, symbol: block.symbol } })
+        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections.map(s => ({ ...s, symbol: s.symbol })) })
       }
     })
     update_page_preview()
@@ -498,45 +495,14 @@ export async function update_section_content(section, updated_content) {
   const original_sections = _.cloneDeep(get(stores.sections))
   const original_content = _.cloneDeep(section.content)
 
-  // Update static content in symbol
-  const original_symbol = _.cloneDeep(section.symbol)
-  const updated_symbol = _.cloneDeep(section.symbol)
-
-  let should_update_symbol = false
-  Object.entries(updated_content).forEach(
-    ([locale_key, locale_value]) => {
-      Object.entries(locale_value).forEach(([field_key, field_value]) => {
-        const matching_field = find(section.symbol.fields, [
-          'key',
-          field_key,
-        ])
-        if (matching_field.is_static) {
-          should_update_symbol = true
-          updated_symbol.content[locale_key] = {
-            ...updated_symbol.content[locale_key],
-            [field_key]: field_value,
-          }
-        }
-      })
-    }
-  )
-
   await update_timeline({
     doing: async () => {
-      stores.sections.update(store => store.map(s => s.id === section.id ? { ...s, content: updated_content, symbol: updated_symbol } : s))
+      stores.sections.update(store => store.map(s => s.id === section.id ? { ...s, content: updated_content } : s))
       await dataChanged({ table: 'sections', action: 'update', id: section.id, data: { content: updated_content } })
-      if (should_update_symbol) {
-        stores.symbols.update(store => store.map(s => s.id === section.symbol.id ? updated_symbol : s))
-        await dataChanged({ table: 'symbols', action: 'update', id: section.symbol.id, data: { content: updated_symbol.content } })
-      }
     },
     undoing: async () => {
       stores.sections.set(original_sections)
       await dataChanged({ table: 'sections', action: 'update', id: section.id, data: { content: original_content } })
-      if (should_update_symbol) {
-        stores.symbols.update(store => store.map(s => s.id === section.symbol.id ? { ...s, content: original_symbol.content } : s))
-        await dataChanged({ table: 'symbols', action: 'update', id: section.symbol.id, data: { content: original_symbol.content } })
-      }
     }
   })
   update_page_preview()
@@ -572,13 +538,6 @@ export async function add_language(key) {
         content: {
           ...section.content,
           [key]: section.content['en']
-        },
-        symbol: {
-          ...section.symbol,
-          content: {
-            ...section.symbol.content,
-            [key]: section.symbol.content['en']
-          }
         }
       })))
 

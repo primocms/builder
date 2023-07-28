@@ -8,7 +8,6 @@
 	const dispatch = createEventDispatcher()
 	import modal from '$lib/stores/app/modal'
 	import { hoveredBlock, showingIDE, userRole } from '$lib/stores/app/misc'
-	import { page } from '$app/stores'
 	import { draggable } from '@neodrag/svelte'
 	import { positions } from '$lib/views/editor/Layout/ComponentNode.svelte'
 	import MenuPopup from '$lib/components/MenuPopup.svelte'
@@ -27,17 +26,16 @@
 	function edit_symbol_content(symbol) {
 		$showingIDE = false
 		modal.show(
-			'COMPONENT_EDITOR',
+			'SYMBOL_EDITOR',
 			{
-				component: symbol,
+				symbol,
 				header: {
 					title: `Edit ${symbol.name || 'Block'}`,
 					icon: 'fas fa-check',
 					button: {
 						label: `Save Block`,
 						icon: 'fas fa-check',
-						onclick: (symbol) => {
-							dispatch('edit_content', symbol)
+						onclick: () => {
 							modal.hide()
 						}
 					}
@@ -52,17 +50,16 @@
 	function edit_symbol_code(symbol) {
 		$showingIDE = true
 		modal.show(
-			'COMPONENT_EDITOR',
+			'SYMBOL_EDITOR',
 			{
-				component: symbol,
+				symbol,
 				header: {
 					title: `Edit ${symbol.title || 'Block'}`,
 					icon: 'fas fa-check',
 					button: {
 						label: `Save Block`,
 						icon: 'fas fa-check',
-						onclick: (symbol) => {
-							dispatch('edit_code', symbol)
+						onclick: () => {
 							modal.hide()
 						}
 					}

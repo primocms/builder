@@ -28,7 +28,7 @@
 			return
 		}
 
-		const component_data = getComponentData({ component: symbol, loc: 'en' })
+		const component_data = getComponentData({ symbol, loc: 'en' })
 		const parent_css = await processCSS($siteCode.css + $pageCode.css)
 		let res = await processCode({
 			component: {

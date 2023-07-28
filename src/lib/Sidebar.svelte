@@ -130,8 +130,6 @@
 					<Sidebar_Symbol
 						{symbol}
 						on:edit={({ detail: updated }) => update_symbol(updated)}
-						on:edit_code={({ detail: updated }) => update_symbol(updated)}
-						on:edit_content={({ detail: updated }) => update_symbol(updated)}
 						on:download={() => download_symbol(symbol)}
 						on:delete={() => delete_symbol(symbol)}
 						on:duplicate={() => duplicate_symbol(symbol, i + 1)}

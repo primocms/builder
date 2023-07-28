@@ -33,6 +33,7 @@
 			? {
 					SITE_PAGES: modals.SitePages,
 					COMPONENT_EDITOR: modals.ComponentEditor,
+					SYMBOL_EDITOR: modals.SymbolEditor,
 					PAGE_EDITOR: modals.PageEditor,
 					SITE_EDITOR: modals.SiteEditor
 			  }[modalType] || $modal.component

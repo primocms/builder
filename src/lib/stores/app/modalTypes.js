@@ -1,4 +1,4 @@
-import {Deploy,ComponentEditor,PageEditor,SiteEditor,SitePages,Dialog} from '../../views/modal'
+import {Deploy,ComponentEditor,SymbolEditor,PageEditor,SiteEditor,SitePages,Dialog} from '../../views/modal'
 
 export const modalTypes = {
   'DEPLOY' : {
@@ -12,6 +12,13 @@ export const modalTypes = {
     component: ComponentEditor,
     header: {
       title: 'Create Component',
+      icon: 'fas fa-code'
+    },
+  },
+  'SYMBOL_EDITOR' : {
+    component: SymbolEditor,
+    header: {
+      title: 'Create Symbol',
       icon: 'fas fa-code'
     },
   },

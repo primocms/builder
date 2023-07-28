@@ -12,13 +12,7 @@
 	import { hoveredBlock } from '../../../stores/app/misc'
 	import { onMobile, saved, showingIDE } from '../../../stores/app/misc'
 	import modal from '../../../stores/app/modal'
-	import sections from '../../../stores/data/sections'
-	import {
-		update_section_content,
-		symbols,
-		updatePreview,
-		active_page
-	} from '../../../stores/actions'
+	import { updatePreview, active_page } from '../../../stores/actions'
 
 	/** @type {boolean} */
 	export let locked
@@ -30,20 +24,6 @@
 	export let i
 
 	let node
-
-	function hasOptionsAbove(rowIndex, rows) {
-		const rowAbove = rows[rowIndex - 1]
-		if (rowAbove && rowAbove.type === 'options') {
-			return true
-		} else return false
-	}
-
-	function hasOptionsBelow(rowIndex, rows) {
-		const rowBelow = rows[rowIndex + 1]
-		if (rowBelow && rowBelow.type === 'options') {
-			return true
-		} else return false
-	}
 
 	async function delete_block() {
 		$positions = $positions.filter((position) => position.id !== block.id)
@@ -73,15 +53,14 @@
 						label: 'Save',
 						onclick: async (component) => {
 							dispatch('unlock')
-							update_section_content(component, component.content)
-							symbols.update(component.symbol)
 							modal.hide()
 						}
 					}
 				}
 			},
 			{
-				showSwitch: true
+				showSwitch: true,
+				disabledBgClose: true
 			}
 		)
 	}

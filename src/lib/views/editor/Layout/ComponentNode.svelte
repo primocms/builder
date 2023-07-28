@@ -32,7 +32,7 @@
 	export let i
 	export let block
 
-	$: symbol = $symbols.find((symbol) => symbol.id === block.symbol.id)
+	$: symbol = $symbols.find((symbol) => symbol.id === block.symbol)
 
 	let node
 	$: if (node) {
