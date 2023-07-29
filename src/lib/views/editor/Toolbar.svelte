@@ -4,13 +4,45 @@
 	import LocaleSelector from './LocaleSelector.svelte'
 	import { timeline } from '../../stores/data'
 	import sections from '../../stores/data/sections'
+	import { fields as site_fields } from '../../stores/data/site'
 	import { undo_change, redo_change } from '../../stores/actions'
 	import { PrimoButton } from '../../components/buttons'
 	import site from '../../stores/data/site'
-	import { name as page_name } from '../../stores/app/activePage'
+	import { userRole } from '../../stores/app'
+	import { name as page_name, fields as page_fields } from '../../stores/app/activePage'
 	import modal from '../../stores/app/modal'
 
-	const buttons = [
+	const page_field_button = {
+		id: 'toolbar--page',
+		title: 'Page',
+		label: 'Page',
+		svg: '<svg width="10" height="16" viewBox="0 0 12 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.425" y="0.925" width="10.4834" height="14.15" rx="1.575" fill="#121212"/><rect x="2.41675" y="3.625" width="2" height="2" fill="#D9D9D9"/><rect x="2.41675" y="7.125" width="6" height="0.75" fill="#D9D9D9"/><rect x="2.41675" y="9.375" width="5" height="0.75" fill="#D9D9D9"/><rect x="2.41675" y="11.625" width="6.5" height="0.75" fill="#D9D9D9"/><rect x="0.425" y="0.925" width="10.4834" height="14.15" rx="1.575" stroke="#CECECE" stroke-width="0.85"/></svg>',
+		onclick: () => modal.show('PAGE_EDITOR', {}, { showSwitch: true })
+	}
+
+	const site_field_button = {
+		id: 'toolbar--site',
+		svg: `<svg width="12" height="18" viewBox="0 0 15 18" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.50831" y="0.925" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="3.50831" y="0.925" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/><rect x="2.09169" y="2.34199" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="2.09169" y="2.34199" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/><rect x="0.675" y="3.75801" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="2.66669" y="6.4165" width="2" height="2" fill="#D9D9D9"/><rect x="2.66669" y="9.6665" width="5.75" height="0.75" fill="#D9D9D9"/><rect x="2.66669" y="11.6665" width="5" height="0.75" fill="#D9D9D9"/><rect x="2.66669" y="13.6665" width="6.5" height="0.75" fill="#D9D9D9"/><rect x="0.675" y="3.75801" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/></svg>`,
+		title: 'Site',
+		label: 'Site',
+		onclick: () => modal.show('SITE_EDITOR', {}, { showSwitch: true })
+	}
+
+	$: show_page_fields = $userRole === 'DEV' || $page_fields.length > 0
+	$: show_site_fields = $userRole === 'DEV' || $site_fields.length > 0
+
+	let field_buttons = []
+
+	// for content editors, only show page/site field buttons if fields exist
+	$: if (show_page_fields && show_site_fields) {
+		field_buttons = [page_field_button, site_field_button]
+	} else if (show_page_fields) {
+		field_buttons = [page_field_button]
+	} else if (show_site_fields) {
+		field_buttons = [site_field_button]
+	}
+
+	$: buttons = [
 		{
 			id: 'toolbar--pages',
 			title: 'Pages',
@@ -22,24 +54,8 @@
 					{ hideLocaleSelector: true, maxWidth: '600px', showSwitch: false }
 				)
 		},
-		[
-			{
-				id: 'toolbar--page',
-				title: 'Page',
-				label: 'Page',
-				svg: '<svg width="10" height="16" viewBox="0 0 12 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.425" y="0.925" width="10.4834" height="14.15" rx="1.575" fill="#121212"/><rect x="2.41675" y="3.625" width="2" height="2" fill="#D9D9D9"/><rect x="2.41675" y="7.125" width="6" height="0.75" fill="#D9D9D9"/><rect x="2.41675" y="9.375" width="5" height="0.75" fill="#D9D9D9"/><rect x="2.41675" y="11.625" width="6.5" height="0.75" fill="#D9D9D9"/><rect x="0.425" y="0.925" width="10.4834" height="14.15" rx="1.575" stroke="#CECECE" stroke-width="0.85"/></svg>',
-				onclick: () => modal.show('PAGE_EDITOR', {}, { showSwitch: true })
-			},
-			{
-				id: 'toolbar--site',
-				svg: `<svg width="12" height="18" viewBox="0 0 15 18" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.50831" y="0.925" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="3.50831" y="0.925" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/><rect x="2.09169" y="2.34199" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="2.09169" y="2.34199" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/><rect x="0.675" y="3.75801" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="2.66669" y="6.4165" width="2" height="2" fill="#D9D9D9"/><rect x="2.66669" y="9.6665" width="5.75" height="0.75" fill="#D9D9D9"/><rect x="2.66669" y="11.6665" width="5" height="0.75" fill="#D9D9D9"/><rect x="2.66669" y="13.6665" width="6.5" height="0.75" fill="#D9D9D9"/><rect x="0.675" y="3.75801" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/></svg>`,
-				title: 'Site',
-				label: 'Site',
-				onclick: () => modal.show('SITE_EDITOR', {}, { showSwitch: true })
-			}
-		]
+		field_buttons
 	]
-
 	$: pageEmpty =
 		$sections && $sections.length <= 1 && $sections.length > 0 && $sections[0]['type'] === 'options'
 </script>

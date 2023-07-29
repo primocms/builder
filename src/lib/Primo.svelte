@@ -16,7 +16,6 @@
 	/** @type {{
    * site: import('$lib').Site
    * pages: Array<import('$lib').Page>
-   * sections: Array<import('$lib').Section>
    * symbols: Array<import('$lib').Symbol>
   }} */
 	export let data
