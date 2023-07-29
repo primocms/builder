@@ -172,7 +172,6 @@ export function getComponentData({
 }
 
 export function get_content_with_static({ component, symbol, loc = get(locale) } ) {
-
   const content = _chain(symbol.fields)
     .map(field => {
       const field_value = component.content?.[loc]?.[field.key]

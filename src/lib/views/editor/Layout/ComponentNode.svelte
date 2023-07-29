@@ -375,6 +375,10 @@
 					e.preventDefault()
 					e.target.blur()
 					link_editor_is_visible = false
+					save_edited_value(key, {
+						url: updated_url,
+						label: element.innerText
+					})
 				}
 			}
 			// element.onblur = (e) => {
@@ -436,14 +440,18 @@
 		}
 	}
 
-	let local_component_data = _.cloneDeep(component_data)
+	let local_component_data
+	$: if (component_data) {
+		local_component_data = _.cloneDeep(component_data)
+	}
 	$: hydrateComponent(component_data)
 	async function hydrateComponent(data) {
 		if (!component) return
 		else if (error) {
 			error = null
 			compileComponentCode(symbol.code)
-		} else if (!_.isEqual(data, local_component_data)) {
+			// } else if (!_.isEqual(data, local_component_data)) {
+		} else {
 			// TODO: re-render the component if `data` doesn't match its fields (e.g. when removing a component field to add to the page)
 			component.$set(data)
 			// sometimes data hydration doesn't work on some fields,

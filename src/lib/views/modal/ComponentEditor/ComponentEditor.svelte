@@ -75,27 +75,27 @@
 	// local copy of component content to modify & save
 	let local_content = get_local_content()
 	function get_local_content() {
-		let final_content = {}
+		let combined_content = symbol.content
 		symbol.fields.forEach((field) => {
 			if (field.is_static) {
-				final_content = {
-					...final_content,
+				combined_content = {
+					...combined_content,
 					[$locale]: {
-						...final_content[$locale],
+						...combined_content[$locale],
 						[field.key]: symbol.content[$locale][field.key] || getCachedPlaceholder(field)
 					}
 				}
 			} else {
-				final_content = {
-					...final_content,
+				combined_content = {
+					...combined_content,
 					[$locale]: {
-						...final_content[$locale],
+						...combined_content[$locale],
 						[field.key]: component.content[$locale][field.key] || getCachedPlaceholder(field)
 					}
 				}
 			}
 		})
-		return final_content
+		return combined_content
 	}
 
 	// component data for compiling

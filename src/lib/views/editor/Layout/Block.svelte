@@ -155,6 +155,7 @@
 	<div use:hover_block transition:slide={{ duration: 100 }} class="hover-state" />
 {/if}
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
 	bind:this={node}
 	in:fade={{ duration: 100 }}

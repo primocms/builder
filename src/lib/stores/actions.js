@@ -491,18 +491,47 @@ export async function update_symbol_with_static_values(component) {
   })
 }
 
+// extract symbol/instance content from updated section content
 export async function update_section_content(section, updated_content) {
-  const original_sections = _.cloneDeep(get(stores.sections))
-  const original_content = _.cloneDeep(section.content)
+  const symbol = get(stores.symbols).find(symbol => symbol.id === section.symbol)
+
+  const original_symbol_content = _.cloneDeep(symbol.content)
+  const original_section_content = _.cloneDeep(section.content)
 
   await update_timeline({
     doing: async () => {
-      stores.sections.update(store => store.map(s => s.id === section.id ? { ...s, content: updated_content } : s))
-      await dataChanged({ table: 'sections', action: 'update', id: section.id, data: { content: updated_content } })
+
+			const updated_symbol_content = cloneDeep(symbol.content)
+			const updated_instance_content = {}
+
+			Object.entries(updated_content).forEach(([language_key, language_content]) => {
+				Object.entries(language_content).forEach(([field_key, field_value]) => {
+					const matching_field = symbol.fields.find((field) => field.key === field_key)
+					if (matching_field.is_static) {
+						updated_symbol_content[language_key] = {
+							...updated_symbol_content[language_key],
+							[field_key]: field_value
+						}
+					} else {
+						updated_instance_content[language_key] = {
+							...updated_instance_content[language_key],
+							[field_key]: field_value
+						}
+					}
+				})
+			})
+
+      stores.symbols.update(store => store.map(s => s.id === symbol.id ? { ...s, content: updated_symbol_content } : s))
+      stores.sections.update(store => store.map(s => s.id === section.id ? { ...s, content: updated_instance_content } : s))
+      await Promise.all([
+        dataChanged({ table: 'sections', action: 'update', id: section.id, data: { content: updated_instance_content } }),
+        dataChanged({ table: 'symbols', action: 'update', id: symbol.id, data: { content: updated_symbol_content } })
+      ])
     },
     undoing: async () => {
-      stores.sections.set(original_sections)
-      await dataChanged({ table: 'sections', action: 'update', id: section.id, data: { content: original_content } })
+      stores.symbols.update(store => store.map(s => s.id === symbol.id ? { ...s, content: original_symbol_content } : s))
+      stores.sections.update(store => store.map(s => s.id === section.id ? { ...s, content: original_section_content } : s))
+      await dataChanged({ table: 'sections', action: 'update', id: section.id, data: { content: original_section_content } })
     }
   })
   update_page_preview()
@@ -554,8 +583,20 @@ export async function add_language(key) {
             }
           }
         }),
+        ...get(stores.symbols).map(async symbol => {
+          await dataChanged({
+            table: 'symbols',
+            action: 'update',
+            id: symbol.id,
+            data: {
+              content: {
+                ...symbol.content,
+                [key]: symbol.content['en']
+              }
+            }
+          })
+        }),
         ...get(stores.pages).map(async page => {
-
           await dataChanged({
             table: 'sections',
             action: 'select',
@@ -575,8 +616,7 @@ export async function add_language(key) {
                 }
               })
             })
-          })
-
+          }),
           await dataChanged({
             table: 'pages',
             action: 'update',
@@ -588,8 +628,6 @@ export async function add_language(key) {
               }
             }
           })
-
-
         }),
       ])
     },
