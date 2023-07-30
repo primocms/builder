@@ -62,12 +62,9 @@
 		}
 	}
 
-	// local copy of component to modify & save
-	let local_component = cloneDeep($symbols.find((s) => s.id === component.symbol))
-
 	const symbol = cloneDeep($symbols.find((s) => s.id === component.symbol))
 
-	let local_code = symbol.code
+	let local_code = cloneDeep(symbol.code)
 
 	// on-screen fields w/ values included
 	let fields = symbol.fields
@@ -144,7 +141,7 @@
 					})
 				}
 			})
-			refreshPreview()
+			refresh_preview()
 		}
 
 		function addMissingKeys() {
@@ -192,7 +189,7 @@
 
 	// changing codes triggers compilation
 	$: $autoRefresh &&
-		compileComponentCode({
+		compile_component_code({
 			html: raw_html,
 			css: raw_css,
 			js: raw_js
@@ -201,7 +198,7 @@
 	let componentApp // holds compiled component
 	let compilationError // holds compilation error
 
-	$: compilationError && data && refreshPreview() // recompile when there's a compilation error & data changes
+	$: compilationError && data && refresh_preview() // recompile when there's a compilation error & data changes
 
 	// ensure placeholder values always conform to form
 	// TODO: do for remaining fields
@@ -214,13 +211,15 @@
 		else return field
 	})
 
-	let disableSave = false
-	async function compileComponentCode({ html, css, js }) {
-		disableSave = true
+	let disable_save = false
+	let component_changed = false
+	async function compile_component_code({ html, css, js }) {
+		disable_save = true
 		loading = true
+		component_changed = true
 
 		await compile()
-		disableSave = compilationError
+		disable_save = compilationError
 		await setTimeout(() => {
 			loading = false
 		}, 200)
@@ -271,8 +270,8 @@
 	let previewUpToDate = false
 	$: raw_html, raw_css, raw_js, (previewUpToDate = false) // reset when code changes
 
-	async function refreshPreview() {
-		await compileComponentCode({
+	async function refresh_preview() {
+		await compile_component_code({
 			html: raw_html,
 			css: raw_css,
 			js: raw_js
@@ -280,12 +279,12 @@
 		previewUpToDate = true
 	}
 
-	async function saveComponent() {
+	async function save_component() {
 		if (!previewUpToDate) {
-			await refreshPreview()
+			await refresh_preview()
 		}
 
-		if (!disableSave) {
+		if (!disable_save) {
 			// parse content - static content gets saved to symbol, dynamic content gets saved to instance
 			const updated_symbol_content = symbol.content
 			const updated_section_content = {}
@@ -329,16 +328,16 @@
 <ModalHeader
 	{...header}
 	warn={() => {
-		if (!isEqual(local_component, component.symbol || component)) {
+		if (component_changed) {
 			const proceed = window.confirm('Undrafted changes will be lost. Continue?')
 			return proceed
 		} else return true
 	}}
 	button={{
 		...header.button,
-		onclick: saveComponent,
+		onclick: save_component,
 		icon: 'material-symbols:save',
-		disabled: disableSave
+		disabled: disable_save
 	}}
 />
 
@@ -361,20 +360,20 @@
 						bind:css={raw_css}
 						bind:js={raw_js}
 						{data}
-						on:save={saveComponent}
-						on:refresh={refreshPreview}
+						on:save={save_component}
+						on:refresh={refresh_preview}
 					/>
 				{:else if $activeTab === 1}
 					<GenericFields
 						bind:fields
 						on:input={() => {
-							refreshPreview()
+							refresh_preview()
 							save_local_content()
 						}}
 						on:delete={async () => {
 							await tick() // wait for fields to update
 							save_local_content()
-							refreshPreview()
+							refresh_preview()
 						}}
 						showCode={true}
 					/>
@@ -382,7 +381,7 @@
 			{:else}
 				<GenericFields
 					bind:fields
-					on:save={saveComponent}
+					on:save={save_component}
 					on:input={() => {
 						fields = fields.filter(Boolean) // to trigger setting `data`
 						save_local_content()
