@@ -1,6 +1,6 @@
 {
 	"name": "@primocms/builder",
-	"version": "0.0.27",
+	"version": "0.0.28",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
