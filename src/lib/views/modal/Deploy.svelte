@@ -9,7 +9,7 @@
 	import TextInput from '$lib/ui/TextInput.svelte'
 	import Select from '$lib/ui/inputs/Select.svelte'
 	import modal from '$lib/stores/app/modal'
-	import site from '$lib/stores/data/site'
+	import site, { active_deployment } from '$lib/stores/data/site'
 	import pages from '$lib/stores/data/pages'
 	import { page } from '$app/stores'
 	import { push_site, buildSiteBundle } from './Deploy'
@@ -18,8 +18,7 @@
 
 	let stage = 'INITIAL'
 
-	let active_deployment = $site.active_deployment
-	if (active_deployment) {
+	if ($active_deployment) {
 		stage = 'CONNECT_REPO__ACTIVE'
 	}
 
@@ -79,7 +78,7 @@
 	}
 
 	let repo_name = ''
-	let repo = active_deployment?.repo.full_name
+	let repo = $active_deployment?.repo.full_name
 	async function create_repo() {
 		loading = true
 		const headers = { Authorization: `Bearer ${github_token}` }
@@ -92,33 +91,32 @@
 			{ headers }
 		)
 		repo = data
-		active_deployment = await push_site({
+		$active_deployment = await push_site({
 			token: github_token,
 			repo: repo.full_name
 		})
-		$site = { ...$site, active_deployment }
 		stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
 		loading = false
 		await dataChanged({
 			table: 'sites',
 			action: 'update',
 			id: $site.id,
-			data: { active_deployment }
+			data: { active_deployment: $active_deployment }
 		})
 		invalidate('app:data')
 	}
 
 	async function deploy_to_repo() {
 		loading = true
-		active_deployment = await push_site({
+		$active_deployment = await push_site({
 			token: github_token,
-			repo: repo_name || active_deployment.repo.full_name
+			repo: repo_name || $active_deployment.repo.full_name
 		})
 		await dataChanged({
 			table: 'sites',
 			action: 'update',
 			id: $site.id,
-			data: { active_deployment }
+			data: { active_deployment: $active_deployment }
 		})
 		stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
 		loading = false
@@ -302,11 +300,11 @@
 			{:else if stage.startsWith('CONNECT_REPO__ACTIVE')}
 				<div class="repo-card">
 					<div>
-						<a class="name" href={active_deployment.repo.html_url} target="_blank">
-							{active_deployment.repo.full_name}
+						<a class="name" href={$active_deployment.repo.html_url} target="_blank">
+							{$active_deployment.repo.full_name}
 						</a>
 						<span class="last-updated">
-							{format(active_deployment.created)}
+							{format($active_deployment.created)}
 						</span>
 					</div>
 					<button class="primo-link" on:click={() => (stage = 'CONNECT_REPO')}>edit</button>
