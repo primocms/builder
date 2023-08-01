@@ -10,7 +10,7 @@
 </script>
 
 <script>
-	import { cloneDeep, find, isEqual, chain as _chain } from 'lodash-es'
+	import _, { cloneDeep, find, chain as _chain } from 'lodash-es'
 	import HSplitPane from './HSplitPane.svelte'
 	import { getPlaceholderValue, getEmptyValue } from '../../../utils'
 	import ModalHeader from '../ModalHeader.svelte'
@@ -251,7 +251,7 @@
 				}
 			},
 			content: local_content,
-			fields: fields.map((field) => {
+			fields: _.cloneDeep(fields).map((field) => {
 				delete field.value
 				return field
 			})
