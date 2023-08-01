@@ -71,23 +71,20 @@ export const symbols = {
       }
     })
   },
-  update: async (updated_symbol) => {
+  update: async (updated_symbol_id, updated_symbol_props) => {
 
     const original_symbols = _.cloneDeep(get(stores.symbols))
-    const original_symbol = _.cloneDeep(original_symbols.find(symbol => symbol.id === updated_symbol.id))
+    const original_symbol = _.cloneDeep(original_symbols.find(symbol => symbol.id === updated_symbol_id))
     const original_sections = _.cloneDeep(get(stores.sections))
 
-    if (_.isEqual(original_symbol, updated_symbol)) return
     await update_timeline({
       doing: async () => {
-
-        stores.symbols.update(store => store.map(symbol => symbol.id === updated_symbol.id ? { ...symbol, ...updated_symbol } : symbol))
-
+        stores.symbols.update(store => store.map(symbol => symbol.id === updated_symbol_id ? { ...symbol, ...updated_symbol_props } : symbol))
         dataChanged({
           table: 'symbols',
           action: 'update',
-          data: updated_symbol,
-          id: updated_symbol.id
+          data: updated_symbol_props,
+          id: updated_symbol_id
         })
       },
       undoing: async () => {
@@ -97,7 +94,7 @@ export const symbols = {
           table: 'symbols',
           action: 'update',
           data: original_symbol,
-          id: updated_symbol.id
+          id: original_symbol.id
         })
       }
     })
@@ -148,7 +145,7 @@ export const symbols = {
       doing: async () => {
         stores.symbols.set(rearranged_symbols_with_indeces)
         await Promise.all(rearranged_symbols_with_indeces.map(symbol => {
-          dataChanged({ table: 'symbols', action: 'update', data: { index: symbol.index } })
+          dataChanged({ table: 'symbols', action: 'update', id: symbol.id, data: { index: symbol.index } })
         }))
       },
       undoing: async () => {
@@ -207,9 +204,13 @@ export const active_page = {
     const original_sections = _.cloneDeep(get(stores.sections))
 
     const new_symbol = {
-      ...symbol,
       id: uuidv4(),
-      site: get(site).id
+      name: symbol.name,
+      index: position,
+      site: get(site).id,
+      code: symbol.code,
+      content: symbol.content,
+      fields: symbol.fields,
     }
 
     // apply site languages to symbol
@@ -488,24 +489,6 @@ export async function update_page_preview(page = get(activePage.default)) {
       options: { upsert: true }
     })
   }
-}
-
-export async function update_symbol_with_static_values(component) {
-  const { symbol } = component
-  let updated_symbol = cloneDeep({
-    ...symbol,
-    ...component
-  })
-  for (let field of symbol.fields) {
-    if (field.is_static) {
-      const component_field_value = component.content[get(locale)][field.key]
-      updated_symbol.content[get(locale)][field.key] = component_field_value
-    }
-  }
-  symbols.update({
-    id: symbol.id,
-    content: updated_symbol.content
-  })
 }
 
 // extract symbol/instance content from updated section content

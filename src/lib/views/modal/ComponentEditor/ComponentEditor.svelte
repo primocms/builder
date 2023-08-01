@@ -307,8 +307,7 @@
 			})
 
 			// code & fields gets saved to symbol
-			actions.symbols.update({
-				...symbol,
+			actions.symbols.update(symbol.id, {
 				code: local_code,
 				content: updated_symbol_content,
 				fields: fields.map((field) => {

@@ -34,7 +34,7 @@
 	let html_head = ''
 	let html_below = ''
 
-	set_page_content(page)
+	$: set_page_content(page)
 	async function set_page_content(page_data) {
 		// if (!page_data) return
 		// await tick()
@@ -120,10 +120,7 @@
 		}, 100)
 	}
 
-	$: draggable_sections = $sections.map((s) => ({ ...s, _drag_id: uuidv4() }))
-
-	// NEXT:
-	// - add SQL instructions to release notes
+	$: draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
 
 	const flipDurationMs = 100
 

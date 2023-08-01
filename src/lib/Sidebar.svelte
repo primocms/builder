@@ -29,11 +29,13 @@
 		await symbol_actions.update(symbol)
 	}
 
-	async function delete_symbol(symbol) {
+	async function delete_symbol(symbol_id) {
+		const symbol = $symbols.find((s) => s.id === symbol_id)
 		symbol_actions.delete(symbol)
 	}
 
-	async function duplicate_symbol(symbol, index) {
+	async function duplicate_symbol(symbol_id, index) {
+		const symbol = $symbols.find((s) => s.id === symbol_id)
 		const new_symbol = _.cloneDeep(symbol)
 		new_symbol.id = uuidv4()
 		delete new_symbol.created_at
@@ -66,12 +68,11 @@
 		reader.readAsText(target.files[0])
 	}
 
-	async function download_symbol(symbol) {
-		const copied_symbol = _.cloneDeep(symbol)
-		delete copied_symbol.type
-		const json = JSON.stringify(copied_symbol)
+	async function download_symbol(symbol_id) {
+		const symbol = $symbols.find((s) => s.id === symbol_id)
+		const json = JSON.stringify(symbol)
 		var blob = new Blob([json], { type: 'application/json' })
-		fileSaver.saveAs(blob, `${copied_symbol.name || copied_symbol.id}.json`)
+		fileSaver.saveAs(blob, `${symbol.name || symbol.id}.json`)
 	}
 
 	async function get_primo_blocks() {
@@ -81,11 +82,12 @@
 		return data.symbols.map((s) => ({ ...s, _drag_id: uuidv4() }))
 	}
 
-	let draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: uuidv4() }))
+	$: draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
 
 	const flipDurationMs = 200
 
-	let all_symbols = _.cloneDeep(draggable_symbols)
+	let all_symbols
+	$: if (draggable_symbols) all_symbols = _.cloneDeep(draggable_symbols)
 	function consider_dnd({ detail }) {
 		draggable_symbols = detail.items
 	}
@@ -135,24 +137,23 @@
 					flipDurationMs,
 					dropTargetStyle: '',
 					centreDraggedOnCursor: true,
-					morphDisabled: true
+					morphDisabled: true,
+					dragDisabled: !dragging
 				}}
 				on:consider={consider_dnd}
 				on:finalize={finalize_dnd}
 			>
 				{#each draggable_symbols as symbol, i (symbol._drag_id)}
-					<div
-						animate:flip={{ duration: flipDurationMs }}
-						on:mousedown={() => (dragging = symbol._drag_id)}
-						on:mouseup={() => (dragging = null)}
-					>
+					<div animate:flip={{ duration: flipDurationMs }}>
 						<Sidebar_Symbol
 							{symbol}
 							header_hidden={dragging === symbol._drag_id}
+							on:mousedown={() => (dragging = symbol._drag_id)}
+							on:mouseup={() => (dragging = null)}
 							on:edit={({ detail: updated }) => update_symbol(updated)}
-							on:download={() => download_symbol(symbol)}
-							on:delete={() => delete_symbol(symbol)}
-							on:duplicate={() => duplicate_symbol(symbol, i + 1)}
+							on:download={() => download_symbol(symbol.id)}
+							on:delete={() => delete_symbol(symbol.id)}
+							on:duplicate={() => duplicate_symbol(symbol.id, i + 1)}
 						/>
 					</div>
 				{/each}

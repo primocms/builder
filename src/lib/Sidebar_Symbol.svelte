@@ -30,7 +30,8 @@
 				}
 			},
 			{
-				showSwitch: true
+				showSwitch: true,
+				disabledBgClose: true
 			}
 		)
 	}
@@ -54,7 +55,8 @@
 				}
 			},
 			{
-				showSwitch: true
+				showSwitch: true,
+				disabledBgClose: true
 			}
 		)
 	}
@@ -153,7 +155,7 @@
 			</div>
 		{/if}
 	</header>
-	<div class="symbol">
+	<div class="symbol" on:mousedown on:mouseup>
 		<Block {symbol} />
 	</div>
 </div>
