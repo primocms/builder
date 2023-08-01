@@ -160,7 +160,6 @@
 
 	function edit_component(block, showIDE = false) {
 		lock_block(block.id)
-		locked_blocks.update((blocks) => [...blocks, block.id])
 		$showingIDE = showIDE
 		modal.show(
 			'COMPONENT_EDITOR',
