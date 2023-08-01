@@ -50,7 +50,6 @@
 		const all_files = await buildSiteBundle({ pages: $pages })
 		files = _.uniqBy(
 			all_files.map((file) => {
-				console.log({ file })
 				return {
 					...file,
 					file: file.path,

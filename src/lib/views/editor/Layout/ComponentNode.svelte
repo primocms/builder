@@ -29,59 +29,12 @@
 
 	const dispatch = createEventDispatcher()
 
-	export let i
 	export let block
+	export let primo_symbol = null
 
-	$: symbol = $symbols.find((symbol) => symbol.id === block.symbol)
+	$: symbol = primo_symbol || $symbols.find((symbol) => symbol.id === block.symbol)
 
 	let node
-	$: if (node) {
-		setTimeout(set_position, 3000)
-	}
-
-	$: $sections, set_position()
-	async function set_position() {
-		await tick()
-		if (!node) return
-
-		let imagesLoaded = 0
-		let totalImages = node.querySelectorAll('img').length
-
-		if (totalImages === 0) {
-			set_positions()
-		} else {
-			node.querySelectorAll('img').forEach((img) => {
-				let newImg = new Image()
-				newImg.onload = imageLoaded
-				newImg.src = img.src
-			})
-
-			function imageLoaded() {
-				imagesLoaded++
-				if (imagesLoaded === totalImages) {
-					set_positions()
-				}
-			}
-		}
-	}
-
-	async function set_positions() {
-		if (!node) return
-		// await tick();
-		const rect = node.getBoundingClientRect()
-		const { y, left, height } = rect
-		$positions = [
-			...$positions.filter((position) => position.id !== block.id),
-			{
-				i,
-				id: block.id,
-				symbol: symbol.id,
-				top: y,
-				bottom: y + height,
-				left
-			}
-		]
-	}
 
 	$: component_data = get_content_with_static({
 		component: block,
@@ -534,7 +487,6 @@
 	}
 
 	function on_page_scroll() {
-		set_position()
 		image_editor_is_visible = false
 		link_editor_is_visible = false
 	}
@@ -652,6 +604,9 @@
 <style lang="postcss">
 	:global(.ProseMirror) {
 		outline: 0 !important;
+	}
+	.node {
+		width: 100%;
 	}
 	pre {
 		margin: 0;

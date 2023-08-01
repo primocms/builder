@@ -2,9 +2,8 @@
 	import _ from 'lodash-es'
 	import fileSaver from 'file-saver'
 	import axios from 'axios'
-	import { hoveredBlock, userRole } from './stores/app/misc'
+	import { userRole } from './stores/app/misc'
 	import site from './stores/data/site'
-	import sections from './stores/data/sections'
 	import symbols from './stores/data/symbols'
 	import Icon from '@iconify/svelte'
 	import { Symbol } from './const'
@@ -12,6 +11,8 @@
 	import { symbols as symbol_actions, active_page } from './stores/actions'
 	import { v4 as uuidv4 } from 'uuid'
 	import { validate_symbol } from '$lib/converter'
+	import { dndzone } from 'svelte-dnd-action'
+	import { flip } from 'svelte/animate'
 
 	let active_tab = 'site'
 
@@ -77,30 +78,28 @@
 		const { data } = await axios.get(
 			'https://raw.githubusercontent.com/mateomorris/primo-library/main/primo.json'
 		)
-		return data.symbols
+		return data.symbols.map((s) => ({ ...s, _drag_id: uuidv4() }))
 	}
 
-	async function add_to_page(symbol) {
-		if ($hoveredBlock.id === null || $sections.length === 0) {
-			// no blocks on page, add to top
-			await active_page.add_block(symbol, 0)
-		} else if ($hoveredBlock.position === 'top') {
-			await active_page.add_block(symbol, $hoveredBlock.i)
-		} else {
-			await active_page.add_block(symbol, $hoveredBlock.i + 1)
+	let draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: uuidv4() }))
+
+	const flipDurationMs = 200
+
+	let all_symbols = _.cloneDeep(draggable_symbols)
+	function consider_dnd({ detail }) {
+		draggable_symbols = detail.items
+	}
+	function finalize_dnd({ detail }) {
+		if (detail.info.trigger === 'droppedIntoZone') {
+			draggable_symbols = detail.items
+			symbol_actions.rearrange(detail.items)
+		} else if (detail.info.trigger === 'droppedIntoAnother') {
+			draggable_symbols = all_symbols
 		}
+		dragging = null
 	}
 
-	async function add_primo_block(symbol) {
-		if ($hoveredBlock.id === null || $sections.length === 0) {
-			// no blocks on page, add to top
-			await active_page.add_primo_block(symbol, 0)
-		} else if ($hoveredBlock.position === 'top') {
-			await active_page.add_primo_block(symbol, $hoveredBlock.i)
-		} else {
-			await active_page.add_primo_block(symbol, $hoveredBlock.i + 1)
-		}
-	}
+	let dragging = null
 </script>
 
 <div class="sidebar primo-reset">
@@ -118,23 +117,44 @@
 				{#if $userRole === 'DEV'}
 					<button class="primo-button" on:click={create_symbol}>
 						<Icon icon="mdi:plus" />
+						<span>Create</span>
 					</button>
 				{/if}
 				<label class="primo-button">
 					<input on:change={upload_symbol} type="file" accept=".json" />
 					<Icon icon="mdi:upload" />
+					<span>Upload</span>
 				</label>
 			</div>
-			<div class="symbols">
-				{#each $symbols as symbol, i (symbol.id)}
-					<Sidebar_Symbol
-						{symbol}
-						on:edit={({ detail: updated }) => update_symbol(updated)}
-						on:download={() => download_symbol(symbol)}
-						on:delete={() => delete_symbol(symbol)}
-						on:duplicate={() => duplicate_symbol(symbol, i + 1)}
-						on:add_to_page={() => add_to_page(symbol)}
-					/>
+			<!-- svelte-ignore missing-declaration -->
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
+			<div
+				class="symbols"
+				use:dndzone={{
+					items: draggable_symbols,
+					flipDurationMs,
+					dropTargetStyle: '',
+					centreDraggedOnCursor: true,
+					morphDisabled: true
+				}}
+				on:consider={consider_dnd}
+				on:finalize={finalize_dnd}
+			>
+				{#each draggable_symbols as symbol, i (symbol._drag_id)}
+					<div
+						animate:flip={{ duration: flipDurationMs }}
+						on:mousedown={() => (dragging = symbol._drag_id)}
+						on:mouseup={() => (dragging = null)}
+					>
+						<Sidebar_Symbol
+							{symbol}
+							header_hidden={dragging === symbol._drag_id}
+							on:edit={({ detail: updated }) => update_symbol(updated)}
+							on:download={() => download_symbol(symbol)}
+							on:delete={() => delete_symbol(symbol)}
+							on:duplicate={() => duplicate_symbol(symbol, i + 1)}
+						/>
+					</div>
 				{/each}
 			</div>
 		{:else}
@@ -155,20 +175,28 @@
 			</div>
 		{/if}
 	{:else}
-		<div class="symbols">
-			{#await get_primo_blocks() then blocks}
-				{#each blocks as symbol, i}
+		{#await get_primo_blocks() then primo_blocks}
+			<div
+				class="symbols"
+				use:dndzone={{
+					items: primo_blocks,
+					flipDurationMs,
+					dropTargetStyle: '',
+					centreDraggedOnCursor: true,
+					morphDisabled: true
+				}}
+				on:consider={consider_dnd}
+				on:finalize={finalize_dnd}
+			>
+				{#each primo_blocks as symbol, i}
 					<Sidebar_Symbol
 						{symbol}
 						controls_enabled={false}
-						on:download={() => download_symbol(symbol)}
-						on:delete={() => delete_symbol(symbol)}
-						on:duplicate={() => duplicate_symbol(symbol)}
-						on:add_to_page={() => add_primo_block(symbol)}
+						header_hidden={dragging === symbol._drag_id}
 					/>
 				{/each}
-			{/await}
-		</div>
+			</div>
+		{/await}
 	{/if}
 </div>
 
@@ -181,13 +209,9 @@
 		flex-direction: column;
 		height: calc(100vh - 54px);
 		gap: 1rem;
-		/* position: fixed; */
-		/* margin-top: 52px; */
-		/* width: 25vw; */
-		/* overflow: scroll; */
 		z-index: 9;
 		position: relative;
-		overflow-y: scroll;
+		overflow: hidden;
 	}
 
 	.tabs {
@@ -242,6 +266,7 @@
 			display: flex;
 			gap: 0.25rem;
 			align-items: center;
+			font-size: 0.75rem;
 
 			input {
 				display: none;
@@ -254,6 +279,6 @@
 		gap: 1rem;
 		display: grid;
 		padding-bottom: 1.5rem;
-		/* overflow: scroll; */
+		overflow-y: scroll;
 	}
 </style>

@@ -8,6 +8,8 @@
 	import * as modals from './views/modal'
 	import HSplitPane from './ui/HSplitPane.svelte'
 	import Sidebar from './Sidebar.svelte'
+	import { overrideItemIdKeyNameBeforeInitialisingDndZones } from 'svelte-dnd-action'
+	overrideItemIdKeyNameBeforeInitialisingDndZones('_drag_id')
 
 	import { userRole } from './stores/app'
 

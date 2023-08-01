@@ -1,14 +1,20 @@
 <script>
 	import _ from 'lodash-es'
+	import { v4 as uuidv4 } from 'uuid'
 	import { tick } from 'svelte'
 	import { fade } from 'svelte/transition'
+	import { flip } from 'svelte/animate'
+	import ComponentNode from './Layout/ComponentNode.svelte'
+	import BlockButtons from './Layout/BlockButtons.svelte'
+	import LockedOverlay from './Layout/LockedOverlay.svelte'
+	import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME } from 'svelte-dnd-action'
 	import { afterNavigate } from '$app/navigation'
-	import { find, isEqual, cloneDeep } from 'lodash-es'
-	import Block from './Layout/Block.svelte'
+	import { isEqual, cloneDeep } from 'lodash-es'
 	import Spinner from '../../ui/misc/Spinner.svelte'
 	import { code as siteCode } from '../../stores/data/site'
-	import { locale, locked_blocks } from '../../stores/app/misc'
-	import { updatePreview } from '../../stores/actions'
+	import { locale, locked_blocks, showingIDE } from '../../stores/app/misc'
+	import { active_page } from '../../stores/actions'
+	import modal from '../../stores/app/modal'
 	import {
 		id as pageID,
 		name as pageName,
@@ -18,6 +24,7 @@
 		content as pageContent
 	} from '../../stores/app/activePage'
 	import sections from '../../stores/data/sections'
+	import symbols from '../../stores/data/symbols'
 	import { processCode, processCSS, wrapInStyleTags } from '../../utils'
 	import { getPageData } from '../../stores/helpers'
 	import { realtimeChanged } from '$lib/database'
@@ -27,12 +34,10 @@
 	let html_head = ''
 	let html_below = ''
 
-	let element
-
-	$: set_page_content(page)
+	set_page_content(page)
 	async function set_page_content(page_data) {
-		if (!page_data) return
-		await tick()
+		// if (!page_data) return
+		// await tick()
 		$sections = page_data.sections
 
 		$pageID = page_data.id
@@ -41,8 +46,6 @@
 		$pageFields = page_data.fields
 		$pageCode = page_data.code
 		$pageContent = page_data.content
-
-		if (page_mounted) updatePreview()
 	}
 
 	const cached = { pageCode: null, siteCode: null }
@@ -116,34 +119,172 @@
 			})
 		}, 100)
 	}
+
+	$: draggable_sections = $sections.map((s) => ({ ...s, _drag_id: uuidv4() }))
+
+	// NEXT:
+	// - add SQL instructions to release notes
+
+	const flipDurationMs = 100
+
+	let dragged_symbol = null
+	function consider_dnd({ detail }) {
+		dragged_symbol = detail.items
+			.map((item, index) => ({ ...item, index }))
+			.find((item) => item._drag_id === detail.info.id)
+
+		if ($symbols.find((symbol) => symbol.id === dragged_symbol.id)) {
+			draggable_sections = detail.items
+		} else {
+			dragged_symbol.is_primo_block = true
+			draggable_sections = detail.items.map((item) =>
+				item._drag_id === detail.info.id ? { ...item, primo_symbol: item } : item
+			)
+		}
+	}
+
+	function finalize_dnd({ detail }) {
+		if (dragged_symbol.is_primo_block) {
+			active_page.add_primo_block(dragged_symbol, dragged_symbol.index)
+		} else {
+			active_page.add_block(dragged_symbol, dragged_symbol.index)
+		}
+	}
+
+	let hovered_block = null
+
+	let buttons_el
+	let hovered_block_el
+	$: position_block_buttons(hovered_block_el, buttons_el)
+	function position_block_buttons(hovered_block_el, buttons_el) {
+		if (!hovered_block_el || !buttons_el) return
+		hovered_block_el.appendChild(buttons_el)
+	}
+
+	function edit_component(block, showIDE = false) {
+		lock_block(block.id)
+		locked_blocks.update((blocks) => [...blocks, block.id])
+		$showingIDE = showIDE
+		modal.show(
+			'COMPONENT_EDITOR',
+			{
+				component: block,
+				header: {
+					title: `Edit Block`,
+					icon: $showingIDE ? 'fas fa-code' : 'fas fa-edit',
+					onclose: () => {
+						unlock_block(block.id)
+					},
+					button: {
+						icon: 'fas fa-check',
+						label: 'Save',
+						onclick: async () => {
+							unlock_block(block.id)
+							modal.hide()
+						}
+					}
+				}
+			},
+			{
+				showSwitch: true,
+				disabledBgClose: true
+			}
+		)
+	}
 </script>
 
-<svelte:head>
-	{@html html_head}
-</svelte:head>
-
+<!-- Loading Spinner -->
 {#if !page_mounted && $sections.length > 0}
 	<div class="spinner-container" out:fade={{ duration: 200 }}>
 		<Spinner />
 	</div>
 {/if}
 
-<div id="page" bind:this={element} class:fadein={page_mounted} lang={$locale}>
-	{#each $sections.sort((a, b) => a.index - b.index) as block, i (block.id)}
-		<Block
-			{i}
-			{block}
-			locked={find($locked_blocks, ['block_id', block.id])}
-			on:lock={() => lock_block(block.id)}
-			on:unlock={() => unlock_block()}
-			on:mount={() => {
-				sections_mounted++
+<!-- Block Buttons -->
+{#if hovered_block_el}
+	<BlockButtons
+		bind:node={buttons_el}
+		i={hovered_block.index}
+		on:delete={() => active_page.delete_block(hovered_block)}
+		on:duplicate={() => active_page.duplicate_block(hovered_block)}
+		on:edit-code={() => edit_component(hovered_block, true)}
+		on:edit-content={() => edit_component(hovered_block)}
+		on:moveUp={() => active_page.move_block(hovered_block, hovered_block.index - 1)}
+		on:moveDown={() => active_page.move_block(hovered_block, hovered_block.index + 1)}
+	/>
+{/if}
+
+<!-- Page & Site HTML/CSS -->
+<svelte:head>
+	{@html html_head}
+</svelte:head>
+
+<!-- Page Blocks -->
+<div
+	id="page"
+	class:fadein={page_mounted}
+	lang={$locale}
+	use:dndzone={{
+		items: draggable_sections,
+		flipDurationMs,
+		morphDisabled: true,
+		dragDisabled: true
+	}}
+	on:consider={consider_dnd}
+	on:finalize={finalize_dnd}
+>
+	{#each draggable_sections.sort((a, b) => a.index - b.index) as block, i (block.id)}
+		<!-- svelte-ignore a11y-no-static-element-interactions -->
+		<!-- svelte-ignore a11y-mouse-events-have-key-events -->
+		{@const locked = $locked_blocks.includes(block.id)}
+		<div
+			in:fade={{ duration: 100 }}
+			class="section"
+			id="section-{block.id.split('-')[0]}"
+			class:locked
+			data-block={block.symbol}
+			on:mouseenter={({ target }) => {
+				hovered_block = block
+				hovered_block_el = target
 			}}
-		/>
+			on:mouseleave={() => {
+				hovered_block = null
+				hovered_block_el = null
+			}}
+			animate:flip={{ duration: flipDurationMs }}
+			style="min-height: 5rem;position:relative;overflow:hidden;"
+		>
+			{#if block[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+				<div class="block-placeholder">
+					<ComponentNode
+						{i}
+						primo_symbol={block.primo_symbol}
+						block={{
+							...block,
+							symbol: block.id
+						}}
+					/>
+				</div>
+			{:else}
+				{#if locked}
+					<LockedOverlay {locked} />
+				{/if}
+				<ComponentNode
+					{i}
+					{block}
+					on:lock={() => lock_block(block.id)}
+					on:unlock={() => unlock_block(block.id)}
+					on:mount={() => {
+						sections_mounted++
+					}}
+				/>
+			{/if}
+		</div>
 	{/each}
 </div>
 {@html html_below || ''}
 
+<!-- Empty State -->
 {#if page_is_empty}
 	<div class="empty-state">This is an empty page</div>
 {/if}
@@ -187,5 +328,26 @@
 		color: #999;
 		z-index: 1;
 		text-align: center;
+	}
+	.block-placeholder {
+		position: absolute;
+		inset: 0;
+		visibility: visible;
+		margin: 0;
+		display: flex;
+		align-items: center;
+		box-shadow: inset 0 0 0 calc(4px) var(--color-gray-8);
+
+		:global(.node) {
+			position: absolute;
+		}
+
+		&::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background: rgba(0, 0, 0, 0.75);
+			z-index: 99;
+		}
 	}
 </style>

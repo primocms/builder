@@ -14,6 +14,8 @@
 	$: isLast = i === $sections.length - 1
 </script>
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<!-- svelte-ignore a11y-mouse-events-have-key-events -->
 <div in:fade={{ duration: 100 }} class="block-buttons primo-reset" bind:this={node}>
 	<div class="top">
 		<div class="component-button">
@@ -55,6 +57,7 @@
 		z-index: 999999;
 		position: absolute;
 		inset: 0px;
+		pointer-events: none;
 	}
 	.component-button {
 		display: flex;
@@ -63,13 +66,6 @@
 		button:last-child {
 			border-bottom-right-radius: 0.25rem;
 		}
-	}
-
-	.block-id {
-		background: rgba(250, 0, 0, 0.2);
-		display: inline;
-		height: 2rem;
-		pointer-events: all;
 	}
 
 	.top-right {
@@ -119,8 +115,9 @@
 		display: flex;
 		justify-content: space-between;
 		position: absolute;
-		/* width: 100%; */
-		inset: 0px;
+		top: 0;
+		left: 0;
+		right: 0;
 	}
 	.bottom {
 		display: flex;

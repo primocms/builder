@@ -141,6 +141,22 @@ export const symbols = {
         })
       }
     })
+  },
+  rearrange: async (rearranged_symbols) => {
+    const rearranged_symbols_with_indeces = rearranged_symbols.map((symbol, i) => ({ ...symbol, index: i }))
+    await update_timeline({
+      doing: async () => {
+        stores.symbols.set(rearranged_symbols_with_indeces)
+        await Promise.all(rearranged_symbols_with_indeces.map(symbol => {
+          dataChanged({ table: 'symbols', action: 'update', data: { index: symbol.index } })
+        }))
+      },
+      undoing: async () => {
+        stores.sections.set(original_sections)
+        await dataChanged({ table: 'sections', action: 'delete', id: new_section.id })
+        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections.map(s => ({ ...s, symbol: s.symbol })) })
+      }
+    })
   }
 }
 
@@ -278,7 +294,8 @@ export const active_page = {
     })
     update_page_preview()
   },
-  duplicate_block: async (block, position) => {
+  duplicate_block: async (block) => {
+    const position = block.index + 1
     const original_sections = _.cloneDeep(get(stores.sections))
 
     const new_block = {
@@ -810,13 +827,4 @@ export async function delete_language(key) {
 
 export async function set_language(loc) {
   locale.set(loc)
-}
-
-export async function updatePreview(updatedSite = get(site)) {
-  if (import.meta.env.SSR) return
-  const channel = new BroadcastChannel('site_preview')
-  channel.postMessage({
-    site: updatedSite,
-    pageID: get(activePageID)
-  })
 }

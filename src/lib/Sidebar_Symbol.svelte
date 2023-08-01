@@ -1,27 +1,15 @@
-<script context="module">
-	import { writable } from 'svelte/store'
-	const mouse_position = writable({ x: 0, y: 0 })
-</script>
-
 <script>
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 	import modal from '$lib/stores/app/modal'
-	import { hoveredBlock, showingIDE, userRole } from '$lib/stores/app/misc'
-	import { draggable } from '@neodrag/svelte'
-	import { positions } from '$lib/views/editor/Layout/ComponentNode.svelte'
+	import { showingIDE, userRole } from '$lib/stores/app/misc'
 	import MenuPopup from '$lib/components/MenuPopup.svelte'
 	import IconButton from '$lib/components/IconButton.svelte'
 	import Block from './BlockItem.svelte'
-	import sections from '$lib/stores/data/sections'
 
 	export let symbol
 	export let controls_enabled = true
-
-	let coordinates = {
-		x: 0,
-		y: 0
-	}
+	export let header_hidden = false
 
 	function edit_symbol_content(symbol) {
 		$showingIDE = false
@@ -71,65 +59,6 @@
 		)
 	}
 
-	function on_drag(e) {
-		dragging = true
-
-		// const block_center = rect.y + rect.height / 2;
-		const mouse_y = $mouse_position.y || 0
-		const mouse_x = $mouse_position.x || 0
-
-		// determine if block_center is within the range of the positions
-		let [matching_block] = $positions.filter((position) => {
-			const within_left = mouse_x > position.left
-			const above_bottom = mouse_y > position.top
-			const below_top = mouse_y < position.bottom
-			return within_left && above_bottom && below_top
-		})
-
-		// if no matching block, check if hovering below last block
-		if (!matching_block && $positions.length > 0) {
-			// hovering below last block
-			const last_block = $positions.at(-1)
-			if (mouse_y > last_block.bottom) {
-				matching_block = last_block
-				dragging_over_block = true
-			} else {
-				$hoveredBlock = { i: 0, id: null, position: '', active: false }
-				dragging_over_block = false
-				return
-			}
-		} else {
-			dragging_over_block = true
-			$hoveredBlock = { ...$hoveredBlock, i: 0 }
-		}
-
-		const top = matching_block?.top || 0
-		const bottom = matching_block?.bottom || 0
-		const center = top + (bottom - top) / 2
-
-		if (mouse_y > top && mouse_y < center) {
-			// mouse is in top half of block
-			$hoveredBlock = {
-				...$hoveredBlock,
-				...matching_block,
-				position: 'top',
-				active: true
-			}
-			// set active_hover store with block above and below hover point
-			// from block, show dropzone above or below
-		} else if (mouse_y > center) {
-			// mouse is below bottom half of block
-			$hoveredBlock = {
-				...$hoveredBlock,
-				...matching_block,
-				position: 'bottom',
-				active: true
-			}
-		} else {
-			$hoveredBlock = { i: 0, id: null, position: '', active: false }
-		}
-	}
-
 	let name_el
 
 	// move cursor to end of name
@@ -159,55 +88,13 @@
 		})
 		renaming = false
 	}
-
-	// keep height of symbol to prevent jumping
-	let element
-
-	let symbol_element
-	let height = null
-	let width = null
-	let top = null
-
-	function set_dimensions() {
-		height = element.offsetHeight + 'px'
-		width = element.offsetWidth + 'px'
-		const rect = symbol_element.getBoundingClientRect()
-		top = rect.top + 'px'
-	}
-
-	function reset_dimensions() {
-		dragging = false
-		$hoveredBlock = {
-			...$hoveredBlock,
-			active: false
-		}
-		coordinates = { x: 0, y: 0 }
-		height = null
-		width = null
-		top = null
-	}
-
-	let dragging = false
-	let dragging_over_block = false
-
-	function on_drag_end() {
-		if (dragging_over_block || $sections.length === 0) {
-			dispatch('add_to_page')
-		}
-		reset_dimensions()
-	}
 </script>
 
-<svelte:window
-	on:mousemove={(event) => {
-		$mouse_position = { x: event.x, y: event.y }
-	}}
-/>
-
-<div bind:this={element} class="sidebar-symbol" style:width style:height>
-	<header>
+<div class="sidebar-symbol">
+	<header style:opacity={header_hidden ? 0 : 1}>
 		{#if renaming}
 			<!-- svelte-ignore a11y-autofocus -->
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
 			<div
 				bind:this={name_el}
 				contenteditable
@@ -266,20 +153,7 @@
 			</div>
 		{/if}
 	</header>
-	<div
-		bind:this={symbol_element}
-		class="symbol"
-		class:dragging
-		style:width
-		style:top
-		use:draggable={{ position: coordinates }}
-		on:neodrag={on_drag}
-		on:neodrag:start={() => {
-			dragging = true
-			set_dimensions()
-		}}
-		on:neodrag:end={on_drag_end}
-	>
+	<div class="symbol">
 		<Block {symbol} />
 	</div>
 </div>
@@ -298,6 +172,7 @@
 			justify-content: space-between;
 			padding: 6px 0;
 			color: #e7e7e7;
+			transition: opacity 0.2s;
 
 			.name {
 				font-size: 13px;

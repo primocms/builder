@@ -16,11 +16,4 @@ export const locale = writable('en')
 
 export const highlightedElement = writable(null)
 
-export const hoveredBlock = writable({
-  i: 0,
-  id: null,
-  position: '',
-  active: false
-})
-
 export const locked_blocks = writable([])
