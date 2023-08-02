@@ -1,4 +1,5 @@
 <script>
+	import '@fontsource/fira-code/index.css'
 	import { browser } from '$app/environment'
 	import IconButton from './components/IconButton.svelte'
 	import Toolbar from './views/editor/Toolbar.svelte'
@@ -13,8 +14,6 @@
 	import { userRole } from './stores/app'
 
 	import { hydrate_active_data } from './stores/actions'
-
-	if (browser) import('@fontsource/fira-code/index.css')
 
 	/** @type {{
    * site: import('$lib').Site
