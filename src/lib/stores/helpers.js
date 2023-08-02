@@ -8,7 +8,7 @@ import symbols from './data/symbols.js'
 import pages from './data/pages.js'
 import activePage from './app/activePage.js'
 import { locale } from './app/misc.js'
-import { processCSS, getPlaceholderValue, getEmptyValue } from '../utils.js'
+import { processCSS, getEmptyValue } from '../utils.js'
 
 export function getSymbolUseInfo(symbolID) {
   const info = { pages: [], frequency: 0 }

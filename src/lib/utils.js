@@ -1,6 +1,5 @@
 import _, { chain as _chain, capitalize as _capitalize } from "lodash-es";
 import { processors } from './component'
-import { LoremIpsum as lipsum } from "lorem-ipsum/src";
 import showdown from '$lib/libraries/showdown/showdown.min.js'
 import showdownHighlight from 'showdown-highlight'
 export const converter = new showdown.Converter({
@@ -71,51 +70,6 @@ export function createDebouncer(time) {
 
 export function wrapInStyleTags(css, id) {
   return `<style type="text/css" ${id ? `id = "${id}"` : ""}>${css}</style>`;
-}
-
-const lorem = new lipsum({
-  sentencesPerParagraph: {
-    max: 8,
-    min: 4
-  },
-  wordsPerSentence: {
-    max: 16,
-    min: 4
-  }
-});
-
-export function getPlaceholderValue(field) {
-  if (field.default) return field.default
-  if (field.type === 'repeater') return getRepeaterValue(field.fields)
-  else if (field.type === 'group') return getGroupValue(field)
-  else if (field.type === 'image') return {
-    url: 'https://picsum.photos/600/400?blur=10',
-    src: 'https://picsum.photos/600/400?blur=10',
-    alt: '',
-    size: null
-  }
-  else if (field.type === 'text') return _capitalize(lorem.generateWords(3))
-  else if (field.type === 'markdown' || field.type === 'content') return {
-    html: converter.makeHtml(`# This is some markdown`),
-    markdown: `# This is some markdown`
-  }
-  else if (field.type === 'link') return {
-    label: lorem.generateWords(1),
-    url: '/'
-  }
-  else if (field.type === 'url') return '/'
-  else {
-    console.warn('No placeholder set for field type', field.type)
-    return ''
-  }
-
-  function getRepeaterValue(subfields) {
-    return Array.from(Array(2)).map(_ => _chain(subfields).map(s => ({ ...s, value: getPlaceholderValue(s) })).keyBy('key').mapValues('value').value())
-  }
-
-  function getGroupValue(field) {
-    return _chain(field.fields).keyBy('key').mapValues((field) => getPlaceholderValue(field)).value()
-  }
 }
 
 export function getEmptyValue(field) {

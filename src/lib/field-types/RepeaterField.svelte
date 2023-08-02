@@ -9,7 +9,7 @@
 	const dispatch = createEventDispatcher()
 
 	import { locale } from '../stores/app/misc'
-	import { getPlaceholderValue } from '../utils'
+	import { getEmptyValue } from '../utils'
 	import { createUniqueID } from '../utilities'
 	import { fieldTypes } from '../stores/app'
 
@@ -58,7 +58,7 @@
 		return field.fields.map((subfield) => ({
 			...subfield,
 			id: createUniqueID(),
-			value: getPlaceholderValue(subfield)
+			value: getEmptyValue(subfield)
 		}))
 	}
 

@@ -12,7 +12,7 @@
 <script>
 	import _, { cloneDeep, find, chain as _chain } from 'lodash-es'
 	import HSplitPane from './HSplitPane.svelte'
-	import { getPlaceholderValue, getEmptyValue } from '../../../utils'
+	import { getEmptyValue } from '../../../utils'
 	import ModalHeader from '../ModalHeader.svelte'
 	import { Tabs } from '../../../components/misc'
 	import FullCodeEditor from './FullCodeEditor.svelte'
@@ -49,7 +49,7 @@
 		if (placeholders.has(key)) {
 			return placeholders.get(key)
 		} else {
-			const val = getPlaceholderValue(field)
+			const val = getEmptyValue(field)
 			placeholders.set(key, val)
 			return val
 		}

@@ -1,7 +1,7 @@
 import _ from 'lodash-es'
 import { v4 as uuidv4 } from 'uuid';
 import { createUniqueID } from "./utilities";
-import { getPlaceholderValue, getEmptyValue } from './utils.js'
+import { getEmptyValue } from './utils.js'
 import showdown from './libraries/showdown/showdown.min.js'
 import showdownHighlight from 'showdown-highlight'
 export const converter = new showdown.Converter({
@@ -83,7 +83,7 @@ export function validate_site_structure_v2(site) {
     const content = Object.entries(site.content).reduce((accumulator, [locale, value]) => {
       accumulator[locale] = {}
       symbol.fields.forEach(field => {
-        accumulator[locale][field.key] = getPlaceholderValue(field)
+        accumulator[locale][field.key] = getEmptyValue(field)
       })
       return accumulator
     }, {})
@@ -293,7 +293,7 @@ export function validate_symbol(symbol) {
   if (!symbol.content || _.isEmpty(symbol.content)) {
     // turn symbol fields into content object
     const content = Object.entries(symbol.fields).reduce((accumulator, [_, field]) => {
-      accumulator[field.key] = getPlaceholderValue(field)
+      accumulator[field.key] = getEmptyValue(field)
       return accumulator
     }, {})
 
