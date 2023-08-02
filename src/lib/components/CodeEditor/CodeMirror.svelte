@@ -9,10 +9,7 @@
 			prettier: await import('prettier'),
 			prettier_css: (await import('prettier/esm/parser-postcss')).default,
 			prettier_babel: (await import('prettier/esm/parser-babel')).default,
-			prettier_svelte: (await import('../../libraries/prettier/prettier-svelte')).default,
-			codemirror_view: await import('@codemirror/view'),
-			codemirror_state: await import('@codemirror/state'),
-			codemirror_commands: await import('@codemirror/commands')
+			prettier_svelte: (await import('../../libraries/prettier/prettier-svelte')).default
 		}
 	}
 </script>
@@ -29,9 +26,9 @@
 	import { code as site_code } from '../../stores/data/site'
 	import { code as page_code } from '../../stores/app/activePage'
 	import { basicSetup } from 'codemirror'
-	// import { EditorView, keymap } from '@codemirror/view'
-	// import { standardKeymap, indentWithTab } from '@codemirror/commands'
-	// import { EditorState, Compartment } from '@codemirror/state'
+	import { EditorView, keymap } from '@codemirror/view'
+	import { standardKeymap, indentWithTab } from '@codemirror/commands'
+	import { EditorState, Compartment } from '@codemirror/state'
 	import { oneDarkTheme, ThemeHighlighting } from './theme'
 	import {
 		svelteCompletions,
@@ -39,7 +36,7 @@
 		extract_css_variables
 	} from './extensions/autocomplete'
 	import { getLanguage } from './extensions'
-	import highlightActiveLine from './extensions/inspector'
+	import highlight_active_line from './extensions/inspector'
 
 	export let data = {}
 	export let prefix = ''
@@ -54,11 +51,11 @@
 
 	const language = getLanguage(mode)
 
-	const css_completions_compartment = new libraries.codemirror_state.Compartment()
+	const css_completions_compartment = new Compartment()
 	let css_variables = extract_css_variables($site_code.css + $page_code.css + value)
 
 	var Editor
-	const state = libraries.codemirror_state.EditorState.create({
+	const state = EditorState.create({
 		selection: {
 			anchor: selection
 		},
@@ -68,9 +65,9 @@
 			language,
 			oneDarkTheme,
 			ThemeHighlighting,
-			libraries.codemirror_view.keymap.of([
-				libraries.codemirror_commands.standardKeymap,
-				libraries.codemirror_commands.indentWithTab,
+			keymap.of([
+				standardKeymap,
+				indentWithTab,
 				{
 					key: 'mod-1',
 					run: () => {
@@ -132,7 +129,7 @@
 					}
 				}
 			]),
-			libraries.codemirror_view.EditorView.updateListener.of((view) => {
+			EditorView.updateListener.of((view) => {
 				if (view.docChanged) {
 					const newValue = view.state.doc.toString()
 					value = newValue.replace(prefix, '')
@@ -158,7 +155,7 @@
 			effects: css_completions_compartment.reconfigure(cssCompletions(css_variables))
 		})
 
-	$: mode === 'html' && Editor && highlightActiveLine(Editor, $highlightedElement)
+	$: mode === 'html' && Editor && highlight_active_line(Editor, $highlightedElement)
 
 	async function format_code(code, { mode, position }) {
 		let formatted
@@ -184,7 +181,7 @@
 
 	let editorNode
 	$: if (editorNode) {
-		Editor = new libraries.codemirror_view.EditorView({
+		Editor = new EditorView({
 			state,
 			parent: editorNode
 		})

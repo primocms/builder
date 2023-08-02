@@ -12,11 +12,11 @@
 <script>
 	import { setContext } from 'svelte'
 	import _, { cloneDeep, find, isEqual, chain as _chain } from 'lodash-es'
-	import HSplitPane from './HSplitPane.svelte'
+	import HSplitPane from '../ComponentEditor/HSplitPane.svelte'
 	import { getEmptyValue } from '../../../utils'
 	import ModalHeader from '../ModalHeader.svelte'
 	import { Tabs } from '../../../components/misc'
-	import FullCodeEditor from './FullCodeEditor.svelte'
+	import FullCodeEditor from '../ComponentEditor/FullCodeEditor.svelte'
 	import { CodePreview } from '../../../components/misc'
 	import GenericFields from '../../../components/GenericFields.svelte'
 	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'

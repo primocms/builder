@@ -11,11 +11,11 @@
 
 <script>
 	import _, { cloneDeep, find, chain as _chain } from 'lodash-es'
-	import HSplitPane from './HSplitPane.svelte'
+	import HSplitPane from '../PageEditor/HSplitPane.svelte'
 	import { getPlaceholderValue, getEmptyValue } from '../../../utils'
 	import ModalHeader from '../ModalHeader.svelte'
 	import { Tabs, Card } from '../../../components/misc'
-	import FullCodeEditor from './FullCodeEditor.svelte'
+	import FullCodeEditor from '../PageEditor/FullCodeEditor.svelte'
 	import { CodePreview } from '../../../components/misc'
 	import GenericFields from '../../../components/GenericFields.svelte'
 	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'

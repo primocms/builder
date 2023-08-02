@@ -30,7 +30,7 @@ const underlineTheme = EditorView.baseTheme({
   ".cm-highlight": { background: "#333" }
 })
 
-export default function highlightActiveLine(Editor, loc) {
+export default function highlight_active_line(Editor, loc) {
   if (!loc) return
   let activeLine
   for (let { from, to } of Editor.visibleRanges) {
