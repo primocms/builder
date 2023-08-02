@@ -1,7 +1,5 @@
 <script>
 	import _ from 'lodash-es'
-	import { v4 as uuidv4 } from 'uuid'
-	import { tick } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import { flip } from 'svelte/animate'
 	import ComponentNode from './Layout/ComponentNode.svelte'
