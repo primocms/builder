@@ -1,6 +1,11 @@
+<script context="module">
+	import { writable } from 'svelte/store'
+	const pluralize = writable(null)
+	import('../libraries/pluralize').then((mod) => pluralize.set(mod.default))
+</script>
+
 <script>
 	import { find as _find, chain as _chain, cloneDeep as _cloneDeep } from 'lodash-es'
-	import pluralize from '../libraries/pluralize'
 	import Icon from '@iconify/svelte'
 	import { createEventDispatcher, onDestroy, tick } from 'svelte'
 
@@ -103,7 +108,7 @@
 		return field ? field.component : null
 	}
 
-	$: singularLabel = pluralize.singular(field.label)
+	$: singularLabel = $pluralize && $pluralize.singular(field.label)
 
 	function getImage(repeaterItem) {
 		const [firstField] = repeaterItem
@@ -205,7 +210,7 @@
 		{/each}
 		<button class="field-button" on:click={add_repeater_item}>
 			<Icon icon="akar-icons:plus" />
-			<span>Add {pluralize.singular(field.label)}</span>
+			<span>Add {$pluralize ? $pluralize.singular(field.label) : field.label}</span>
 		</button>
 	</div>
 </div>
