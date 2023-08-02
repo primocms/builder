@@ -1,7 +1,7 @@
 import {get} from 'svelte/store'
 import pages from '$lib/stores/data/pages'
 import axios from 'axios'
-import beautify from 'js-beautify'
+// import beautify from 'js-beautify' // remove for now to reduce bundle size, dynamically import later if wanted
 import { dataChanged } from '$lib/database.js'
 import { buildStaticPage } from '$lib/stores/helpers'
 import _ from 'lodash-es'
@@ -112,7 +112,7 @@ export async function buildSiteBundle({ pages }) {
       separateModules: true,
       locale: language
     })
-    const formattedHTML = await beautify.html(html)
+    // const formattedHTML = await beautify.html(html)
 
     let parent_urls = []
     const parent = pages.find(p => p.id === page.parent)
@@ -154,7 +154,7 @@ export async function buildSiteBundle({ pages }) {
     const page_tree = [
       {
         path,
-        content: formattedHTML,
+        content: html,
       },
     ]
 

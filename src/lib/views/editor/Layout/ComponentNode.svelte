@@ -1,13 +1,15 @@
 <script context="module">
-	import { writable } from 'svelte/store'
-	export const positions = writable([])
+	let Editor, Extension
+	import('@tiptap/core').then((module) => {
+		Editor = module.Editor
+		Extension = module.Extension
+	})
 </script>
 
 <script>
 	import _ from 'lodash-es'
 	import { fade } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
-	import { Editor, Extension } from '@tiptap/core'
 	import sections from '$lib/stores/data/sections'
 	import StarterKit from '@tiptap/starter-kit'
 	import Highlight from '@tiptap/extension-highlight'
@@ -64,7 +66,7 @@
 	let link_editor_is_visible = false
 
 	let active_editor
-	function set_editable_markdown({ key, element }) {
+	async function set_editable_markdown({ key, element }) {
 		const html = element.innerHTML.trim()
 		element.innerHTML = ''
 		const editor = new Editor({

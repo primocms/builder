@@ -1,9 +1,15 @@
+<script context="module">
+	let JSZip
+	import('jszip').then((module) => {
+		JSZip = module.default
+	})
+</script>
+
 <script>
 	import { invalidate } from '$app/navigation'
 	import Icon from '@iconify/svelte'
 	import _ from 'lodash-es'
 	import axios from 'axios'
-	import JSZip from 'jszip'
 	import { saveAs } from 'file-saver'
 	import { format } from 'timeago.js'
 	import TextInput from '$lib/ui/TextInput.svelte'

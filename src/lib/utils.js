@@ -83,9 +83,6 @@ const lorem = new lipsum({
     min: 4
   }
 });
-export const LoremIpsum = (nSentences = 1) => {
-  return lorem.generateSentences(nSentences)
-}
 
 export function getPlaceholderValue(field) {
   if (field.default) return field.default

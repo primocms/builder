@@ -1,7 +1,6 @@
 <script>
 	import _, { chain as _chain } from 'lodash-es'
 	import { fade } from 'svelte/transition'
-	import * as Popper from '@popperjs/core'
 	import { getComponentData, getSymbolUseInfo } from '$lib/stores/helpers'
 
 	import IFrame from '$lib/views/modal/ComponentLibrary/IFrame.svelte'
@@ -46,15 +45,6 @@
 		res.css = res.css + parent_css
 		componentCode = res
 		cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content })
-	}
-
-	const info = getSymbolUseInfo(symbol.id)
-	let button_node
-	let tooltip_node
-	$: if (tooltip_node) {
-		Popper.createPopper(button_node, tooltip_node, {
-			placement: 'top'
-		})
 	}
 
 	let active
