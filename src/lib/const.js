@@ -22,9 +22,9 @@ export const Field = (field = {}) => ({
  * @param symbol - The symbol properties to be applied to the new symbol
  * @returns {import('$lib').Symbol} 
  */
-export const Symbol = (symbol = {}) => ({
+export const Symbol = (symbol) => ({
   id: uuidv4(),
-  name: '',
+  name: 'New Block',
   code: {
     css: '',
     html: '',
@@ -34,6 +34,7 @@ export const Symbol = (symbol = {}) => ({
   content: {
     en: {}
   },
+  site: symbol.site,
   ...symbol
 })
 

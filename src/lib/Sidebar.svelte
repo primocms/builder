@@ -17,12 +17,8 @@
 	let active_tab = 'site'
 
 	async function create_symbol() {
-		const symbol = Symbol()
-		await symbol_actions.create({
-			...symbol,
-			name: 'New Block',
-			site: $site.id
-		})
+		const symbol = Symbol({ site: $site.id })
+		await symbol_actions.create(symbol)
 	}
 
 	async function update_symbol(symbol) {

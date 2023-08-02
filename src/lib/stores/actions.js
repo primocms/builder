@@ -295,7 +295,8 @@ export const active_page = {
     })
     update_page_preview()
   },
-  duplicate_block: async (block) => {
+  duplicate_block: async (block_id) => {
+    const block = get(stores.sections).find(section => section.id === block_id)
     const position = block.index + 1
     const original_sections = _.cloneDeep(get(stores.sections))
 
@@ -313,29 +314,31 @@ export const active_page = {
     await update_timeline({
       doing: async () => {
         stores.sections.set(new_sections)
-        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol })) })
+        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections })
       },
       undoing: async () => {
         stores.sections.set(original_sections)
         await dataChanged({ table: 'sections', action: 'delete', id: new_block.id })
+        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections })
       }
     })
     update_page_preview()
   },
-  delete_block: async (block) => {
+  delete_block: async (block_id) => {
     const original_sections = _.cloneDeep(get(stores.sections))
-    const new_sections = original_sections.filter(section => section.id !== block.id).map((section, i) => ({ ...section, index: i }))
+    const block = original_sections.find(section => section.id === block_id)
+    const new_sections = original_sections.filter(section => section.id !== block_id).map((section, i) => ({ ...section, index: i }))
 
     await update_timeline({
       doing: async () => {
         stores.sections.set(new_sections)
-        await dataChanged({ table: 'sections', action: 'delete', id: block.id })
-        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections.map(s => ({ ...s, symbol: s.symbol })) })
+        await dataChanged({ table: 'sections', action: 'delete', id: block_id })
+        await dataChanged({ table: 'sections', action: 'upsert', data: new_sections })
       },
       undoing: async () => {
         stores.sections.set(original_sections)
-        await dataChanged({ table: 'sections', action: 'insert', data: { ...block, symbol: block.symbol } })
-        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections.map(s => ({ ...s, symbol: s.symbol })) })
+        await dataChanged({ table: 'sections', action: 'insert', data: block })
+        await dataChanged({ table: 'sections', action: 'upsert', data: original_sections })
       }
     })
     update_page_preview()

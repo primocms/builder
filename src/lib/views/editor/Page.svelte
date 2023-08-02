@@ -201,8 +201,8 @@
 	<BlockButtons
 		bind:node={buttons_el}
 		i={hovered_block.index}
-		on:delete={() => active_page.delete_block(hovered_block)}
-		on:duplicate={() => active_page.duplicate_block(hovered_block)}
+		on:delete={() => active_page.delete_block(hovered_block.id)}
+		on:duplicate={() => active_page.duplicate_block(hovered_block.id)}
 		on:edit-code={() => edit_component(hovered_block, true)}
 		on:edit-content={() => edit_component(hovered_block)}
 		on:moveUp={() => active_page.move_block(hovered_block, hovered_block.index - 1)}
