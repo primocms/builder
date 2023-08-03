@@ -101,7 +101,7 @@ export async function convert_html_to_markdown(html) {
   if (converter) {
     return converter.makeMarkdown(html)
   } else {
-    const modules = await Promise.all([import('./libraries/showdown/showdown.min.js'), import('showdown-highlight')])
+    const modules = await Promise.all([import('showdown'), import('showdown-highlight')])
     showdown = modules[0].default
     showdown_highlight = modules[1].default
     converter = new showdown.Converter({
@@ -115,7 +115,7 @@ export async function convert_markdown_to_html(markdown) {
   if (converter) {
     return converter.makeHtml(markdown)
   } else {
-    const modules = await Promise.all([import('./libraries/showdown/showdown.min.js'), import('showdown-highlight')])
+    const modules = await Promise.all([import('showdown'), import('showdown-highlight')])
     showdown = modules[0].default
     showdown_highlight = modules[1].default
     converter = new showdown.Converter({
