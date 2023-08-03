@@ -200,23 +200,10 @@
 
 	$: compilationError && data && refresh_preview() // recompile when there's a compilation error & data changes
 
-	// ensure placeholder values always conform to form
-	// TODO: do for remaining fields
-	$: fields = fields.map((field) => {
-		if (field.type === 'link' && !field.value?.url)
-			return {
-				...field,
-				value: getCachedPlaceholder(field)
-			}
-		else return field
-	})
-
 	let disable_save = false
-	let component_changed = false
 	async function compile_component_code({ html, css, js }) {
 		disable_save = true
 		loading = true
-		component_changed = true
 
 		await compile()
 		disable_save = compilationError
@@ -327,6 +314,8 @@
 <ModalHeader
 	{...header}
 	warn={() => {
+		const component_changed = true
+		// !isEqual(local_content, get_local_content()) || !isEqual(local_code, symbol.code)
 		if (component_changed) {
 			const proceed = window.confirm('Undrafted changes will be lost. Continue?')
 			return proceed
