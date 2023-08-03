@@ -82,14 +82,6 @@
 			symbol.name = 'Block'
 		}
 	}
-
-	function changeName(new_name) {
-		dispatch('edit', {
-			...symbol,
-			name: new_name
-		})
-		renaming = false
-	}
 </script>
 
 <div class="sidebar-symbol">
@@ -107,7 +99,8 @@
 					if (e.code === 'Enter') {
 						e.preventDefault()
 						e.target.blur()
-						changeName(e.target.textContent)
+						dispatch('rename', e.target.textContent)
+						renaming = false
 					}
 				}}
 			>

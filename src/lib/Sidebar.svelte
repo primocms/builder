@@ -21,8 +21,8 @@
 		await symbol_actions.create(symbol)
 	}
 
-	async function update_symbol(symbol) {
-		await symbol_actions.update(symbol)
+	async function rename_symbol(id, name) {
+		await symbol_actions.update(id, { name })
 	}
 
 	async function delete_symbol(symbol_id) {
@@ -146,7 +146,7 @@
 							header_hidden={dragging === symbol._drag_id}
 							on:mousedown={() => (dragging = symbol._drag_id)}
 							on:mouseup={() => (dragging = null)}
-							on:edit={({ detail: updated }) => update_symbol(updated)}
+							on:rename={({ detail: name }) => rename_symbol(symbol.id, name)}
 							on:download={() => download_symbol(symbol.id)}
 							on:delete={() => delete_symbol(symbol.id)}
 							on:duplicate={() => duplicate_symbol(symbol.id, i + 1)}
