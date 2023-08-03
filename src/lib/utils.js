@@ -1,10 +1,5 @@
 import _, { chain as _chain, capitalize as _capitalize } from "lodash-es";
 import { processors } from './component'
-import showdown from '$lib/libraries/showdown/showdown.min.js'
-import showdownHighlight from 'showdown-highlight'
-export const converter = new showdown.Converter({
-  extensions: [showdownHighlight()],
-})
 
 const componentsCache = new Map();
 export async function processCode({ component, buildStatic = true, format = 'esm', locale = 'en', hydrated = true, ignoreCachedData = false }) {
@@ -98,5 +93,34 @@ export function getEmptyValue(field) {
 
   function getGroupValue(field) {
     return _chain(field.fields).keyBy('key').mapValues((field) => getEmptyValue(field)).value()
+  }
+}
+
+let converter, showdown, showdown_highlight
+export async function convert_html_to_markdown(html) {
+  if (converter) {
+    return converter.makeMarkdown(html)
+  } else {
+    const modules = await Promise.all([import('./libraries/showdown/showdown.min.js'), import('showdown-highlight')])
+    showdown = modules[0].default
+    showdown_highlight = modules[1].default
+    converter = new showdown.Converter({
+      extensions: [showdown_highlight()]
+    })
+    return converter.makeMarkdown(html)
+  }
+}
+
+export async function convert_markdown_to_html(markdown) {
+  if (converter) {
+    return converter.makeHtml(markdown)
+  } else {
+    const modules = await Promise.all([import('./libraries/showdown/showdown.min.js'), import('showdown-highlight')])
+    showdown = modules[0].default
+    showdown_highlight = modules[1].default
+    converter = new showdown.Converter({
+      extensions: [showdown_highlight()]
+    })
+    return converter.makeHtml(markdown)
   }
 }

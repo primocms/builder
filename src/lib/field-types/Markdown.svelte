@@ -1,22 +1,15 @@
-<script context="module">
-	import showdown from '../libraries/showdown/showdown.min.js'
-	import showdownHighlight from 'showdown-highlight'
-	export const converter = new showdown.Converter({
-		extensions: [showdownHighlight()]
-	})
-</script>
-
 <script>
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 	import autosize from 'autosize'
+	import { convert_markdown_to_html } from '$lib/utils'
 
 	export let field
 
 	// ensure value is correct shape
 	if (typeof field.value === 'string') {
 		field.value = {
-			markdown: converter.makeMarkdown(field.value),
+			markdown: field.value,
 			html: field.value
 		}
 	} else if (typeof field.value !== 'object' && !field.value.hasOwnProperty('markdown')) {
@@ -41,8 +34,8 @@
 		if (field.default === field.value.markdown) target.select()
 	}
 
-	function parseContent(markdown) {
-		field.value.html = converter.makeHtml(markdown)
+	async function parseContent(markdown) {
+		field.value.html = await convert_markdown_to_html(markdown)
 		field.value.markdown = markdown
 		dispatch('input')
 	}

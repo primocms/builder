@@ -2,11 +2,6 @@ import _ from 'lodash-es'
 import { v4 as uuidv4 } from 'uuid';
 import { createUniqueID } from "./utilities";
 import { getEmptyValue } from './utils.js'
-import showdown from './libraries/showdown/showdown.min.js'
-import showdownHighlight from 'showdown-highlight'
-export const converter = new showdown.Converter({
-  extensions: [showdownHighlight()],
-})
 
 const Field = (field) => {
   if (field.type === 'content') {
@@ -226,7 +221,7 @@ export function validate_site_structure_v2(site) {
         accumulator[locale] = {
           content: {
             html,
-            markdown: typeof (html) === 'string' && html ? converter.makeMarkdown(html) : ''
+            markdown: html
           }
         }
         return accumulator

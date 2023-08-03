@@ -18,7 +18,7 @@
 	import FloatingMenu from '@tiptap/extension-floating-menu'
 	import { tick, createEventDispatcher } from 'svelte'
 	import { browser } from '$app/environment'
-	import { processCode } from '$lib/utils'
+	import { processCode, convert_html_to_markdown } from '$lib/utils'
 	import { hovering_outside } from '$lib/utilities'
 	import pages from '$lib/stores/data/pages'
 	import symbols from '$lib/stores/data/symbols'
@@ -26,7 +26,6 @@
 	import { update_section_content } from '$lib/stores/actions'
 	import CopyButton from './CopyButton.svelte'
 	import modal from '$lib/stores/app/modal'
-	import { converter } from '$lib/field-types/Markdown.svelte'
 	import { get_content_with_static } from '$lib/stores/helpers'
 
 	const dispatch = createEventDispatcher()
@@ -93,12 +92,13 @@
 						active_editor = editor
 						dispatch('lock')
 					},
-					onBlur() {
+					async onBlur() {
+						console.log('onblur save')
 						dispatch('unlock')
 						const updated_html = editor.getHTML()
 						save_edited_value(key, {
 							html: updated_html,
-							markdown: converter.makeMarkdown(updated_html)
+							markdown: await convert_html_to_markdown(updated_html)
 						})
 					}
 				})
