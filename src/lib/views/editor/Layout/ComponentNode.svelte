@@ -93,7 +93,6 @@
 						dispatch('lock')
 					},
 					async onBlur() {
-						console.log('onblur save')
 						dispatch('unlock')
 						const updated_html = editor.getHTML()
 						save_edited_value(key, {
