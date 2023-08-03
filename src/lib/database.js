@@ -1,11 +1,11 @@
-let listener = () => {}
+let database_listener = () => {}
 
-export function subscribe(fn) {
-  listener = fn
+export function database_subscribe(fn) {
+  database_listener = fn
 }
 
-export function unsubscribe() {
-  listener = null
+export function database_unsubscribe() {
+  database_listener = null
 }
 
 /**
@@ -18,8 +18,7 @@ export function unsubscribe() {
  * }} payload - The data that changed
  */
 export async function dataChanged(payload) {
-  // When data changes, notify the listener
-  return await listener(payload)
+  return await database_listener(payload)
 }
 
 let storage_listener = () => {}
@@ -32,8 +31,17 @@ export function storage_unsubscribe(fn) {
   storage_listener = null
 }
 
+/**
+ * Runs when storing files
+ * @param {{
+*  bucket: string,
+*  action: string,
+*  key: string,
+*  file: string,
+*  options: object,
+* }} payload - The data that changed
+*/
 export async function storageChanged(payload) {
-  // When data changes, notify all listeners
   return await storage_listener(payload)
 }
 

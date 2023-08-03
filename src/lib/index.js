@@ -12,7 +12,8 @@ import { Page, Site } from './const'
 import PrimoFieldTypes from './field-types'
 import {validate_site_structure_v2} from './converter'
 import PrimoPage from './views/editor/Page.svelte'
-import {subscribe, storage_subscribe, realtime_subscribe} from './database'
+import {database_subscribe, storage_subscribe, realtime_subscribe} from './database'
+import {deploy_subscribe} from './deploy'
 
 import * as utils from './utils'
 import * as components from './components'
@@ -24,9 +25,10 @@ const stores = {
 }
 
 export {
-  subscribe,
+  database_subscribe,
   storage_subscribe,
   realtime_subscribe,
+  deploy_subscribe,
   locale,
   locked_blocks,
   site,

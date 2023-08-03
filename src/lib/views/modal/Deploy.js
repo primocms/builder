@@ -1,13 +1,14 @@
 import {get} from 'svelte/store'
 import pages from '$lib/stores/data/pages'
-import axios from 'axios'
 // import beautify from 'js-beautify' // remove for now to reduce bundle size, dynamically import later if wanted
 import { dataChanged } from '$lib/database.js'
+import {deploy} from '$lib/deploy'
 import { buildStaticPage } from '$lib/stores/helpers'
 import _ from 'lodash-es'
 import {page} from '$app/stores'
+import {site} from '$lib/stores/data/site'
 
-export async function push_site({ token, repo }) {
+export async function push_site(repo) {
   const files = (
     await buildSiteBundle({
       pages: get(pages),
@@ -19,68 +20,7 @@ export async function push_site({ token, repo }) {
     }
   })
 
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github.v3+json',
-  }
-
-  const [{data:existing_repo}, {data: [latest_commit]}] = await Promise.all([
-    axios.get(`https://api.github.com/repos/${repo}`, { headers }),
-    axios.get(`https://api.github.com/repos/${repo}/commits?sha=main`, { headers })
-  ])
-  const activeSha = latest_commit?.sha
-
-  const tree = await createTree()
-  const commit = await createCommit(tree.sha)
-  const final = await pushCommit(commit.sha)
-
-  return {
-    deploy_id: final.object.sha,
-    repo: existing_repo,
-    created: Date.now(),
-  }
-
-  async function createTree() {
-    const bundle = files.map((file) => ({
-      path: file.file,
-      content: file.data,
-      type: 'blob',
-      mode: '100644',
-    }))
-    const { data } = await axios.post(
-      `https://api.github.com/repos/${repo}/git/trees`,
-      {
-        tree: bundle,
-      },
-      { headers }
-    )
-    return data
-  }
-
-  async function createCommit(tree) {
-    const { data } = await axios.post(
-      `https://api.github.com/repos/${repo}/git/commits`,
-      {
-        message: 'Update site',
-        tree,
-        ...(activeSha ? { parents: [activeSha] } : {}),
-      },
-      { headers }
-    )
-    return data
-  }
-
-  async function pushCommit(commitSha) {
-    const { data } = await axios.patch(
-      `https://api.github.com/repos/${repo}/git/refs/heads/main`,
-      {
-        sha: commitSha,
-        force: true,
-      },
-      { headers }
-    )
-    return data
-  }
+  return await deploy({ files, site_id: get(site).id, repo })
 }
 
 export async function buildSiteBundle({ pages }) {

@@ -61,11 +61,11 @@
 		"pluralize": "^8.0.0",
 		"prettier": "^2.4.1",
 		"promise-worker": "^2.0.1",
+		"showdown": "^2.1.0",
 		"showdown-highlight": "^3.1.0",
 		"svelte": "^3.59.2",
 		"svelte-dnd-action": "^0.9.24",
 		"svelte-toggle": "^3.1.0",
-		"showdown": "^2.1.0",
 		"timeago.js": "^4.0.2",
 		"uuid": "^9.0.0"
 	},

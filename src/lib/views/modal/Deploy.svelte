@@ -82,8 +82,9 @@
 		}
 	}
 
+	$: console.log({ $active_deployment })
+
 	let repo_name = ''
-	let repo = $active_deployment?.repo.full_name
 	async function create_repo() {
 		loading = true
 		const headers = { Authorization: `Bearer ${github_token}` }
@@ -95,37 +96,42 @@
 			},
 			{ headers }
 		)
-		repo = data
-		$active_deployment = await push_site({
-			token: github_token,
-			repo: repo.full_name
-		})
-		stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
+		console.log({ data })
+		const { success, res } = await push_site(repo.full_name)
+		if (success) {
+			$active_deployment = res
+			stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
+		} else {
+			// stage = 'CONNECT_REPO__ACTIVE__ERROR'
+			alert('Could not deploy to repo')
+		}
 		loading = false
-		await dataChanged({
-			table: 'sites',
-			action: 'update',
-			id: $site.id,
-			data: { active_deployment: $active_deployment }
-		})
-		invalidate('app:data')
+		// await dataChanged({
+		// 	table: 'sites',
+		// 	action: 'update',
+		// 	id: $site.id,
+		// 	data: { active_deployment: $active_deployment }
+		// })
+		// invalidate('app:data')
 	}
 
 	async function deploy_to_repo() {
 		loading = true
-		$active_deployment = await push_site({
-			token: github_token,
-			repo: repo_name || $active_deployment.repo.full_name
-		})
-		await dataChanged({
-			table: 'sites',
-			action: 'update',
-			id: $site.id,
-			data: { active_deployment: $active_deployment }
-		})
-		stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
+		const { success, res } = await push_site(repo_name || $active_deployment.repo.full_name)
+		if (success) {
+			$active_deployment = res
+			stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
+		} else {
+			alert('Could not deploy to repo')
+		}
+		// await dataChanged({
+		// 	table: 'sites',
+		// 	action: 'update',
+		// 	id: $site.id,
+		// 	data: { active_deployment: $active_deployment }
+		// })
 		loading = false
-		invalidate('app:data')
+		// invalidate('app:data')
 	}
 
 	let user_repos = []
