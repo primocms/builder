@@ -195,10 +195,12 @@
 	{:else if stage.startsWith('CONNECT_REPO')}
 		<div class="container">
 			<div class="account-card">
-				<div class="user">
-					<img src={$github_account?.avatar_url} alt="Github avatar" />
-					<span>{$github_account?.login}</span>
-				</div>
+				{#if $github_account}
+					<div class="user">
+						<img src={$github_account.avatar_url} alt="Github avatar" />
+						<span>{$github_account.login}</span>
+					</div>
+				{/if}
 				<button
 					class="primo-link"
 					on:click={() => {
