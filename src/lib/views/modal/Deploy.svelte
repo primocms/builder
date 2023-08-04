@@ -196,8 +196,8 @@
 		<div class="container">
 			<div class="account-card">
 				<div class="user">
-					<img src={$github_account.avatar_url} alt="Github avatar" />
-					<span>{$github_account.login}</span>
+					<img src={$github_account?.avatar_url} alt="Github avatar" />
+					<span>{$github_account?.login}</span>
 				</div>
 				<button
 					class="primo-link"
