@@ -12,7 +12,9 @@ export function deploy_unsubscribe() {
  * Runs when deploying the site
  * @param {{
  *  [files]: obj,
- *  owner_id: string,
+ *  site_id: string,
+ *  repo_name: string,
+ *  create_new?: boolean,
  * }} payload - The data that changed
  */
 export async function deploy(payload) {

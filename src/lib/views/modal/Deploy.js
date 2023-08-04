@@ -8,7 +8,7 @@ import _ from 'lodash-es'
 import {page} from '$app/stores'
 import {site} from '$lib/stores/data/site'
 
-export async function push_site(repo) {
+export async function push_site({repo_name, create_new = false}) {
   const files = (
     await buildSiteBundle({
       pages: get(pages),
@@ -20,7 +20,7 @@ export async function push_site(repo) {
     }
   })
 
-  return await deploy({ files, site_id: get(site).id, repo })
+  return await deploy({ files, site_id: get(site).id, repo_name, create_new })
 }
 
 export async function buildSiteBundle({ pages }) {

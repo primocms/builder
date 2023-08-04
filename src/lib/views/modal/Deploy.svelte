@@ -1,23 +1,24 @@
 <script context="module">
-	let JSZip
-	import('jszip').then((module) => {
-		JSZip = module.default
-	})
+	import { browser } from '$app/environment'
+	import { writable } from 'svelte/store'
+	import axios from 'axios'
+
+	const github_account = writable(null)
+
+	let JSZip, saveFile
+	import('jszip').then((module) => (JSZip = module.default))
+	import('file-saver').then((module) => (saveFile = module.saveAs))
 </script>
 
 <script>
-	import { invalidate } from '$app/navigation'
 	import Icon from '@iconify/svelte'
 	import _ from 'lodash-es'
-	import axios from 'axios'
-	import { saveAs } from 'file-saver'
 	import { format } from 'timeago.js'
 	import TextInput from '$lib/ui/TextInput.svelte'
 	import Select from '$lib/ui/inputs/Select.svelte'
 	import modal from '$lib/stores/app/modal'
 	import site, { active_deployment } from '$lib/stores/data/site'
 	import pages from '$lib/stores/data/pages'
-	import { page } from '$app/stores'
 	import { push_site, buildSiteBundle } from './Deploy'
 	import PrimaryButton from '$lib/ui/PrimaryButton.svelte'
 	import { dataChanged } from '$lib/database'
@@ -28,26 +29,31 @@
 		stage = 'CONNECT_REPO__ACTIVE'
 	}
 
-	let github_token = $page.data.config['github_token']['value'] || ''
-	let github_account = $page.data.config['github_token']['options']?.user
+	let entered_github_token = ''
+
+	$: if (!$github_account) {
+		axios
+			.get('/api/deploy/user')
+			.then(({ data }) => ($github_account = data))
+			.catch((e) => console.log(e))
+	}
 
 	async function connect_github() {
-		const headers = { Authorization: `Bearer ${github_token}` }
+		const headers = { Authorization: `Bearer ${entered_github_token}` }
 
 		const { data } = await axios.get(`https://api.github.com/user`, {
 			headers: { ...headers, Accept: 'application/vnd.github.v3+json' }
 		})
 
 		if (data) {
-			github_account = data
+			$github_account = data
 			stage = 'CONNECT_REPO'
 			await dataChanged({
 				table: 'config',
 				action: 'update',
 				id: 'github_token',
-				data: { value: github_token, options: { user: github_account } }
+				data: { value: entered_github_token, options: { user: data } }
 			})
-			invalidate('app:data')
 		}
 	}
 
@@ -70,7 +76,7 @@
 		loading = true
 		await build_files()
 		const toDownload = await create_site_zip()
-		saveAs(toDownload, `${$site.name}.zip`)
+		saveFile(toDownload, `${$site.name}.zip`)
 		modal.hide()
 
 		async function create_site_zip() {
@@ -84,78 +90,26 @@
 
 	$: console.log({ $active_deployment })
 
-	let repo_name = ''
-	async function create_repo() {
-		loading = true
-		const headers = { Authorization: `Bearer ${github_token}` }
-		const { data } = await axios.post(
-			`https://api.github.com/user/repos`,
-			{
-				name: repo_name,
-				auto_init: true
-			},
-			{ headers }
-		)
-		console.log({ data })
-		const { success, res } = await push_site(repo.full_name)
-		if (success) {
-			$active_deployment = res
-			stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
-		} else {
-			// stage = 'CONNECT_REPO__ACTIVE__ERROR'
-			alert('Could not deploy to repo')
-		}
-		loading = false
-		// await dataChanged({
-		// 	table: 'sites',
-		// 	action: 'update',
-		// 	id: $site.id,
-		// 	data: { active_deployment: $active_deployment }
-		// })
-		// invalidate('app:data')
-	}
-
+	let new_repo_name = ''
+	let existing_repo_name = ''
 	async function deploy_to_repo() {
 		loading = true
-		const { success, res } = await push_site(repo_name || $active_deployment.repo.full_name)
-		if (success) {
-			$active_deployment = res
+		const deployment = await push_site({
+			repo_name: new_repo_name || existing_repo_name || $active_deployment.repo.full_name,
+			create_new: new_repo_name ? true : false
+		})
+		if (deployment) {
+			$active_deployment = deployment
 			stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
 		} else {
 			alert('Could not deploy to repo')
 		}
-		// await dataChanged({
-		// 	table: 'sites',
-		// 	action: 'update',
-		// 	id: $site.id,
-		// 	data: { active_deployment: $active_deployment }
-		// })
 		loading = false
-		// invalidate('app:data')
 	}
 
-	let user_repos = []
-	$: if (github_account) get_repos()
 	async function get_repos() {
-		const headers = {
-			Authorization: `Bearer ${github_token}`,
-			Accept: 'application/vnd.github.v3+json'
-		}
-		const res = await Promise.all([
-			await axios.get(`https://api.github.com/user/repos?per_page=100`, {
-				headers: { ...headers }
-			}),
-			await axios.get(`https://api.github.com/user/repos?per_page=100&page=2`, {
-				headers: { ...headers }
-			})
-		]).then((res) => res.map(({ data }) => data))
-
-		user_repos = _.flatten(res).map((repo) => {
-			return {
-				id: repo.full_name,
-				label: repo.name
-			}
-		})
+		const { data } = await axios.get('/api/deploy/repos')
+		return data
 	}
 
 	const Title = (stage) => {
@@ -204,7 +158,7 @@
 					<Icon icon={loading ? 'eos-icons:loading' : 'ic:baseline-download'} />
 					<span>Download</span>
 				</button>
-				{#if github_account}
+				{#if $github_account}
 					<button class="primo-button primary" on:click={() => (stage = 'CONNECT_REPO')}>
 						<Icon icon="mdi:github" />
 						<span>Deploy to Github</span>
@@ -232,7 +186,7 @@
 				<p>Enter API Token</p>
 				<form on:submit|preventDefault={connect_github}>
 					<div>
-						<TextInput bind:value={github_token} placeholder="Token" />
+						<TextInput bind:value={entered_github_token} placeholder="Token" />
 						<button class="primo-button">Connect</button>
 					</div>
 				</form>
@@ -242,14 +196,12 @@
 		<div class="container">
 			<div class="account-card">
 				<div class="user">
-					<img src={github_account?.avatar_url} alt="" />
-					<span>{github_account?.login}</span>
+					<img src={$github_account.avatar_url} alt="Github avatar" />
+					<span>{$github_account.login}</span>
 				</div>
 				<button
 					class="primo-link"
 					on:click={() => {
-						github_token = ''
-						github_account = null
 						stage = 'CONNECT_GITHUB'
 					}}
 				>
@@ -276,10 +228,10 @@
 							use existing repo instead
 						</button>
 					</header>
-					<form on:submit|preventDefault={create_repo}>
+					<form on:submit|preventDefault={deploy_to_repo}>
 						<p class="form-label">Enter repo name</p>
 						<div>
-							<TextInput bind:value={repo_name} placeholder="Site" />
+							<TextInput bind:value={new_repo_name} placeholder="Site" />
 							<button class="primo-button primary" disabled={loading}>
 								{#if loading}
 									<Icon icon="eos-icons:loading" />
@@ -302,7 +254,11 @@
 					<form on:submit|preventDefault={deploy_to_repo}>
 						<p class="form-label">Select repo</p>
 						<div>
-							<Select bind:value={repo_name} options={user_repos} />
+							{#await get_repos()}
+								<Select options={[]} />
+							{:then repos}
+								<Select bind:value={existing_repo_name} options={repos} />
+							{/await}
 							<PrimaryButton type="submit" label="Deploy" {loading} />
 						</div>
 					</form>
@@ -455,7 +411,9 @@
 		margin-top: 0.5rem;
 
 		div {
-			display: flex;
+			display: grid;
+			gap: 0.5rem;
+			grid-template-columns: 1fr auto;
 			gap: 0.5rem;
 		}
 	}
