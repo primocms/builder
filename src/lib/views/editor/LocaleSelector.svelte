@@ -13,12 +13,12 @@
 
 	let showingSelector = false
 	let addingLanguage = false
-	$: all_languages = $content ? Object.keys($content) : []
+	$: site_languages = $content ? Object.keys($content) : []
 
 	let searchText = ''
 	$: filtered_available_languages = ((text) => {
 		return text.length > 0
-			? available_languages.filter((l) => !all_languages.includes(l.key)).filter(match)
+			? available_languages.filter((l) => !site_languages.includes(l.key)).filter(match)
 			: available_languages
 		function match(language) {
 			let matching_language
@@ -70,7 +70,7 @@
 		<div class="select-container" in:fly={{ duration: 100, y: -20, opacity: 0 }}>
 			{#if !addingLanguage}
 				<div class="language-list" aria-hidden="true">
-					{#each all_languages as languageID}
+					{#each site_languages.sort((l) => (l === 'en' ? -1 : 1)) as languageID}
 						<div class="language-item">
 							<button
 								on:click={() => {
