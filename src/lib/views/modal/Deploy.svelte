@@ -19,6 +19,7 @@
 	import modal from '$lib/stores/app/modal'
 	import site, { active_deployment } from '$lib/stores/data/site'
 	import pages from '$lib/stores/data/pages'
+	import symbols from '$lib/stores/data/symbols'
 	import { push_site, buildSiteBundle } from './Deploy'
 	import PrimaryButton from '$lib/ui/PrimaryButton.svelte'
 	import { dataChanged } from '$lib/database'
@@ -59,7 +60,7 @@
 
 	let files = []
 	async function build_files() {
-		const all_files = await buildSiteBundle({ pages: $pages })
+		const all_files = await buildSiteBundle({ pages: $pages, symbols: $symbols })
 		files = _.uniqBy(
 			all_files.map((file) => {
 				return {

@@ -1,9 +1,11 @@
 import {get} from 'svelte/store'
 import pages from '$lib/stores/data/pages'
+import symbols from '$lib/stores/data/symbols'
 // import beautify from 'js-beautify' // remove for now to reduce bundle size, dynamically import later if wanted
 import { dataChanged } from '$lib/database.js'
 import {deploy} from '$lib/deploy'
 import { buildStaticPage } from '$lib/stores/helpers'
+import {processCode} from '$lib/utils'
 import _ from 'lodash-es'
 import {page} from '$app/stores'
 import {site} from '$lib/stores/data/site'
@@ -12,6 +14,7 @@ export async function push_site({repo_name, create_new = false}) {
   const files = (
     await buildSiteBundle({
       pages: get(pages),
+      symbols: get(symbols)
     })
   ).map((file) => {
     return {
@@ -23,19 +26,33 @@ export async function push_site({repo_name, create_new = false}) {
   return await deploy({ files, site_id: get(site).id, repo_name, create_new })
 }
 
-export async function buildSiteBundle({ pages }) {
+export async function buildSiteBundle({ pages, symbols }) {
   let all_sections = []
   let all_pages = []
 
   const page_files = await Promise.all(pages.map((page) => {
-
     return Promise.all(Object.keys(page.content).map((language) => {
       return buildPageTree(page, language)
     }))
-
   }))
 
-  return buildSiteTree(page_files.flat())
+  const symbol_files = await Promise.all(symbols.filter(s => s.code.js).map(async (symbol) => {
+    const res = await processCode({
+      component: {
+        html: symbol.code.html,
+        css: symbol.code.css,
+        js: symbol.code.js,
+        data: symbol.content['en']
+      }
+    })
+    const date = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
+    return {
+      path: '_symbols/' + symbol.id + '.js',
+      content: `// ${symbol.name} - Updated ${date}\n` + res.js
+    }
+  }))
+
+  return buildSiteTree([ ...symbol_files, ...page_files.flat()])
 
   async function buildPageTree(page, language) {
     const { url } = page
@@ -49,7 +66,7 @@ export async function buildSiteBundle({ pages }) {
     const { html, js } = await buildStaticPage({
       page,
       page_sections: sections,
-      separateModules: true,
+      page_symbols: symbols.filter(symbol => sections.find(section => section.symbol === symbol.id)),
       locale: language
     })
     // const formattedHTML = await beautify.html(html)
@@ -98,17 +115,6 @@ export async function buildSiteBundle({ pages }) {
       },
     ]
 
-    if (js && language !== 'en') {
-      page_tree.push({
-        path: url === 'index' ? `${language}/_module.js` : `${full_url}/_module.js`,
-        content: js,
-      })
-    } else if (js) {
-      page_tree.push({
-        path: url === 'index' ? '_module.js' : `${full_url}/_module.js`,
-        content: js,
-      })
-    }
 
     return page_tree
   }

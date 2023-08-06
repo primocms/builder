@@ -35,12 +35,13 @@ export function getSymbol(symbolID) {
  *  page_sections?: import('$lib').Section[]
  *  page_symbols?: import('$lib').Symbol[]
  *  locale?: string
- *  separateModules?: boolean
  *  no_js?: boolean
  * }} details
  * @returns {Promise<string | { html: string, js: string}>} 
  * */
-export async function buildStaticPage({ page = get(activePage), site = get(activeSite), page_sections = get(sections), page_symbols = get(symbols), locale = 'en', separateModules = false, no_js = false }) {
+export async function buildStaticPage({ page = get(activePage), site = get(activeSite), page_sections = get(sections), page_symbols = get(symbols), locale = 'en', no_js = false }) {
+  const hydratable_symbols = page_symbols.filter(s => s.code.js)
+  
   const component = await Promise.all([
     (async () => {
       const css = await processCSS(site.code.css + page.code.css)
@@ -69,9 +70,10 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
       })
       const { css, error } = await processors.css(postcss || '')
       const section_id = section.id.split('-')[0]
+      const hydrated = hydratable_symbols.some(symbol => symbol.id === section.symbol)
       return {
         html: `
-          <div class="section" id="section-${section_id}">
+          <div class="section" id="section-${section_id}" ${hydrated ?? `data-symbol="${section.symbol}"`}>
             ${html} 
           </div>`,
         js,
@@ -95,7 +97,7 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
     locale
   })
 
-  const final = `
+  const final = `\
   <!DOCTYPE html>
   <html lang="${locale}">
     <head>
@@ -105,35 +107,35 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
     </head>
     <body id="page">
       ${res.html}
-      ${!no_js ? `<script type="module">${buildModule(res.js)}</script>` : ``}
+      ${no_js ? `` : `<script type="module">${fetch_modules(hydratable_symbols)}</script>`}
     </body>
   </html>
   `
 
-  // fetch module & content to hydrate component
-  function buildModule(js) {
-    return separateModules ? `\
-      const path = window.location.pathname === '/' ? '' : window.location.pathname
-      const [ {default:App} ] = await Promise.all([
-        import(path + '/_module.js')
-      ]).catch(e => console.error(e))
-      new App({
-        target: document.querySelector('body'),
-        hydrate: true,
-      })`
-      :
-      `\
-    const App = ${js};
-    new App({
-      target: document.querySelector('body'),
-      hydrate: true
-    }); `
+  // fetch module to hydrate component, include hydration data
+  function fetch_modules(symbols) {
+    return symbols.map(symbol => `
+      import('/_symbols/${symbol.id}.js')
+      .then(({default:App}) => {
+        ${page_sections.map(section => {
+          const instance_content = get_content_with_static({ component: section, symbol, locale })
+          return `
+            new App({
+              target: document.querySelector('[data-symbol="${symbol.id}"]'),
+              hydrate: true,
+              props: ${JSON.stringify(instance_content)}
+            })
+          `
+        }).join('\n')}
+      })
+      .catch(e => console.error(e))
+    `).join('\n')
   }
 
-  return separateModules ? {
+  return {
     html: final,
     js: res.js
-  } : final
+  }
 }
 
 // Include static content alongside the component's content
