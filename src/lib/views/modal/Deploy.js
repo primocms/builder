@@ -20,6 +20,7 @@ export async function push_site({repo_name, create_new = false}) {
     return {
       file: file.path,
       data: file.content,
+      size: (new Blob([file.content], { type: 'text/plain' }).size) / 1024
     }
   })
 
