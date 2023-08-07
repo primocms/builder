@@ -117,7 +117,7 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
     return symbols.map(symbol => `
       import('/_symbols/${symbol.id}.js')
       .then(({default:App}) => {
-        ${page_sections.map(section => {
+        ${page_sections.filter(section => section.symbol === symbol.id).map(section => {
           const instance_content = get_content_with_static({ component: section, symbol, locale })
           return `
             new App({
