@@ -10,7 +10,6 @@
 	import _ from 'lodash-es'
 	import { fade } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
-	import sections from '$lib/stores/data/sections'
 	import StarterKit from '@tiptap/starter-kit'
 	import Highlight from '@tiptap/extension-highlight'
 	import Link from '@tiptap/extension-link'

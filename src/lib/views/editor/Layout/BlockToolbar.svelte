@@ -1,7 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte'
 	import { fade } from 'svelte/transition'
-	import sections from '../../../stores/data/sections'
+	import sections from '../../../stores/data/sections.js'
 	import { userRole } from '$lib/stores/app/misc'
 	import Icon from '@iconify/svelte'
 
@@ -55,9 +55,11 @@
 	.block-buttons {
 		box-shadow: inset 0 0 0 calc(4px) var(--color-gray-8);
 		z-index: 999999;
-		position: absolute;
-		inset: 0px;
+		position: fixed;
 		pointer-events: none;
+		display: flex;
+		justify-content: space-between;
+		flex-direction: column;
 	}
 	.component-button {
 		display: flex;
@@ -114,17 +116,17 @@
 	.top {
 		display: flex;
 		justify-content: space-between;
-		position: absolute;
+		/* position: absolute;
 		top: 0;
 		left: 0;
-		right: 0;
+		right: 0; */
 	}
 	.bottom {
 		display: flex;
 		justify-content: flex-end;
 		/* width: 100%; */
-		bottom: 0px;
+		/* bottom: 0px;
 		right: 0px;
-		position: absolute;
+		position: absolute; */
 	}
 </style>

@@ -83,8 +83,10 @@
 	const flipDurationMs = 200
 
 	let all_symbols
-	$: if (draggable_symbols) all_symbols = _.cloneDeep(draggable_symbols)
 	function consider_dnd({ detail }) {
+		if (!all_symbols) {
+			all_symbols = _.cloneDeep(draggable_symbols)
+		}
 		draggable_symbols = detail.items
 	}
 	function finalize_dnd({ detail }) {

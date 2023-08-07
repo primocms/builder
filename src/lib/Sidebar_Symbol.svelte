@@ -148,6 +148,7 @@
 			</div>
 		{/if}
 	</header>
+	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div class="symbol" on:mousedown on:mouseup>
 		<Block {symbol} />
 	</div>

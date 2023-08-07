@@ -1,9 +1,10 @@
 <script>
 	import _ from 'lodash-es'
+	import { tick } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import { flip } from 'svelte/animate'
 	import ComponentNode from './Layout/ComponentNode.svelte'
-	import BlockButtons from './Layout/BlockButtons.svelte'
+	import BlockToolbar from './Layout/BlockToolbar.svelte'
 	import LockedOverlay from './Layout/LockedOverlay.svelte'
 	import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME } from 'svelte-dnd-action'
 	import { afterNavigate } from '$app/navigation'
@@ -33,6 +34,7 @@
 	let html_below = ''
 
 	$: set_page_content(page)
+	set_page_content(page)
 	async function set_page_content(page_data) {
 		// if (!page_data) return
 		// await tick()
@@ -118,6 +120,7 @@
 		}, 100)
 	}
 
+	let draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
 	$: draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
 
 	const flipDurationMs = 100
@@ -128,7 +131,10 @@
 			.map((item, index) => ({ ...item, index }))
 			.find((item) => item._drag_id === detail.info.id)
 
-		if ($symbols.find((symbol) => symbol.id === dragged_symbol.id)) {
+		if (!dragged_symbol) return
+
+		const is_site_symbol = $symbols.some((s) => s.id === dragged_symbol.id)
+		if (is_site_symbol) {
 			draggable_sections = detail.items
 		} else {
 			dragged_symbol.is_primo_block = true
@@ -138,22 +144,50 @@
 		}
 	}
 
-	function finalize_dnd({ detail }) {
+	async function finalize_dnd() {
+		moving = true
 		if (dragged_symbol.is_primo_block) {
-			active_page.add_primo_block(dragged_symbol, dragged_symbol.index)
+			await active_page.add_primo_block(dragged_symbol, dragged_symbol.index)
 		} else {
-			active_page.add_block(dragged_symbol, dragged_symbol.index)
+			await active_page.add_block(dragged_symbol, dragged_symbol.index)
 		}
+		setTimeout(() => {
+			moving = false
+		}, 300)
 	}
 
 	let hovered_block = null
 
-	let buttons_el
+	let block_toolbar_element
+	let page_el
 	let hovered_block_el
-	$: position_block_buttons(hovered_block_el, buttons_el)
-	function position_block_buttons(hovered_block_el, buttons_el) {
-		if (!hovered_block_el || !buttons_el) return
-		hovered_block_el.appendChild(buttons_el)
+
+	let showing_block_toolbar = false
+	async function show_block_toolbar() {
+		showing_block_toolbar = true
+		await tick()
+		position_block_toolbar()
+		page_el.addEventListener('scroll', position_block_toolbar)
+	}
+
+	async function position_block_toolbar() {
+		hovered_block_el.appendChild(block_toolbar_element)
+		const { top, left, bottom, right } = hovered_block_el.getBoundingClientRect()
+		const block_positions = {
+			top: (top <= 56 ? 56 : top) + window.scrollY,
+			bottom: bottom >= window.innerHeight ? 0 : window.innerHeight - bottom,
+			left,
+			right: window.innerWidth - right - window.scrollX
+		}
+		block_toolbar_element.style.top = `${block_positions.top}px`
+		block_toolbar_element.style.bottom = `${block_positions.bottom}px`
+		block_toolbar_element.style.left = `${block_positions.left}px`
+		block_toolbar_element.style.right = `${block_positions.right}px`
+	}
+
+	function hide_block_toolbar() {
+		showing_block_toolbar = false
+		page_el.removeEventListener('scroll', position_block_toolbar)
 	}
 
 	function edit_component(block, showIDE = false) {
@@ -185,6 +219,8 @@
 			}
 		)
 	}
+
+	let moving = false // workaround to prevent block buttons from showing when moving blocks
 </script>
 
 <!-- Loading Spinner -->
@@ -195,16 +231,30 @@
 {/if}
 
 <!-- Block Buttons -->
-{#if hovered_block_el}
-	<BlockButtons
-		bind:node={buttons_el}
+{#if showing_block_toolbar}
+	<BlockToolbar
+		bind:node={block_toolbar_element}
 		i={hovered_block.index}
 		on:delete={() => active_page.delete_block(hovered_block.id)}
 		on:duplicate={() => active_page.duplicate_block(hovered_block.id)}
 		on:edit-code={() => edit_component(hovered_block, true)}
 		on:edit-content={() => edit_component(hovered_block)}
-		on:moveUp={() => active_page.move_block(hovered_block, hovered_block.index - 1)}
-		on:moveDown={() => active_page.move_block(hovered_block, hovered_block.index + 1)}
+		on:moveUp={async () => {
+			moving = true
+			hide_block_toolbar()
+			active_page.move_block(hovered_block, hovered_block.index - 1)
+			setTimeout(() => {
+				moving = false
+			}, 300)
+		}}
+		on:moveDown={async () => {
+			moving = true
+			hide_block_toolbar()
+			active_page.move_block(hovered_block, hovered_block.index + 1)
+			setTimeout(() => {
+				moving = false
+			}, 300)
+		}}
 	/>
 {/if}
 
@@ -216,6 +266,7 @@
 <!-- Page Blocks -->
 <div
 	id="page"
+	bind:this={page_el}
 	class:fadein={page_mounted}
 	lang={$locale}
 	use:dndzone={{
@@ -227,7 +278,7 @@
 	on:consider={consider_dnd}
 	on:finalize={finalize_dnd}
 >
-	{#each draggable_sections.sort((a, b) => a.index - b.index) as block, i (block.id)}
+	{#each draggable_sections as block (block.id)}
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		<!-- svelte-ignore a11y-mouse-events-have-key-events -->
 		{@const locked = $locked_blocks.includes(block.id)}
@@ -237,21 +288,25 @@
 			id="section-{block.id.split('-')[0]}"
 			class:locked
 			data-block={block.symbol}
-			on:mouseenter={({ target }) => {
+			on:mousemove={() => {
+				if (!moving && !showing_block_toolbar) {
+					show_block_toolbar()
+				}
+			}}
+			on:mouseenter={async ({ target }) => {
 				hovered_block = block
 				hovered_block_el = target
+				if (!moving) {
+					show_block_toolbar()
+				}
 			}}
-			on:mouseleave={() => {
-				hovered_block = null
-				hovered_block_el = null
-			}}
+			on:mouseleave={hide_block_toolbar}
 			animate:flip={{ duration: flipDurationMs }}
-			style="min-height: 5rem;position:relative;overflow:hidden;"
+			style="min-height: 5rem;overflow:hidden;position: relative;"
 		>
 			{#if block[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
 				<div class="block-placeholder">
 					<ComponentNode
-						{i}
 						primo_symbol={block.primo_symbol}
 						block={{
 							...block,
@@ -264,13 +319,10 @@
 					<LockedOverlay {locked} />
 				{/if}
 				<ComponentNode
-					{i}
 					{block}
 					on:lock={() => lock_block(block.id)}
 					on:unlock={() => unlock_block(block.id)}
-					on:mount={() => {
-						sections_mounted++
-					}}
+					on:mount={() => sections_mounted++}
 				/>
 			{/if}
 		</div>
