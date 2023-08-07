@@ -13,6 +13,7 @@
 <script>
 	import Icon from '@iconify/svelte'
 	import _ from 'lodash-es'
+	import { fade } from 'svelte/transition'
 	import { format } from 'timeago.js'
 	import TextInput from '$lib/ui/TextInput.svelte'
 	import Select from '$lib/ui/inputs/Select.svelte'
@@ -195,24 +196,27 @@
 		</div>
 	{:else if stage.startsWith('CONNECT_REPO')}
 		<div class="container">
-			<div class="account-card">
-				{#if $github_account}
+			{#if $github_account}
+				<div class="account-card" in:fade|local>
 					<div class="user">
 						<img src={$github_account.avatar_url} alt="Github avatar" />
 						<span>{$github_account.login}</span>
 					</div>
-				{/if}
-				<button
-					class="primo-link"
-					on:click={() => {
-						stage = 'CONNECT_GITHUB'
-					}}
-				>
-					edit
-				</button>
-			</div>
+					<button
+						class="primo-link"
+						on:click={() => {
+							stage = 'CONNECT_GITHUB'
+						}}
+					>
+						edit
+					</button>
+				</div>
+			{/if}
 			{#if stage === 'CONNECT_REPO'}
 				<div class="buttons">
+					<button class="primo-button" on:click={download_site}>
+						<Icon icon="ic:baseline-download" />
+					</button>
 					<button class="primo-button" on:click={() => (stage = 'CONNECT_REPO__USE_EXISTING')}>
 						Use existing repo
 					</button>
@@ -405,6 +409,7 @@
 		padding: 7px 16px;
 		background: #1f1f1f;
 		border-radius: 0.25rem;
+		height: 100%;
 	}
 	.primo-button.primary {
 		border: 1px solid #35d994;
