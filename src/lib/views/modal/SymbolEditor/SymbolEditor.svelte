@@ -68,30 +68,7 @@
 	let fields = cloneDeep(symbol.fields)
 
 	// local copy of component content to modify & save
-	let local_content = get_local_content()
-	function get_local_content() {
-		let combined_content = symbol.content
-		symbol.fields.forEach((field) => {
-			if (field.is_static) {
-				combined_content = {
-					...combined_content,
-					[$locale]: {
-						...combined_content[$locale],
-						[field.key]: symbol.content[$locale][field.key] || getCachedPlaceholder(field)
-					}
-				}
-			} else {
-				combined_content = {
-					...combined_content,
-					[$locale]: {
-						...combined_content[$locale],
-						[field.key]: component.content[$locale][field.key] || getCachedPlaceholder(field)
-					}
-				}
-			}
-		})
-		return combined_content
-	}
+	let local_content = cloneDeep(symbol.content)
 
 	// component data for compiling
 	$: data = get_data($locale, local_content)
