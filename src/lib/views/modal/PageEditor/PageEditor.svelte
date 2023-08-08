@@ -196,19 +196,21 @@
 		}, 200)
 
 		async function compile() {
-			preview = await buildStaticPage({
-				page: {
-					...$activePage,
-					code: {
-						...local_code,
-						html: {
-							head: html,
-							below: '' // TODO
-						}
-					},
-					content: local_content
-				}
-			})
+			preview = (
+				await buildStaticPage({
+					page: {
+						...$activePage,
+						code: {
+							...local_code,
+							html: {
+								head: html,
+								below: '' // TODO
+							}
+						},
+						content: local_content
+					}
+				})
+			)?.html
 		}
 	}
 

@@ -177,19 +177,21 @@
 		}, 200)
 
 		async function compile() {
-			preview = await buildStaticPage({
-				site: {
-					...$site,
-					code: {
-						...local_code,
-						html: {
-							head: html,
-							below: '' // TODO
-						}
-					},
-					content: local_content
-				}
-			})
+			preview = (
+				await buildStaticPage({
+					site: {
+						...$site,
+						code: {
+							...local_code,
+							html: {
+								head: html,
+								below: '' // TODO
+							}
+						},
+						content: local_content
+					}
+				})
+			)?.html
 		}
 	}
 

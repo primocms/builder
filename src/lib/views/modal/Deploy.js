@@ -4,7 +4,7 @@ import symbols from '$lib/stores/data/symbols'
 // import beautify from 'js-beautify' // remove for now to reduce bundle size, dynamically import later if wanted
 import { dataChanged } from '$lib/database.js'
 import {deploy} from '$lib/deploy'
-import { buildStaticPage,getComponentData } from '$lib/stores/helpers'
+import { buildStaticPage } from '$lib/stores/helpers'
 import {processCode} from '$lib/utils'
 import _ from 'lodash-es'
 import {page} from '$app/stores'
@@ -38,15 +38,17 @@ export async function buildSiteBundle({ pages, symbols }) {
   }))
 
   const symbol_files = await Promise.all(symbols.filter(s => s.code.js).map(async (symbol) => {
-		const component_data = getComponentData({ symbol, loc: 'en' })
     const res = await processCode({
       component: {
         html: symbol.code.html,
         css: symbol.code.css,
         js: symbol.code.js,
-        data: component_data
+        data: symbol.content['en']
       }
     })
+    if (res.error) {
+      console.error('Error processing symbol', symbol.name, res.error)
+    } 
     const date = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
     return {
       path: '_symbols/' + symbol.id + '.js',

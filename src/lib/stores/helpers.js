@@ -61,11 +61,9 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
     ...page_sections.map(async section => {
       const symbol = page_symbols.find(symbol => symbol.id === section.symbol)
       const { html, css: postcss, js } = symbol.code
-      const data = getComponentData({
+      const data = get_content_with_static({
         component: section,
         symbol,
-        page,
-        site,
         loc: locale
       })
       const { css, error } = await processors.css(postcss || '')
@@ -139,40 +137,6 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
 }
 
 // Include static content alongside the component's content
-export function getComponentData({
-  component,
-  symbol = get(symbols).find(symbol => symbol.id === component.symbol),
-  page = get(activePage),
-  site = get(activeSite),
-  loc = get(locale),
-  include_parent_data = true
-}) {
-
-	let component_content = {}
-  symbol.fields.forEach((field) => {
-    if (field.is_static || !component) {
-      component_content = {
-        ...component_content,
-        [field.key]: symbol.content[loc]?.[field.key] || getEmptyValue(field)
-      }
-    } else {
-      component_content = {
-        ...component_content,
-        [field.key]: component.content[loc]?.[field.key] || getEmptyValue(field)
-      }
-    }
-  })
-
-  const site_content = site.content[loc]
-  const page_content = page.content[loc]
-
-  return include_parent_data ? _.cloneDeep({
-    ...site_content,
-    ...page_content,
-    ...component_content
-  }) : _.cloneDeep(component_content)
-}
-
 export function get_content_with_static({ component, symbol, loc = get(locale) } ) {
   if (!symbol) return { en: {} }
   const content = _chain(symbol.fields)
