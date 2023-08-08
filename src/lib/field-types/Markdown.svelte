@@ -12,7 +12,7 @@
 			markdown: field.value,
 			html: field.value
 		}
-	} else if (typeof field.value !== 'object' && !field.value.hasOwnProperty('markdown')) {
+	} else if (typeof field.value !== 'object' || !field.value?.hasOwnProperty('markdown')) {
 		field.value = {
 			markdown: '',
 			html: ''
