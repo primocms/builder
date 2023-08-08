@@ -70,7 +70,6 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
       })
       const { css, error } = await processors.css(postcss || '')
       const section_id = section.id.split('-')[0]
-      const hydrated = hydratable_symbols_on_page.some(symbol => symbol.id === section.symbol)
       return {
         html: `
           <div class="section" id="section-${section_id}">
@@ -154,12 +153,12 @@ export function getComponentData({
     if (field.is_static || !component) {
       component_content = {
         ...component_content,
-        [field.key]: symbol.content[loc][field.key] || getEmptyValue(field)
+        [field.key]: symbol.content[loc]?.[field.key] || getEmptyValue(field)
       }
     } else {
       component_content = {
         ...component_content,
-        [field.key]: component.content[loc][field.key] || getEmptyValue(field)
+        [field.key]: component.content[loc]?.[field.key] || getEmptyValue(field)
       }
     }
   })

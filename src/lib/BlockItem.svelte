@@ -1,7 +1,6 @@
 <script>
 	import _, { chain as _chain } from 'lodash-es'
 	import { fade } from 'svelte/transition'
-	import { getComponentData, getSymbolUseInfo } from '$lib/stores/helpers'
 
 	import IFrame from '$lib/views/modal/ComponentLibrary/IFrame.svelte'
 	import { processCode, processCSS } from '$lib/utils'
@@ -19,7 +18,7 @@
 	let componentCode
 	let cachedSymbol = {}
 	$: compile_component_code(symbol, $locale)
-	async function compile_component_code(symbol) {
+	async function compile_component_code(symbol, language) {
 		if (
 			_.isEqual(cachedSymbol.code, symbol.code) &&
 			_.isEqual(cachedSymbol.content, symbol.content)
@@ -27,7 +26,6 @@
 			return
 		}
 
-		const component_data = getComponentData({ symbol, loc: 'en' })
 		const parent_css = await processCSS($siteCode.css + $pageCode.css)
 		let res = await processCode({
 			component: {
@@ -37,7 +35,7 @@
 				html: `
           ${symbol.code.html}
           ${$pageCode.html.below}`,
-				data: component_data
+				data: symbol.content[language]
 			},
 			buildStatic: true,
 			hydrated: false

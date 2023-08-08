@@ -302,7 +302,7 @@
 			}}
 			on:mouseleave={hide_block_toolbar}
 			animate:flip={{ duration: flipDurationMs }}
-			style="min-height: 5rem;overflow:hidden;position: relative;"
+			style="min-height: 3rem;overflow:hidden;position: relative;"
 		>
 			{#if block[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
 				<div class="block-placeholder">
