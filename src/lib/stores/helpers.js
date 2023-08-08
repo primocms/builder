@@ -40,7 +40,7 @@ export function getSymbol(symbolID) {
  * @returns {Promise<string | { html: string, js: string}>} 
  * */
 export async function buildStaticPage({ page = get(activePage), site = get(activeSite), page_sections = get(sections), page_symbols = get(symbols), locale = 'en', no_js = false }) {
-  const hydratable_symbols = page_symbols.filter(s => s.code.js)
+  const hydratable_symbols_on_page = page_symbols.filter(s => s.code.js && page_sections.some(section => section.symbol === s.id))
   
   const component = await Promise.all([
     (async () => {
@@ -70,10 +70,10 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
       })
       const { css, error } = await processors.css(postcss || '')
       const section_id = section.id.split('-')[0]
-      const hydrated = hydratable_symbols.some(symbol => symbol.id === section.symbol)
+      const hydrated = hydratable_symbols_on_page.some(symbol => symbol.id === section.symbol)
       return {
         html: `
-          <div class="section" id="section-${section_id}" ${hydrated ?? `data-symbol="${section.symbol}"`}>
+          <div class="section" id="section-${section_id}">
             ${html} 
           </div>`,
         js,
@@ -107,7 +107,7 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
     </head>
     <body id="page">
       ${res.html}
-      ${no_js ? `` : `<script type="module">${fetch_modules(hydratable_symbols)}</script>`}
+      ${no_js ? `` : `<script type="module">${fetch_modules(hydratable_symbols_on_page)}</script>`}
     </body>
   </html>
   `
@@ -118,10 +118,11 @@ export async function buildStaticPage({ page = get(activePage), site = get(activ
       import('/_symbols/${symbol.id}.js')
       .then(({default:App}) => {
         ${page_sections.filter(section => section.symbol === symbol.id).map(section => {
+          const section_id = section.id.split('-')[0]
           const instance_content = get_content_with_static({ component: section, symbol, locale })
           return `
             new App({
-              target: document.querySelector('[data-symbol="${symbol.id}"]'),
+              target: document.querySelector('#section-${section_id}'),
               hydrate: true,
               props: ${JSON.stringify(instance_content)}
             })
