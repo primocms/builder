@@ -473,14 +473,14 @@ export async function update_page_preview(page = get(activePage.default)) {
       bucket: 'sites',
       action: 'upload',
       key: `${get(stores.site).id}/${page.id}/index.html`,
-      file: preview,
+      file: preview.html,
       options: { upsert: true }
     })
     await storageChanged({
       bucket: 'sites',
       action: 'upload',
       key: `${get(stores.site).id}/preview.html`,
-      file: preview,
+      file: preview.html,
       options: { upsert: true }
     })
   } else {
@@ -488,7 +488,7 @@ export async function update_page_preview(page = get(activePage.default)) {
       bucket: 'sites',
       action: 'upload',
       key: `${get(stores.site).id}/${page.id}/index.html`,
-      file: preview,
+      file: preview.html,
       options: { upsert: true }
     })
   }
