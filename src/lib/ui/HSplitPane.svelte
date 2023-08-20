@@ -360,7 +360,7 @@
 	.center,
 	.right {
 		position: relative;
-		transition: 0.1s width;
+		/* transition: 0.1s width; */
 	}
 	div.left {
 		width: var(--left-pane-size);
@@ -379,7 +379,7 @@
 		display: flex;
 	}
 	.transitioning {
-		transition: width 0.1s;
+		/* transition: width 0.1s; */
 	}
 	.overflow-hidden {
 		overflow: hidden !important;

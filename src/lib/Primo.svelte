@@ -85,6 +85,8 @@
 	<svelte:component this={activeModal} {...$modal.componentProps} />
 </Modal>
 
+<svelte:window on:resize={reset} />
+
 <svelte:head>
 	<link
 		rel="stylesheet"
