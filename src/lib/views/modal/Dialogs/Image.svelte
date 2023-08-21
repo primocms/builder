@@ -58,7 +58,6 @@
 				})
 
 				loading = false
-				dispatch('input', field)
 			} else {
 				loading = false
 			}
