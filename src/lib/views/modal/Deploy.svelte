@@ -3,8 +3,6 @@
 	import { writable } from 'svelte/store'
 	import axios from 'axios'
 
-	const github_account = writable(null)
-
 	let JSZip, saveFile
 	import('jszip').then((module) => (JSZip = module.default))
 	import('file-saver').then((module) => (saveFile = module.saveAs))
@@ -33,12 +31,7 @@
 
 	let entered_github_token = ''
 
-	$: if (!$github_account) {
-		axios
-			.get('/api/deploy/user')
-			.then(({ data }) => ($github_account = data))
-			.catch((e) => console.log(e))
-	}
+	let github_account = $site.active_deployment?.repo?.owner
 
 	async function connect_github() {
 		const headers = { Authorization: `Bearer ${entered_github_token}` }
@@ -48,7 +41,7 @@
 		})
 
 		if (data) {
-			$github_account = data
+			github_account = data
 			stage = 'CONNECT_REPO'
 			await dataChanged({
 				table: 'config',
@@ -160,7 +153,7 @@
 					<Icon icon={loading ? 'eos-icons:loading' : 'ic:baseline-download'} />
 					<span>Download</span>
 				</button>
-				{#if $github_account}
+				{#if github_account}
 					<button class="primo-button primary" on:click={() => (stage = 'CONNECT_REPO')}>
 						<Icon icon="mdi:github" />
 						<span>Deploy to Github</span>
@@ -196,11 +189,11 @@
 		</div>
 	{:else if stage.startsWith('CONNECT_REPO')}
 		<div class="container">
-			{#if $github_account}
+			{#if github_account}
 				<div class="account-card" in:fade|local>
 					<div class="user">
-						<img src={$github_account.avatar_url} alt="Github avatar" />
-						<span>{$github_account.login}</span>
+						<img src={github_account.avatar_url} alt="Github avatar" />
+						<span>{github_account.login}</span>
 					</div>
 					<button
 						class="primo-link"
@@ -211,6 +204,15 @@
 						edit
 					</button>
 				</div>
+			{:else}
+				<button
+					class="primo-link"
+					on:click={() => {
+						stage = 'CONNECT_GITHUB'
+					}}
+				>
+					Connect Github account
+				</button>
 			{/if}
 			{#if stage === 'CONNECT_REPO'}
 				<div class="buttons">
@@ -351,6 +353,7 @@
 	}
 
 	.primo-link {
+		text-align: left;
 		font-size: 0.875rem;
 		color: var(--color-gray-3);
 		text-decoration: underline;
