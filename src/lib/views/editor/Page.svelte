@@ -86,8 +86,12 @@
 				}
 			})
 		])
-		html_head = !head.error ? head.head : ''
-		html_below = !below.error ? below.html : ''
+		if (!head.error) {
+			append_to_head(head.head)
+		} else {
+			console.warn(head.error)
+		}
+		// html_below = !below.error ? below.html : ''
 	}
 
 	// Fade in page when all components mounted
@@ -221,6 +225,30 @@
 	}
 
 	let moving = false // workaround to prevent block buttons from showing when moving blocks
+
+	// using instead of <svelte:head> to enable script tags
+	function append_to_head(code) {
+		// Create a temporary container to hold the parsed HTML
+		const tempContainer = document.createElement('div')
+		tempContainer.innerHTML = code
+
+		// Iterate through the child nodes, and append them to the head
+		Array.from(tempContainer.childNodes).forEach((child) => {
+			if (child.tagName === 'SCRIPT') {
+				// Handle script tags manually to ensure they are executed
+				const script = document.createElement('script')
+				script.textContent = child.textContent
+				// Copy over all attributes from the original script tag, including 'src'
+				Array.from(child.attributes).forEach((attr) => {
+					script.setAttribute(attr.name, attr.value)
+				})
+				document.head.appendChild(script)
+			} else {
+				// Append other elements directly
+				document.head.appendChild(child)
+			}
+		})
+	}
 </script>
 
 <!-- Loading Spinner -->
@@ -257,11 +285,6 @@
 		}}
 	/>
 {/if}
-
-<!-- Page & Site HTML/CSS -->
-<svelte:head>
-	{@html html_head}
-</svelte:head>
 
 <!-- Page Blocks -->
 <div
