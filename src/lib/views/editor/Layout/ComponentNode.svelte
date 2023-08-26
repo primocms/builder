@@ -7,6 +7,7 @@
 </script>
 
 <script>
+	import { onDestroy } from 'svelte'
 	import _ from 'lodash-es'
 	import { fade } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
@@ -45,7 +46,7 @@
 	let html = ''
 	let css = ''
 	let js = ''
-	$: node && compileComponentCode(symbol.code)
+	$: node && compile_component_code(symbol.code)
 
 	async function save_edited_value(key, value) {
 		_.set(local_component_data, key, value)
@@ -105,16 +106,16 @@
 	}
 
 	let error = ''
-	async function compileComponentCode(rawCode) {
+	async function compile_component_code(raw_code) {
 		// workaround for this function re-running anytime something changes on the page
 		// (as opposed to when the code actually changes)
-		if (html !== rawCode.html || css !== rawCode.css || js !== rawCode.js) {
-			html = rawCode.html
-			css = rawCode.css
-			js = rawCode.js
+		if (html !== raw_code.html || css !== raw_code.css || js !== raw_code.js) {
+			html = raw_code.html
+			css = raw_code.css
+			js = raw_code.js
 			const res = await processCode({
 				component: {
-					...rawCode,
+					...raw_code,
 					data: component_data
 				},
 				buildStatic: false
@@ -397,12 +398,12 @@
 	$: if (component_data) {
 		local_component_data = _.cloneDeep(component_data)
 	}
-	$: hydrateComponent(component_data)
-	async function hydrateComponent(data) {
+	$: hydrate_component(component_data)
+	async function hydrate_component(data) {
 		if (!component) return
 		else if (error) {
 			error = null
-			compileComponentCode(symbol.code)
+			compile_component_code(symbol.code)
 			// } else if (!_.isEqual(data, local_component_data)) {
 		} else {
 			// TODO: re-render the component if `data` doesn't match its fields (e.g. when removing a component field to add to the page)
@@ -418,13 +419,23 @@
 	let component
 
 	// Fade in component on mount
-	let observer
+	let mutation_observer
+	let resize_observer
 	if (browser) {
-		observer = new MutationObserver(() => {
+		mutation_observer = new MutationObserver(() => {
 			dispatch('mount')
 			reroute_links()
 		})
+
+		resize_observer = new ResizeObserver((entries) => {
+			dispatch('resize')
+		})
 	}
+
+	onDestroy(() => {
+		mutation_observer?.disconnect()
+		resize_observer?.disconnect()
+	})
 
 	// Reroute links to correctly open externally and internally
 	// TODO: fix
@@ -468,9 +479,10 @@
 	}
 
 	$: if (node) {
-		observer.observe(node, {
+		mutation_observer.observe(node, {
 			childList: true
 		})
+		resize_observer.observe(node)
 	}
 
 	$: if (error) {
@@ -489,22 +501,6 @@
 	function on_page_scroll() {
 		image_editor_is_visible = false
 		link_editor_is_visible = false
-	}
-
-	// Workaround for meny breaking when rearranging
-	const menu_observer = browser
-		? new MutationObserver((e) => {
-				if (e[0].addedNodes.length === 0) {
-					// menu is janky, so we need to re-create it
-					// active_editor.destroy()
-					// set_editable_markdown()
-				}
-		  })
-		: null
-	$: if (bubbleMenu) {
-		menu_observer?.observe(bubbleMenu, {
-			childList: true
-		})
 	}
 </script>
 

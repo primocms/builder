@@ -176,7 +176,7 @@
 		})
 	}
 
-	async function position_block_toolbar() {
+	function position_block_toolbar() {
 		hovered_block_el.appendChild(block_toolbar_element)
 		const { top, left, bottom, right } = hovered_block_el.getBoundingClientRect()
 		const block_positions = {
@@ -347,6 +347,11 @@
 					on:lock={() => lock_block(block.id)}
 					on:unlock={() => unlock_block(block.id)}
 					on:mount={() => sections_mounted++}
+					on:resize={() => {
+						if (showing_block_toolbar) {
+							position_block_toolbar()
+						}
+					}}
 				/>
 			{/if}
 		</div>
