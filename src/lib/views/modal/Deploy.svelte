@@ -1,14 +1,11 @@
 <script context="module">
-	import { browser } from '$app/environment'
-	import { writable } from 'svelte/store'
-	import axios from 'axios'
-
 	let JSZip, saveFile
 	import('jszip').then((module) => (JSZip = module.default))
 	import('file-saver').then((module) => (saveFile = module.saveAs))
 </script>
 
 <script>
+	import axios from 'axios'
 	import Icon from '@iconify/svelte'
 	import _ from 'lodash-es'
 	import { fade } from 'svelte/transition'
@@ -19,7 +16,7 @@
 	import site, { active_deployment } from '$lib/stores/data/site'
 	import pages from '$lib/stores/data/pages'
 	import symbols from '$lib/stores/data/symbols'
-	import { push_site, buildSiteBundle } from './Deploy'
+	import { push_site, build_site_bundle } from './Deploy'
 	import PrimaryButton from '$lib/ui/PrimaryButton.svelte'
 	import { dataChanged } from '$lib/database'
 
@@ -32,6 +29,12 @@
 	let entered_github_token = ''
 
 	let github_account = $site.active_deployment?.repo?.owner
+	if (!github_account) {
+		axios
+			.get('/api/deploy/user')
+			.then(({ data }) => (github_account = data))
+			.catch((e) => console.log(e))
+	}
 
 	async function connect_github() {
 		const headers = { Authorization: `Bearer ${entered_github_token}` }
@@ -52,29 +55,18 @@
 		}
 	}
 
-	let files = []
-	async function build_files() {
-		const all_files = await buildSiteBundle({ pages: $pages, symbols: $symbols })
-		files = _.uniqBy(
-			all_files.map((file) => {
-				return {
-					...file,
-					file: file.path,
-					data: file.content
-				}
-			}),
-			'file'
-		) // remove duplicated modules
-	}
-
 	async function download_site() {
 		loading = true
-		await build_files()
-		const toDownload = await create_site_zip()
-		saveFile(toDownload, `${$site.name}.zip`)
+		const files = await build_site_bundle({ pages: $pages, symbols: $symbols })
+		if (!files) {
+			loading = false
+			return
+		}
+		const bundle = await create_site_zip(files)
+		saveFile(bundle, `${$site.name}.zip`)
 		modal.hide()
 
-		async function create_site_zip() {
+		async function create_site_zip(files) {
 			const zip = new JSZip()
 			files.forEach(({ file, data }) => {
 				zip.file(file, data)
