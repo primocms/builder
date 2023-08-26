@@ -276,7 +276,9 @@
 	.symbols {
 		padding-inline: 1.5rem;
 		gap: 1rem;
-		display: grid;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
 		padding-bottom: 1.5rem;
 		overflow-y: scroll;
 	}

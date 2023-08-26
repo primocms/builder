@@ -1,11 +1,17 @@
 <script>
 	import { createEventDispatcher } from 'svelte'
-	const dispatch = createEventDispatcher()
+	import _ from 'lodash-es'
+	import Icon from '@iconify/svelte'
 	import modal from '$lib/stores/app/modal'
 	import { showingIDE, userRole } from '$lib/stores/app/misc'
 	import MenuPopup from '$lib/components/MenuPopup.svelte'
 	import IconButton from '$lib/components/IconButton.svelte'
-	import Block from './BlockItem.svelte'
+	import { processCode, processCSS } from '$lib/utils'
+	import { code as siteCode } from '$lib/stores/data/site'
+	import { code as pageCode } from '$lib/stores/app/activePage'
+	import { locale } from '$lib/stores/app/misc'
+	import IFrame from '$lib/views/modal/ComponentLibrary/IFrame.svelte'
+	const dispatch = createEventDispatcher()
 
 	export let symbol
 	export let controls_enabled = true
@@ -82,6 +88,44 @@
 			symbol.name = 'Block'
 		}
 	}
+
+	let height = 0
+
+	let componentCode
+	let cachedSymbol = {}
+	let component_error
+	$: compile_component_code(symbol, $locale)
+	async function compile_component_code(symbol, language) {
+		if (
+			_.isEqual(cachedSymbol.code, symbol.code) &&
+			_.isEqual(cachedSymbol.content, symbol.content)
+		) {
+			return
+		}
+
+		const parent_css = await processCSS($siteCode.css + $pageCode.css)
+		let res = await processCode({
+			component: {
+				...symbol.code,
+				head: $siteCode.html.head + $pageCode.html.head,
+				css: parent_css + symbol.code.css,
+				html: `
+          ${symbol.code.html}
+          ${$pageCode.html.below}`,
+				data: symbol.content[language]
+			},
+			buildStatic: true,
+			hydrated: false
+		})
+		if (res.error) {
+			component_error = res.error
+		} else {
+			component_error = null
+			res.css = res.css + parent_css
+			componentCode = res
+			cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content })
+		}
+	}
 </script>
 
 <div class="sidebar-symbol">
@@ -150,7 +194,13 @@
 	</header>
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div class="symbol" on:mousedown on:mouseup>
-		<Block {symbol} />
+		{#if component_error}
+			<div class="error">
+				<Icon icon="bxs:error" />
+			</div>
+		{:else}
+			<IFrame bind:height {componentCode} />
+		{/if}
 	</div>
 </div>
 
@@ -190,22 +240,21 @@
 			width: 100%;
 			border-radius: 0.25rem;
 			overflow: hidden;
-			/* border: 1px solid #e3e4e8; */
-			/* border-radius: 6px; */
-			/* overflow: hidden; */
+			position: relative;
 			cursor: grab;
 			min-height: 2rem;
 			transition: box-shadow 0.2s;
 			border: 1px solid var(--color-gray-8);
-			/* background: var(--primo-color-white); */
-
-			&.dragging {
-				cursor: grabbing;
-				box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.1);
-				position: fixed;
-				z-index: 999;
-			}
 		}
+	}
+	.error {
+		display: flex;
+		justify-content: center;
+		height: 100%;
+		position: absolute;
+		inset: 0;
+		align-items: center;
+		background: #ff0000;
 	}
 	[contenteditable] {
 		outline: 0 !important;

@@ -171,7 +171,9 @@
 		showing_block_toolbar = true
 		await tick()
 		position_block_toolbar()
-		page_el.addEventListener('scroll', position_block_toolbar)
+		page_el.addEventListener('scroll', () => {
+			showing_block_toolbar = false
+		})
 	}
 
 	async function position_block_toolbar() {
@@ -191,7 +193,6 @@
 
 	function hide_block_toolbar() {
 		showing_block_toolbar = false
-		page_el.removeEventListener('scroll', position_block_toolbar)
 	}
 
 	function edit_component(block, showIDE = false) {
@@ -224,7 +225,7 @@
 		)
 	}
 
-	let moving = false // workaround to prevent block buttons from showing when moving blocks
+	let moving = false // workaround to prevent block toolbar from showing when moving blocks
 
 	// using instead of <svelte:head> to enable script tags
 	function append_to_head(code) {
