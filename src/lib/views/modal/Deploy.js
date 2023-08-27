@@ -10,7 +10,7 @@ import _ from 'lodash-es'
 import { page } from '$app/stores'
 import { site } from '$lib/stores/data/site'
 
-export async function push_site({ repo_name, create_new = false }) {
+export async function push_site(repo_name, create_new = false) {
 	const site_bundle = await build_site_bundle({
 		pages: get(pages),
 		symbols: get(symbols)
@@ -25,7 +25,7 @@ export async function push_site({ repo_name, create_new = false }) {
 		size: new Blob([file.content], { type: 'text/plain' }).size / 1024
 	}))
 
-	return await deploy({ files, site_id: get(site).id, repo_name, create_new })
+	return await deploy({ files, site_id: get(site).id, repo_name }, create_new)
 }
 
 export async function build_site_bundle({ pages, symbols }) {
@@ -43,7 +43,9 @@ export async function build_site_bundle({ pages, symbols }) {
 				)
 			})
 		)
-		const symbol_files = await Promise.all(symbols.map((symbol) => build_symbol_tree(symbol)))
+		const symbol_files = await Promise.all(
+			symbols.filter((s) => s.code.js).map((symbol) => build_symbol_tree(symbol))
+		)
 		site_bundle = build_site_tree([...symbol_files, ...page_files.flat()])
 	} catch (e) {
 		alert(e.message)
