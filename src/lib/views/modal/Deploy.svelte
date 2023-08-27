@@ -13,6 +13,7 @@
 	import TextInput from '$lib/ui/TextInput.svelte'
 	import Select from '$lib/ui/inputs/Select.svelte'
 	import modal from '$lib/stores/app/modal'
+	import Spinner from '$lib/ui/Spinner.svelte'
 	import site, { active_deployment } from '$lib/stores/data/site'
 	import pages from '$lib/stores/data/pages'
 	import symbols from '$lib/stores/data/symbols'
@@ -81,10 +82,17 @@
 	let existing_repo_name = ''
 	async function deploy_to_repo() {
 		loading = true
-		const deployment = await push_site({
-			repo_name: new_repo_name || existing_repo_name || $active_deployment.repo.full_name,
-			create_new: new_repo_name ? true : false
-		})
+		let destination_repo
+		let creating_new_repo = false
+		if (new_repo_name) {
+			destination_repo = `${github_account.login}/${new_repo_name}`
+			creating_new_repo = true
+		} else if (existing_repo_name) {
+			destination_repo = existing_repo_name
+		} else {
+			destination_repo = $active_deployment.repo.full_name
+		}
+		const deployment = await push_site(destination_repo, creating_new_repo)
 		if (deployment) {
 			$active_deployment = deployment
 			stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
@@ -256,7 +264,7 @@
 						<p class="form-label">Select repo</p>
 						<div>
 							{#await get_repos()}
-								<Select options={[]} />
+								<Spinner />
 							{:then repos}
 								<Select bind:value={existing_repo_name} options={repos} />
 							{/await}
