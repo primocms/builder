@@ -24,7 +24,7 @@
 	import symbols from '$lib/stores/data/symbols'
 	import { locale } from '$lib/stores/app/misc'
 	import { update_section_content } from '$lib/stores/actions'
-	import CopyButton from './CopyButton.svelte'
+	import MarkdownButton from './MarkdownButton.svelte'
 	import modal from '$lib/stores/app/modal'
 	import { get_content_with_static } from '$lib/stores/helpers'
 
@@ -533,27 +533,27 @@
 
 <div class="menu floating-menu primo-reset" bind:this={floatingMenu}>
 	{#if active_editor}
-		<CopyButton
+		<MarkdownButton
 			icon="heading"
 			on:click={() => active_editor.chain().focus().toggleHeading({ level: 1 }).run()}
 		/>
-		<CopyButton
+		<MarkdownButton
 			icon="code"
 			on:click={() => active_editor.chain().focus().toggleCodeBlock().run()}
 		/>
-		<CopyButton
+		<MarkdownButton
 			icon="quote-left"
 			on:click={() => active_editor.chain().focus().toggleBlockquote().run()}
 		/>
-		<CopyButton
+		<MarkdownButton
 			icon="list-ul"
 			on:click={() => active_editor.chain().focus().toggleBulletList().run()}
 		/>
-		<CopyButton
+		<MarkdownButton
 			icon="list-ol"
 			on:click={() => active_editor.chain().focus().toggleOrderedList().run()}
 		/>
-		<!-- <CopyButton
+		<!-- <MarkdownButton
 			icon="image"
 			on:click={() =>
 				modal.show('DIALOG', {
@@ -568,7 +568,7 @@
 </div>
 <div class="menu bubble-menu primo-reset" bind:this={bubbleMenu}>
 	{#if active_editor}
-		<CopyButton
+		<MarkdownButton
 			icon="link"
 			on:click={() =>
 				modal.show('DIALOG', {
@@ -579,17 +579,17 @@
 					}
 				})}
 		/>
-		<CopyButton
+		<MarkdownButton
 			icon="bold"
 			on:click={() => active_editor.chain().focus().toggleBold().run()}
 			active={active_editor.isActive('bold')}
 		/>
-		<CopyButton
+		<MarkdownButton
 			icon="italic"
 			on:click={() => active_editor.chain().focus().toggleItalic().run()}
 			active={active_editor.isActive('italic')}
 		/>
-		<CopyButton
+		<MarkdownButton
 			icon="highlighter"
 			on:click={() => active_editor.chain().focus().toggleHighlight().run()}
 			active={active_editor.isActive('highlight')}

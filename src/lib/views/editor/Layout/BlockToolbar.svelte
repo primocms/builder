@@ -1,5 +1,6 @@
 <script>
-	import { createEventDispatcher } from 'svelte'
+	import { browser } from '$app/environment'
+	import { createEventDispatcher, getContext } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import sections from '../../../stores/data/sections.js'
 	import { userRole } from '$lib/stores/app/misc'
@@ -7,11 +8,15 @@
 
 	const dispatch = createEventDispatcher()
 
+	export let id
 	export let i
 	export let node = null
 
 	$: isFirst = i === 0
 	$: isLast = i === $sections.length - 1
+
+	let DEBUGGING
+	if (browser) DEBUGGING = getContext('DEBUGGING')
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -26,6 +31,9 @@
 				<button on:click={() => dispatch('edit-code')}>
 					<Icon icon="ph:code-bold" />
 				</button>
+			{/if}
+			{#if DEBUGGING}
+				<span class="block-id">{id}</span>
 			{/if}
 		</div>
 		<div class="top-right">
@@ -74,8 +82,17 @@
 		display: flex;
 	}
 
+	.block-id {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.25rem 0.5rem;
+		pointer-events: all;
+		background: rgba(0, 0, 0, 0.9);
+		color: white;
+		font-size: 0.75rem;
+	}
+
 	.button-delete {
-		/* border-left: 1px solid var(--primo-color-brand-dark); */
 		border-bottom-left-radius: 0.25rem;
 		padding-left: 0.75rem;
 		padding-right: 0.75rem;

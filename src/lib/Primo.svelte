@@ -1,5 +1,6 @@
 <script>
 	import '@fontsource/fira-code/index.css'
+	import { setContext } from 'svelte'
 	import { browser } from '$app/environment'
 	import IconButton from './components/IconButton.svelte'
 	import Toolbar from './views/editor/Toolbar.svelte'
@@ -63,6 +64,8 @@
 		rightPaneSize = browser ? (window.innerWidth / 5) * 5 + 'px' : '0px'
 		showing_sidebar = true
 	}
+
+	if (browser) setContext('DEBUGGING', new URLSearchParams(window.location.search).has('debug'))
 </script>
 
 <HSplitPane bind:leftPaneSize bind:rightPaneSize style="margin-top:54px">

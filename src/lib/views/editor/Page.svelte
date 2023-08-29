@@ -263,6 +263,7 @@
 {#if showing_block_toolbar}
 	<BlockToolbar
 		bind:node={block_toolbar_element}
+		id={hovered_block.id}
 		i={hovered_block.index}
 		on:delete={() => active_page.delete_block(hovered_block.id)}
 		on:duplicate={() => active_page.duplicate_block(hovered_block.id)}

@@ -1,5 +1,7 @@
 <script>
+	import { getContext } from 'svelte'
 	import { find as _find } from 'lodash-es'
+	import { browser } from '$app/environment'
 	import ToolbarButton from './ToolbarButton.svelte'
 	import LocaleSelector from './LocaleSelector.svelte'
 	import { timeline } from '../../stores/data'
@@ -9,7 +11,11 @@
 	import { PrimoButton } from '../../components/buttons'
 	import site from '../../stores/data/site'
 	import { userRole } from '../../stores/app'
-	import { name as page_name, fields as page_fields } from '../../stores/app/activePage'
+	import {
+		id as page_id,
+		name as page_name,
+		fields as page_fields
+	} from '../../stores/app/activePage'
 	import modal from '../../stores/app/modal'
 
 	const page_field_button = {
@@ -58,6 +64,10 @@
 	]
 	$: pageEmpty =
 		$sections && $sections.length <= 1 && $sections.length > 0 && $sections[0]['type'] === 'options'
+
+	let DEBUGGING
+	if (browser) DEBUGGING = getContext('DEBUGGING')
+	$: console.log(DEBUGGING)
 </script>
 
 <nav aria-label="toolbar" id="primo-toolbar" class="primo-reset">
@@ -83,7 +93,11 @@
 		</div>
 		<div class="site-name">
 			<span class="site">{$site.name} /</span>
-			<span class="page">{$page_name}</span>
+			{#if DEBUGGING}
+				<span class="page">{$page_name} ({$page_id})</span>
+			{:else}
+				<span class="page">{$page_name}</span>
+			{/if}
 		</div>
 		<div class="right">
 			{#if !$timeline.first}
