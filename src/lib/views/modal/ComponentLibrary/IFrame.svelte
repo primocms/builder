@@ -83,7 +83,7 @@
 
 <style lang="postcss">
 	.IFrame {
-		position: absolute;
+		position: relative;
 		inset: 0;
 		/* height: 100%; */
 	}
