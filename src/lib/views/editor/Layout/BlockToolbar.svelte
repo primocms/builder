@@ -4,6 +4,7 @@
 	import { fade } from 'svelte/transition'
 	import sections from '../../../stores/data/sections.js'
 	import { userRole } from '$lib/stores/app/misc'
+	import { click_to_copy } from '$lib/utilities'
 	import Icon from '@iconify/svelte'
 
 	const dispatch = createEventDispatcher()
@@ -33,7 +34,9 @@
 				</button>
 			{/if}
 			{#if DEBUGGING}
-				<span class="block-id">{id}</span>
+				<button class="block-id" use:click_to_copy>
+					{id}
+				</button>
 			{/if}
 		</div>
 		<div class="top-right">

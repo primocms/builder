@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher } from 'svelte'
+	import { createEventDispatcher, getContext } from 'svelte'
 	import _ from 'lodash-es'
 	import Icon from '@iconify/svelte'
 	import modal from '$lib/stores/app/modal'
@@ -10,6 +10,7 @@
 	import { code as siteCode } from '$lib/stores/data/site'
 	import { code as pageCode } from '$lib/stores/app/activePage'
 	import { locale } from '$lib/stores/app/misc'
+	import { click_to_copy } from '$lib/utilities'
 	import IFrame from '$lib/views/modal/ComponentLibrary/IFrame.svelte'
 	const dispatch = createEventDispatcher()
 
@@ -167,6 +168,13 @@
 				<MenuPopup
 					icon="carbon:overflow-menu-vertical"
 					options={[
+						getContext('DEBUGGING')
+							? {
+									label: `${symbol.id.slice(0, 5)}...`,
+									icon: 'ph:copy-duotone',
+									on_click: (e) => click_to_copy(e.target, symbol.id)
+							  }
+							: {},
 						{
 							label: 'Duplicate',
 							icon: 'bxs:duplicate',

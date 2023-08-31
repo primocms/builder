@@ -17,6 +17,7 @@
 		fields as page_fields
 	} from '../../stores/app/activePage'
 	import modal from '../../stores/app/modal'
+	import { click_to_copy } from '$lib/utilities'
 
 	const page_field_button = {
 		id: 'toolbar--page',
@@ -94,7 +95,10 @@
 		<div class="site-name">
 			<span class="site">{$site.name} /</span>
 			{#if DEBUGGING}
-				<span class="page">{$page_name} ({$page_id})</span>
+				<span class="page">
+					{$page_name}
+					<button use:click_to_copy>({$page_id})</button>
+				</span>
 			{:else}
 				<span class="page">{$page_name}</span>
 			{/if}
