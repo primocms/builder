@@ -218,12 +218,12 @@
 		{
 			id: 'code',
 			label: 'Code',
-			icon: 'code'
+			icon: 'material-symbols:code'
 		},
 		{
 			id: 'fields',
 			label: 'Fields',
-			icon: 'database'
+			icon: 'fluent:form-multiple-24-regular'
 		}
 	]
 

@@ -81,17 +81,17 @@
 	<div class="mobile-tabs {variants}">
 		<div class="tabs">
 			<ul>
-				<li class="xyz-in" class:is-active={activeTab === 0}>
+				<li class:is-active={activeTab === 0}>
 					<button on:click={() => (activeTab = 0)}>
 						<span>HTML</span>
 					</button>
 				</li>
-				<li class="xyz-in" class:is-active={activeTab === 1}>
+				<li class:is-active={activeTab === 1}>
 					<button on:click={() => (activeTab = 1)}>
 						<span>CSS</span>
 					</button>
 				</li>
-				<li class="xyz-in" class:is-active={activeTab === 2}>
+				<li class:is-active={activeTab === 2}>
 					<button on:click={() => (activeTab = 2)}>
 						<span>JS</span>
 					</button>

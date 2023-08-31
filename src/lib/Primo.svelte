@@ -90,7 +90,9 @@
 		'akar-icons:check',
 		'mdi:chevron-down',
 		'ic:round-code',
-		'eos-icons:loading'
+		'eos-icons:loading',
+		'material-symbols:code',
+		'fluent:form-multiple-24-regular'
 	])
 	enableCache('local')
 </script>
