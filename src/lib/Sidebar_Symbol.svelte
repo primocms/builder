@@ -115,7 +115,7 @@
 				data: symbol.content[language]
 			},
 			buildStatic: true,
-			hydrated: false
+			hydrated: true
 		})
 		if (res.error) {
 			component_error = res.error
