@@ -1,6 +1,6 @@
 <script>
 	import '@fontsource/fira-code/index.css'
-	import { setContext } from 'svelte'
+	import { loadIcons, enableCache } from '@iconify/svelte'
 	import { browser } from '$app/environment'
 	import IconButton from './components/IconButton.svelte'
 	import Toolbar from './views/editor/Toolbar.svelte'
@@ -65,7 +65,34 @@
 		showing_sidebar = true
 	}
 
-	if (browser) setContext('DEBUGGING', new URLSearchParams(window.location.search).has('debug'))
+	// Preload icons
+	loadIcons([
+		'bxs:duplicate',
+		'ic:baseline-edit',
+		'ic:baseline-download',
+		'ic:outline-delete',
+		'bsx:error',
+		'mdi:plus',
+		'mdi:upload',
+		'fa-solid:plus',
+		'carbon:close',
+		'material-symbols:drag-handle-rounded',
+		'ph:caret-down-bold',
+		'ph:caret-up-bold',
+		'charm:layout-rows',
+		'charm:layout-columns',
+		'bx:refresh',
+		'uil:image-upload',
+		'mdi:arrow-up',
+		'mdi:arrow-down',
+		'ion:trash',
+		'akar-icons:plus',
+		'akar-icons:check',
+		'mdi:chevron-down',
+		'ic:round-code',
+		'eos-icons:loading'
+	])
+	enableCache('local')
 </script>
 
 <HSplitPane bind:leftPaneSize bind:rightPaneSize style="margin-top:54px">
