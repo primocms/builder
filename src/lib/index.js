@@ -14,7 +14,7 @@ import PrimoFieldTypes from './field-types'
 import { validate_site_structure_v2 } from './converter'
 import PrimoPage from './views/editor/Page.svelte'
 import { database_subscribe, storage_subscribe, realtime_subscribe } from './database'
-import { deploy_subscribe } from './deploy'
+import { deploy, deploy_subscribe } from './deploy'
 
 import * as utils from './utils'
 import * as components from './components'
@@ -30,6 +30,7 @@ export {
 	storage_subscribe,
 	realtime_subscribe,
 	deploy_subscribe,
+	deploy,
 	locale,
 	locked_blocks,
 	site,
