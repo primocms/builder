@@ -67,6 +67,7 @@
 
 	// Preload icons
 	loadIcons([
+		'mdi:icon',
 		'bxs:duplicate',
 		'ic:baseline-edit',
 		'ic:baseline-download',
@@ -108,7 +109,9 @@
 		{/if}
 	</div>
 	<div slot="right">
-		<Toolbar />
+		<Toolbar>
+			<slot name="toolbar"><!-- optional fallback --></slot>
+		</Toolbar>
 		<slot />
 	</div>
 </HSplitPane>

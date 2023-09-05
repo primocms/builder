@@ -68,7 +68,6 @@
 
 	let DEBUGGING
 	if (browser) DEBUGGING = getContext('DEBUGGING')
-	$: console.log(DEBUGGING)
 </script>
 
 <nav aria-label="toolbar" id="primo-toolbar" class="primo-reset">
@@ -110,6 +109,7 @@
 			{#if !$timeline.last}
 				<ToolbarButton id="redo" title="Redo" icon="material-symbols:redo" on:click={redo_change} />
 			{/if}
+			<slot />
 			<LocaleSelector />
 			<ToolbarButton
 				type="primo"

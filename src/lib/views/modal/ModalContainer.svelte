@@ -76,20 +76,24 @@
 		overflow: hidden;
 		position: relative;
 		border-radius: var(--primo-border-radius);
-		flex: 1;
+		/* flex: 1; */
 		max-height: 100vh;
+		justify-content: center;
+		pointer-events: none;
+		height: 100%;
 		/* padding: 0 1rem; pushes content out of sight on windows if vertical */
 		/* height: 100%;  make component editor full height when in cms) */
 	}
 
 	.modal-card-body {
 		border-radius: 1px;
-		flex: 1;
+		/* flex: 1; */
 		display: flex;
 		flex-direction: column;
 		border-radius: var(--primo-border-radius);
 		justify-content: center;
 		height: 100%;
+		pointer-events: all;
 		/* height: calc(
       100vh - 6rem
     );  to allow children to scroll on overflow (i.e. not grow) */

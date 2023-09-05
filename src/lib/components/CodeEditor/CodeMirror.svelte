@@ -229,7 +229,7 @@
 		overflow-y: scroll;
 		overscroll-behavior-x: contain; /* prevent from swiping back */
 		font-family: 'Fira Code', monospace !important;
-		height: calc(100% - 40px);
+		height: calc(100% - 83px);
 		position: relative;
 	}
 

@@ -266,86 +266,92 @@
 	}
 </script>
 
-<ModalHeader
-	label="Page"
-	warn={() => {
-		// if (!isEqual(local_component, component)) {
-		//   const proceed = window.confirm(
-		//     'Undrafted changes will be lost. Continue?'
-		//   )
-		//   return proceed
-		// } else return true
-		return true
-	}}
-	button={{
-		icon: 'material-symbols:save',
-		label: 'Save',
-		onclick: saveComponent,
-		disabled: disableSave
-	}}
-/>
-
-<main class:showing-ide={$showingIDE} class:showing-cms={!$showingIDE}>
-	<HSplitPane
-		orientation={$orientation}
-		bind:leftPaneSize={$leftPaneSize}
-		bind:rightPaneSize={$rightPaneSize}
-		bind:topPaneSize={$topPaneSize}
-		bind:bottomPaneSize={$bottomPaneSize}
-		hideRightPanel={$onMobile}
-		hideLeftOverflow={$showingIDE && $activeTab === 0}
-	>
-		<div slot="left" lang={$locale}>
-			{#if $showingIDE}
-				<Tabs {tabs} bind:activeTab={$activeTab} />
-				{#if $activeTab === 0}
-					<FullCodeEditor
-						bind:html={rawHTML}
-						bind:css={rawCSS}
-						{data}
-						on:save={saveComponent}
-						on:refresh={refreshPreview}
-					/>
-				{:else if $activeTab === 1}
+<div class="PageEditor">
+	<ModalHeader
+		label="Page"
+		warn={() => {
+			// if (!isEqual(local_component, component)) {
+			//   const proceed = window.confirm(
+			//     'Undrafted changes will be lost. Continue?'
+			//   )
+			//   return proceed
+			// } else return true
+			return true
+		}}
+		button={{
+			icon: 'material-symbols:save',
+			label: 'Save',
+			onclick: saveComponent,
+			disabled: disableSave
+		}}
+	/>
+	<main class:showing-ide={$showingIDE} class:showing-cms={!$showingIDE}>
+		<HSplitPane
+			orientation={$orientation}
+			bind:leftPaneSize={$leftPaneSize}
+			bind:rightPaneSize={$rightPaneSize}
+			bind:topPaneSize={$topPaneSize}
+			bind:bottomPaneSize={$bottomPaneSize}
+			hideRightPanel={$onMobile}
+			hideLeftOverflow={$showingIDE && $activeTab === 0}
+		>
+			<div slot="left" lang={$locale}>
+				{#if $showingIDE}
+					<Tabs {tabs} bind:activeTab={$activeTab} />
+					{#if $activeTab === 0}
+						<FullCodeEditor
+							bind:html={rawHTML}
+							bind:css={rawCSS}
+							{data}
+							on:save={saveComponent}
+							on:refresh={refreshPreview}
+						/>
+					{:else if $activeTab === 1}
+						<GenericFields
+							bind:fields
+							on:input={() => {
+								refreshPreview()
+								saveLocalContent()
+							}}
+							on:delete={async () => {
+								await tick() // wait for fields to update
+								saveLocalContent()
+								refreshPreview()
+							}}
+							showCode={true}
+						/>
+					{/if}
+				{:else}
 					<GenericFields
 						bind:fields
+						on:save={saveComponent}
 						on:input={() => {
-							refreshPreview()
+							fields = fields.filter(Boolean) // to trigger setting `data`
 							saveLocalContent()
 						}}
-						on:delete={async () => {
-							await tick() // wait for fields to update
-							saveLocalContent()
-							refreshPreview()
-						}}
-						showCode={true}
+						showCode={false}
 					/>
 				{/if}
-			{:else}
-				<GenericFields
-					bind:fields
-					on:save={saveComponent}
-					on:input={() => {
-						fields = fields.filter(Boolean) // to trigger setting `data`
-						saveLocalContent()
-					}}
-					showCode={false}
+			</div>
+			<div slot="right">
+				<CodePreview
+					bind:orientation={$orientation}
+					view="small"
+					{loading}
+					{preview}
+					error={compilationError}
 				/>
-			{/if}
-		</div>
-		<div slot="right">
-			<CodePreview
-				bind:orientation={$orientation}
-				view="small"
-				{loading}
-				{preview}
-				error={compilationError}
-			/>
-		</div>
-	</HSplitPane>
-</main>
+			</div>
+		</HSplitPane>
+	</main>
+</div>
 
 <style lang="postcss">
+	.PageEditor {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+	}
 	main {
 		display: flex; /* to help w/ positioning child items in code view */
 		background: var(--primo-color-black);

@@ -329,7 +329,7 @@
 	}}
 />
 
-<main class:showing-ide={$showingIDE} class:showing-cms={!$showingIDE}>
+<main class:showing-ide={$showingIDE} class:showing-cms={!$showingIDE} lang={$locale}>
 	<HSplitPane
 		orientation={$orientation}
 		bind:leftPaneSize={$leftPaneSize}
@@ -339,7 +339,7 @@
 		hideRightPanel={$onMobile}
 		hideLeftOverflow={$showingIDE && $activeTab === 0}
 	>
-		<div slot="left" lang={$locale}>
+		<svelte:fragment slot="left">
 			{#if $showingIDE}
 				<Tabs {tabs} bind:activeTab={$activeTab} />
 				{#if $activeTab === 0}
@@ -377,7 +377,7 @@
 					showCode={false}
 				/>
 			{/if}
-		</div>
+		</svelte:fragment>
 		<div slot="right">
 			<CodePreview
 				bind:orientation={$orientation}
