@@ -69,8 +69,8 @@
 
 		async function create_site_zip(files) {
 			const zip = new JSZip()
-			files.forEach(({ file, data }) => {
-				zip.file(file, data)
+			files.forEach(({ path, content }) => {
+				zip.file(path, content)
 			})
 			return await zip.generateAsync({ type: 'blob' })
 		}
