@@ -90,6 +90,12 @@
 					{/if}
 				{/each}
 			</div>
+			<button
+				style="color:white;border:1px solid white;padding-inline: 0.5rem;font-size:0.85rem;"
+				on:click={() => modal.show('PLUGIN__BLOG')}
+			>
+				Blog
+			</button>
 		</div>
 		<div class="site-name">
 			<span class="site">{$site.name} /</span>
