@@ -41,7 +41,7 @@
 			// })
 			let size = new Blob([image]).size
 
-			const key = `${$site.id}/${image.name + image.lastModified}`
+			const key = `${$site.id}/${image.lastModified + image.name}`
 			const url = await storageChanged({
 				bucket: 'images',
 				action: 'upload',
