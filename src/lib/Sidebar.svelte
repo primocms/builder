@@ -83,10 +83,11 @@
 	const flipDurationMs = 200
 
 	function consider_dnd({ detail }) {
-		draggable_symbols = detail.items
+		// draggable_symbols = detail.items
 	}
 
 	function finalize_dnd({ detail }) {
+		console.log({ detail })
 		if (detail.info.trigger === 'droppedIntoZone') {
 			symbol_actions.rearrange(detail.items)
 		} else if (detail.info.trigger === 'droppedIntoAnother') {

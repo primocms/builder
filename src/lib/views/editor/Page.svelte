@@ -125,7 +125,7 @@
 	}
 
 	let draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
-	$: draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
+	// $: draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
 
 	const flipDurationMs = 100
 
