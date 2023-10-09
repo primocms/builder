@@ -135,6 +135,8 @@
 			.map((item, index) => ({ ...item, index }))
 			.find((item) => item._drag_id === detail.info.id)
 
+		console.log(detail.items, dragged_symbol)
+
 		if (!dragged_symbol) return
 
 		const is_site_symbol = $symbols.some((s) => s.id === dragged_symbol.id)
