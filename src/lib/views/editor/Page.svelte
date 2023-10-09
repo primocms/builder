@@ -177,6 +177,7 @@
 	}
 
 	function position_block_toolbar() {
+		if (!hovered_block_el) return
 		hovered_block_el.appendChild(block_toolbar_element)
 		const { top, left, bottom, right } = hovered_block_el.getBoundingClientRect()
 		const block_positions = {

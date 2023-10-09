@@ -82,19 +82,15 @@
 
 	const flipDurationMs = 200
 
-	let all_symbols
 	function consider_dnd({ detail }) {
-		if (!all_symbols) {
-			all_symbols = _.cloneDeep(draggable_symbols)
-		}
 		draggable_symbols = detail.items
 	}
+
 	function finalize_dnd({ detail }) {
 		if (detail.info.trigger === 'droppedIntoZone') {
-			draggable_symbols = detail.items
 			symbol_actions.rearrange(detail.items)
 		} else if (detail.info.trigger === 'droppedIntoAnother') {
-			draggable_symbols = all_symbols
+			draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
 		}
 		dragging = null
 	}
