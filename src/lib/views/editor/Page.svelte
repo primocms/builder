@@ -135,7 +135,7 @@
 			.map((item, index) => ({ ...item, index }))
 			.find((item) => item._drag_id === detail.info.id)
 
-		console.log(detail.items, dragged_symbol)
+		console.log({ detail, dragged_symbol })
 
 		if (!dragged_symbol) return
 
