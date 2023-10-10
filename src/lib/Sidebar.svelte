@@ -94,10 +94,8 @@
 			const rearranged = detail.items.map((item, index) => ({ ...item, index }))
 			console.log({ rearranged })
 			symbol_actions.rearrange(rearranged)
-			refresh_symbols()
-		} else if (detail.info.trigger === 'droppedIntoAnother') {
-			refresh_symbols()
 		}
+		refresh_symbols()
 		dragging = null
 	}
 
