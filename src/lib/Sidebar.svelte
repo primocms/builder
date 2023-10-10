@@ -19,16 +19,19 @@
 
 	async function create_symbol() {
 		const symbol = Symbol({ site: $site.id })
-		await symbol_actions.create(symbol)
+		symbol_actions.create(symbol)
+		refresh_symbols()
 	}
 
 	async function rename_symbol(id, name) {
-		await symbol_actions.update(id, { name })
+		symbol_actions.update(id, { name })
+		refresh_symbols()
 	}
 
 	async function delete_symbol(symbol_id) {
 		const symbol = $symbols.find((s) => s.id === symbol_id)
 		symbol_actions.delete(symbol)
+		refresh_symbols()
 	}
 
 	async function duplicate_symbol(symbol_id, index) {
@@ -44,6 +47,7 @@
 			},
 			index
 		)
+		refresh_symbols()
 	}
 
 	async function upload_symbol({ target }) {
@@ -53,11 +57,12 @@
 			try {
 				const uploaded = JSON.parse(target.result)
 				const validated = validate_symbol(uploaded)
-				await symbol_actions.create({
+				symbol_actions.create({
 					...validated,
 					id: uuidv4(),
 					site: $site.id
 				})
+				refresh_symbols()
 			} catch (error) {
 				console.error(error)
 			}
