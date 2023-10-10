@@ -133,7 +133,7 @@
 	function consider_dnd({ detail }) {
 		dragged_symbol = detail.items
 			.map((item, index) => ({ ...item, index }))
-			.find((item) => item._drag_id === detail.info.id)
+			.find((item) => item.isDndShadowItem)
 
 		console.log({ detail, dragged_symbol })
 
