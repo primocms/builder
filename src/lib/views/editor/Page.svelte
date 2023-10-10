@@ -145,8 +145,10 @@
 
 		const is_site_symbol = $symbols.some((s) => s.id === dragged_symbol.id)
 		if (is_site_symbol) {
+			console.log('Site symbol')
 			draggable_sections = detail.items
 		} else {
+			console.log('Primo symbol')
 			dragged_symbol.is_primo_block = true
 			draggable_sections = detail.items.map((item) =>
 				item._drag_id === detail.info.id ? { ...item, primo_symbol: item } : item
