@@ -125,6 +125,7 @@
 	}
 
 	let draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
+	$: console.log({ draggable_sections })
 	async function refresh_sections() {
 		await tick()
 		draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
