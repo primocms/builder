@@ -9,6 +9,7 @@
 
 	export let align = 'right'
 
+	const PRIMARY_LANG = "ja"
 	const Language_Name = (language) => _find(available_languages, ['key', language])['name']
 
 	let showingSelector = false
@@ -70,7 +71,7 @@
 		<div class="select-container" in:fly={{ duration: 100, y: -20, opacity: 0 }}>
 			{#if !addingLanguage}
 				<div class="language-list" aria-hidden="true">
-					{#each site_languages.sort((l) => (l === 'en' ? -1 : 1)) as languageID}
+					{#each site_languages.sort((l) => (l === PRIMARY_LANG ? -1 : 1)) as languageID}
 						<div class="language-item">
 							<button
 								on:click={() => {
@@ -82,7 +83,7 @@
 							>
 								{Language_Name(languageID)} ({languageID})
 							</button>
-							{#if languageID !== 'en'}
+							{#if languageID !== PRIMARY_LANG}
 								<button class="remove" on:click={() => delete_language(languageID)}>
 									<Icon icon="bi:x" />
 								</button>

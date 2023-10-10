@@ -22,6 +22,7 @@
 	import { dataChanged } from '$lib/database'
 
 	let stage = 'INITIAL'
+	let primary_language = 'en'
 
 	if ($active_deployment) {
 		stage = 'CONNECT_REPO__ACTIVE'
@@ -58,7 +59,11 @@
 
 	async function download_site() {
 		loading = true
-		const files = await build_site_bundle({ pages: $pages, symbols: $symbols })
+		const files = await build_site_bundle({
+			pages: $pages,
+			symbols: $symbols,
+			primary_language
+		})
 		if (!files) {
 			loading = false
 			return
@@ -92,7 +97,7 @@
 		} else {
 			destination_repo = $active_deployment.repo.full_name
 		}
-		const deployment = await push_site(destination_repo, creating_new_repo)
+		const deployment = await push_site(destination_repo, creating_new_repo, primary_language)
 		if (deployment) {
 			$active_deployment = deployment
 			stage = 'CONNECT_REPO__ACTIVE__SUCCESS'
@@ -151,7 +156,7 @@
 			<div class="buttons">
 				<button class="primo-button" on:click={download_site}>
 					<Icon icon={loading ? 'eos-icons:loading' : 'ic:baseline-download'} />
-					<span>Download</span>
+					<span>Download (!)</span>
 				</button>
 				{#if github_account}
 					<button class="primo-button primary" on:click={() => (stage = 'CONNECT_REPO')}>
@@ -164,6 +169,13 @@
 						<span>Connect to Github</span>
 					</button>
 				{/if}
+			</div>
+			<div style="display: flex; justify-content: flex-end; align-items: center; gap: 1rem;">
+				<div>Primary Language:</div>
+				<select class="primo-button" bind:value={primary_language}>
+					<option value="en">English</option>
+					<option value="ja">Japanese</option>
+				</select>
 			</div>
 		</div>
 	{:else if stage === 'CONNECT_GITHUB'}
