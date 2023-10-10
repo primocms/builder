@@ -78,7 +78,7 @@
 		return data.symbols.map((s) => ({ ...s, _drag_id: uuidv4() }))
 	}
 
-	$: draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
+	let draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
 
 	const flipDurationMs = 200
 
