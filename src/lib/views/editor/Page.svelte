@@ -150,9 +150,13 @@
 		} else {
 			console.log('Primo symbol')
 			dragged_symbol.is_primo_block = true
-			draggable_sections = detail.items.map((item) =>
-				item._drag_id === detail.info.id ? { ...item, primo_symbol: item } : item
-			)
+			draggable_sections = detail.items.map((item) => {
+				if (item[SHADOW_ITEM_MARKER_PROPERTY_NAME]) {
+					// currently dragged item
+					console.log('adding primo symbol', item)
+					return { ...item, primo_symbol: item }
+				} else return item
+			})
 		}
 	}
 
