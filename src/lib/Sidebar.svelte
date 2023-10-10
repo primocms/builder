@@ -79,11 +79,12 @@
 	}
 
 	let draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
+	$: console.log({ draggable_symbols })
 
 	const flipDurationMs = 200
 
 	function consider_dnd({ detail }) {
-		// draggable_symbols = detail.items
+		draggable_symbols = detail.items
 	}
 
 	function finalize_dnd({ detail }) {
