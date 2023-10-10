@@ -157,6 +157,7 @@
 		} else {
 			await active_page.add_block(dragged_symbol, dragged_symbol.index)
 		}
+		draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
 		setTimeout(() => {
 			moving = false
 		}, 300)
