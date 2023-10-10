@@ -155,10 +155,11 @@
 	async function finalize_dnd() {
 		moving = true
 		if (dragged_symbol.is_primo_block) {
-			await active_page.add_primo_block(dragged_symbol, dragged_symbol.index)
+			active_page.add_primo_block(dragged_symbol, dragged_symbol.index)
 		} else {
-			await active_page.add_block(dragged_symbol, dragged_symbol.index)
+			active_page.add_block(dragged_symbol, dragged_symbol.index)
 		}
+		await tick()
 		refresh_sections()
 		setTimeout(() => {
 			moving = false
