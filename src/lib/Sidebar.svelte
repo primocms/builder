@@ -90,11 +90,19 @@
 	function finalize_dnd({ detail }) {
 		console.log({ detail })
 		if (detail.info.trigger === 'droppedIntoZone') {
-			symbol_actions.rearrange(detail.items)
+			const rearranged = detail.items.map((item, index) => ({ ...item, index }))
+			console.log({ rearranged })
+			symbol_actions.rearrange(rearranged)
+			refresh_symbols()
 		} else if (detail.info.trigger === 'droppedIntoAnother') {
-			draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
+			refresh_symbols()
 		}
 		dragging = null
+	}
+
+	async function refresh_symbols() {
+		await tick()
+		draggable_symbols = $symbols.map((s, i) => ({ ...s, _drag_id: s.id }))
 	}
 
 	let dragging = null
