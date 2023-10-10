@@ -107,12 +107,10 @@ export const symbols = {
 
 		await update_timeline({
 			doing: async () => {
-				await stores.sections.update((store) =>
+				stores.sections.update((store) =>
 					store.filter((section) => section.symbol !== symbol_to_delete.id)
 				)
-				await stores.symbols.update((symbols) =>
-					symbols.filter((s) => s.id !== symbol_to_delete.id)
-				)
+				stores.symbols.update((symbols) => symbols.filter((s) => s.id !== symbol_to_delete.id))
 
 				deleted_sections = await dataChanged({
 					table: 'sections',
