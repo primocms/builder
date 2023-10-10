@@ -125,7 +125,8 @@
 	}
 
 	let draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
-	function refresh_sections() {
+	async function refresh_sections() {
+		await tick()
 		draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
 	}
 
@@ -159,7 +160,6 @@
 		} else {
 			active_page.add_block(dragged_symbol, dragged_symbol.index)
 		}
-		await tick()
 		refresh_sections()
 		setTimeout(() => {
 			moving = false
@@ -273,7 +273,7 @@
 		id={hovered_block.id}
 		i={hovered_block.index}
 		on:delete={async () => {
-			await active_page.delete_block(hovered_block.id)
+			active_page.delete_block(hovered_block.id)
 			refresh_sections()
 		}}
 		on:duplicate={() => {
@@ -285,7 +285,7 @@
 		on:moveUp={async () => {
 			moving = true
 			hide_block_toolbar()
-			await active_page.move_block(hovered_block, hovered_block.index - 1)
+			active_page.move_block(hovered_block, hovered_block.index - 1)
 			refresh_sections()
 			setTimeout(() => {
 				moving = false
@@ -294,7 +294,7 @@
 		on:moveDown={async () => {
 			moving = true
 			hide_block_toolbar()
-			await active_page.move_block(hovered_block, hovered_block.index + 1)
+			active_page.move_block(hovered_block, hovered_block.index + 1)
 			refresh_sections()
 			setTimeout(() => {
 				moving = false
