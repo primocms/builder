@@ -30,7 +30,7 @@
 
 	async function delete_symbol(symbol_id) {
 		const symbol = $symbols.find((s) => s.id === symbol_id)
-		await symbol_actions.delete(symbol)
+		symbol_actions.delete(symbol)
 		refresh_symbols()
 	}
 
