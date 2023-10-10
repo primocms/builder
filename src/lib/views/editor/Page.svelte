@@ -125,7 +125,9 @@
 	}
 
 	let draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
-	// $: draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
+	function refresh_sections() {
+		draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
+	}
 
 	const flipDurationMs = 100
 
@@ -157,7 +159,7 @@
 		} else {
 			await active_page.add_block(dragged_symbol, dragged_symbol.index)
 		}
-		draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
+		refresh_sections()
 		setTimeout(() => {
 			moving = false
 		}, 300)
@@ -269,14 +271,21 @@
 		bind:node={block_toolbar_element}
 		id={hovered_block.id}
 		i={hovered_block.index}
-		on:delete={() => active_page.delete_block(hovered_block.id)}
-		on:duplicate={() => active_page.duplicate_block(hovered_block.id)}
+		on:delete={async () => {
+			await active_page.delete_block(hovered_block.id)
+			refresh_sections()
+		}}
+		on:duplicate={() => {
+			active_page.duplicate_block(hovered_block.id)
+			refresh_sections()
+		}}
 		on:edit-code={() => edit_component(hovered_block, true)}
 		on:edit-content={() => edit_component(hovered_block)}
 		on:moveUp={async () => {
 			moving = true
 			hide_block_toolbar()
-			active_page.move_block(hovered_block, hovered_block.index - 1)
+			await active_page.move_block(hovered_block, hovered_block.index - 1)
+			refresh_sections()
 			setTimeout(() => {
 				moving = false
 			}, 300)
@@ -284,7 +293,8 @@
 		on:moveDown={async () => {
 			moving = true
 			hide_block_toolbar()
-			active_page.move_block(hovered_block, hovered_block.index + 1)
+			await active_page.move_block(hovered_block, hovered_block.index + 1)
+			refresh_sections()
 			setTimeout(() => {
 				moving = false
 			}, 300)
