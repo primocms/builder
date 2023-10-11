@@ -125,7 +125,11 @@
 	}
 
 	let draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
-	$: draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
+	$: console.log({ draggable_sections })
+	$: refresh_sections($sections)
+	async function refresh_sections(_) {
+		draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
+	}
 
 	const flipDurationMs = 100
 
@@ -133,28 +137,37 @@
 	function consider_dnd({ detail }) {
 		dragged_symbol = detail.items
 			.map((item, index) => ({ ...item, index }))
-			.find((item) => item._drag_id === detail.info.id)
+			.find((item) => item.isDndShadowItem)
+
+		console.log({ detail, dragged_symbol })
 
 		if (!dragged_symbol) return
 
 		const is_site_symbol = $symbols.some((s) => s.id === dragged_symbol.id)
 		if (is_site_symbol) {
+			console.log('Site symbol')
 			draggable_sections = detail.items
 		} else {
+			console.log('Primo symbol')
 			dragged_symbol.is_primo_block = true
-			draggable_sections = detail.items.map((item) =>
-				item._drag_id === detail.info.id ? { ...item, primo_symbol: item } : item
-			)
+			draggable_sections = detail.items.map((item) => {
+				if (item[SHADOW_ITEM_MARKER_PROPERTY_NAME]) {
+					// currently dragged item
+					console.log('adding primo symbol', item)
+					return { ...item, primo_symbol: item }
+				} else return item
+			})
 		}
 	}
 
 	async function finalize_dnd() {
 		moving = true
 		if (dragged_symbol.is_primo_block) {
-			await active_page.add_primo_block(dragged_symbol, dragged_symbol.index)
+			active_page.add_primo_block(dragged_symbol, dragged_symbol.index)
 		} else {
-			await active_page.add_block(dragged_symbol, dragged_symbol.index)
+			active_page.add_block(dragged_symbol, dragged_symbol.index)
 		}
+		refresh_sections()
 		setTimeout(() => {
 			moving = false
 		}, 300)
@@ -266,14 +279,21 @@
 		bind:node={block_toolbar_element}
 		id={hovered_block.id}
 		i={hovered_block.index}
-		on:delete={() => active_page.delete_block(hovered_block.id)}
-		on:duplicate={() => active_page.duplicate_block(hovered_block.id)}
+		on:delete={async () => {
+			active_page.delete_block(hovered_block.id)
+			refresh_sections()
+		}}
+		on:duplicate={() => {
+			active_page.duplicate_block(hovered_block.id)
+			refresh_sections()
+		}}
 		on:edit-code={() => edit_component(hovered_block, true)}
 		on:edit-content={() => edit_component(hovered_block)}
 		on:moveUp={async () => {
 			moving = true
 			hide_block_toolbar()
 			active_page.move_block(hovered_block, hovered_block.index - 1)
+			refresh_sections()
 			setTimeout(() => {
 				moving = false
 			}, 300)
@@ -282,6 +302,7 @@
 			moving = true
 			hide_block_toolbar()
 			active_page.move_block(hovered_block, hovered_block.index + 1)
+			refresh_sections()
 			setTimeout(() => {
 				moving = false
 			}, 300)
