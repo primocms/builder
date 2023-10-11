@@ -1,4 +1,5 @@
 <script>
+	import { tick } from 'svelte'
 	import _ from 'lodash-es'
 	import fileSaver from 'file-saver'
 	import axios from 'axios'
@@ -18,16 +19,19 @@
 
 	async function create_symbol() {
 		const symbol = Symbol({ site: $site.id })
-		await symbol_actions.create(symbol)
+		symbol_actions.create(symbol)
+		refresh_symbols()
 	}
 
 	async function rename_symbol(id, name) {
-		await symbol_actions.update(id, { name })
+		symbol_actions.update(id, { name })
+		refresh_symbols()
 	}
 
 	async function delete_symbol(symbol_id) {
 		const symbol = $symbols.find((s) => s.id === symbol_id)
 		symbol_actions.delete(symbol)
+		refresh_symbols()
 	}
 
 	async function duplicate_symbol(symbol_id, index) {
@@ -43,6 +47,7 @@
 			},
 			index
 		)
+		refresh_symbols()
 	}
 
 	async function upload_symbol({ target }) {
@@ -52,11 +57,12 @@
 			try {
 				const uploaded = JSON.parse(target.result)
 				const validated = validate_symbol(uploaded)
-				await symbol_actions.create({
+				symbol_actions.create({
 					...validated,
 					id: uuidv4(),
 					site: $site.id
 				})
+				refresh_symbols()
 			} catch (error) {
 				console.error(error)
 			}
@@ -78,7 +84,8 @@
 		return data.symbols.map((s) => ({ ...s, _drag_id: uuidv4() }))
 	}
 
-	$: draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
+	let draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
+	$: console.log({ draggable_symbols })
 
 	const flipDurationMs = 200
 
@@ -87,12 +94,19 @@
 	}
 
 	function finalize_dnd({ detail }) {
+		console.log({ detail })
 		if (detail.info.trigger === 'droppedIntoZone') {
-			symbol_actions.rearrange(detail.items)
-		} else if (detail.info.trigger === 'droppedIntoAnother') {
-			draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
+			const rearranged = detail.items.map((item, index) => ({ ...item, index }))
+			console.log({ rearranged })
+			symbol_actions.rearrange(rearranged)
 		}
+		refresh_symbols()
 		dragging = null
+	}
+
+	async function refresh_symbols() {
+		await tick()
+		draggable_symbols = $symbols.map((s, i) => ({ ...s, _drag_id: s.id }))
 	}
 
 	let dragging = null
