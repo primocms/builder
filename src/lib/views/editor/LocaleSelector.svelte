@@ -9,7 +9,7 @@
 
 	export let align = 'right'
 
-	const PRIMARY_LANG = "ja"
+	const PRIMARY_LANG = "en"
 	const Language_Name = (language) => _find(available_languages, ['key', language])['name']
 
 	let showingSelector = false
