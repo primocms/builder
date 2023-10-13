@@ -1,5 +1,6 @@
 import { customAlphabet } from 'nanoid/non-secure'
 import { v4 as uuidv4 } from 'uuid';
+import { find as _find } from 'lodash-es'
 
 /**
  * Creates a new field object with default values.
@@ -356,3 +357,5 @@ function createUniqueID(length = 5) {
   const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz', length);
   return nanoid()
 }
+
+export const Language_Name = (language) => _find(available_languages, ['key', language])['name']

@@ -1,16 +1,14 @@
 <script>
 	import Icon from '@iconify/svelte'
 	import { fly } from 'svelte/transition'
-	import { find as _find } from 'lodash-es'
 	import { locale } from '../../stores/app/misc'
 	import { add_language, delete_language, set_language } from '../../stores/actions'
-	import { languages as available_languages } from '../../const'
+	import { languages as available_languages, Language_Name } from '../../const'
 	import { content } from '../../stores/data/site'
 
 	export let align = 'right'
 
 	const PRIMARY_LANG = "en"
-	const Language_Name = (language) => _find(available_languages, ['key', language])['name']
 
 	let showingSelector = false
 	let addingLanguage = false
