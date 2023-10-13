@@ -8,6 +8,7 @@ export const fields = writable([]);
 export const code = writable(Site().code);
 export const content = writable(Site().content);
 export const active_deployment = writable(null);
+export const primary_language = writable("en");
 
 export function update(props) {
 	if (props.id) {
