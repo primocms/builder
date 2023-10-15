@@ -75,19 +75,21 @@
 		let combined_content = symbol.content
 		symbol.fields.forEach((field) => {
 			if (field.is_static) {
+				const value = symbol.content[$locale][field.key]
 				combined_content = {
 					...combined_content,
 					[$locale]: {
 						...combined_content[$locale],
-						[field.key]: symbol.content[$locale][field.key] || getCachedPlaceholder(field)
+						[field.key]: value !== undefined ? value : getCachedPlaceholder(field)
 					}
 				}
 			} else {
+				const value = component.content[$locale][field.key]
 				combined_content = {
 					...combined_content,
 					[$locale]: {
 						...combined_content[$locale],
-						[field.key]: component.content[$locale][field.key] || getCachedPlaceholder(field)
+						[field.key]: value !== undefined ? value : getCachedPlaceholder(field)
 					}
 				}
 			}
