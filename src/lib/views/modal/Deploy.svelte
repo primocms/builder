@@ -172,14 +172,6 @@
 					</button>
 				{/if}
 			</div>
-			<div style="display: flex; justify-content: flex-end; align-items: center; gap: 1rem;">
-				<div>Primary Language:</div>
-				<select class="primo-button" bind:value={$primary_language}>
-					{#each site_languages as lang_id}
-						<option value={lang_id}>{Language_Name(lang_id)}</option>
-					{/each}
-				</select>
-			</div>
 		</div>
 	{:else if stage === 'CONNECT_GITHUB'}
 		<div class="container">
@@ -308,6 +300,16 @@
 			{/if}
 		</div>
 	{/if}
+	<div class="container">
+		<div style="display: flex; justify-content: flex-end; align-items: center; gap: 1rem;">
+			<div>Primary Language:</div>
+			<select class="primo-button" bind:value={$primary_language}>
+				{#each site_languages as lang_id}
+					<option value={lang_id}>{Language_Name(lang_id)}</option>
+				{/each}
+			</select>
+		</div>
+	</div>
 </div>
 
 <style lang="postcss">
