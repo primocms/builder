@@ -175,17 +175,6 @@
 
 	$: compilationError && data && refreshPreview() // recompile when there's a compilation error & data changes
 
-	// ensure placeholder values always conform to form
-	// TODO: do for remaining fields
-	$: fields = fields.map((field) => {
-		if (field.type === 'link' && !field.value?.url)
-			return {
-				...field,
-				value: getCachedPlaceholder(field)
-			}
-		else return field
-	})
-
 	let disableSave = false
 	async function compileComponentCode({ html, css, js }) {
 		disableSave = true
@@ -231,12 +220,12 @@
 		{
 			id: 'code',
 			label: 'Code',
-			icon: 'code'
+			icon: 'material-symbols:code'
 		},
 		{
 			id: 'fields',
 			label: 'Fields',
-			icon: 'database'
+			icon: 'fluent:form-multiple-24-regular'
 		}
 	]
 
