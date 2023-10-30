@@ -86,6 +86,7 @@
 
 	let draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
 	$: console.log({ draggable_symbols })
+	$: refresh_symbols($symbols)
 
 	const flipDurationMs = 200
 
