@@ -18,9 +18,14 @@
 		field.value = _chain(subfieldsWithValues).keyBy('key').mapValues('value').value()
 	}
 
+	function setSubfieldOptions() {
+		field.fields = subfieldsWithValues.map((subfield) => subfield) // pass everything (i.e. options)
+	}
+
 	function onInput() {
 		setSelectedOption()
 		setFieldValue()
+		setSubfieldOptions()
 		dispatch('input')
 	}
 

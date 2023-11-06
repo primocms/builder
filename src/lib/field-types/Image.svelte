@@ -10,61 +10,79 @@
 
 	const defaultValue = {
 		alt: '',
-		url: '',
-		src: '',
-		size: null
+		url: ''
 	}
 
 	export let field = {
-		value: defaultValue
+		value: defaultValue,
+		options: {
+			size: null,
+			type: null
+		}
 	}
 
 	if (typeof field.value === 'string' || !field.value) {
 		field.value = defaultValue
 	}
 
-	function setValue({ url, size }) {
+	function set_url(url) {
 		field.value = {
-			...field.value,
-			url: url,
-			src: url,
-			size
+			url,
+			alt: field.value.alt
 		}
 	}
 
-	async function uploadImage({ target }) {
-		loading = true
-		const { files } = target
-		if (files.length > 0) {
-			const image = files[0]
-
-			// const compressed = await imageCompression(image, {
-			// 	maxSizeMB: 0.5
-			// })
-			let size = new Blob([image]).size
-
-			const key = `${$site.id}/${image.lastModified + image.name}`
-			const url = await storageChanged({
-				bucket: 'images',
-				action: 'upload',
-				key,
-				file: image
-			})
-
-			if (url) {
-				imagePreview = url
-
-				setValue({
-					url,
-					size: Math.round(size / 1000)
-				})
-
-				loading = false
-				dispatch('input', field)
-			} else {
-				loading = false
-			}
+	function set_options(options) {
+		field.options = {
+			...field.options,
+			...options
 		}
+	}
+
+	async function convert_image(url, new_type) {
+		const response = await fetch(url)
+		const blob = await response.blob()
+
+		const image = new Image()
+		image.crossOrigin = 'anonymous' // This is important for CORS if the image is from a different domain
+		image.src = URL.createObjectURL(blob)
+		image.onload = () => {
+			const canvas = document.createElement('canvas')
+			canvas.width = image.naturalWidth
+			canvas.height = image.naturalHeight
+			canvas.getContext('2d').drawImage(image, 0, 0)
+			canvas.toBlob((blob) => {
+				// Now we have a `blob` containing webp data
+
+				// Use the file rename trick to turn it back into a file
+				const myImage = new File([blob], `${blob.name}.${new_type}`, { type: blob.type })
+				uploadImage(myImage)
+			}, `image/${new_type}`)
+		}
+	}
+
+	async function uploadImage(image) {
+		loading = true
+
+		const key = `${$site.id}/${image.lastModified + image.name}`
+		const url = await storageChanged({
+			bucket: 'images',
+			action: 'upload',
+			key,
+			file: image
+		})
+
+		if (url) {
+			imagePreview = url
+			set_url(url)
+			set_options({
+				original_type: field.options.original_type || image.type.replace('image/', ''),
+				type: image.type.replace('image/', ''),
+				size: Math.round(image.size / 1000)
+			})
+			dispatch('input', field)
+		}
+		loading = false
 	}
 
 	let imagePreview = field.value.url || ''
@@ -74,15 +92,15 @@
 <div class="image-field">
 	<span class="field-label">{field.label}</span>
 	<div class="image-info">
-		{#if loading}
-			<div class="spinner-container">
-				<Spinner />
-			</div>
-		{:else}
-			<div class="image-preview">
-				{#if field.value.size}
+		<div class="image-preview">
+			{#if loading}
+				<div class="spinner-container">
+					<Spinner />
+				</div>
+			{:else}
+				{#if field.options.size}
 					<span class="field-size">
-						{field.value.size}KB
+						{field.options.size}KB
 					</span>
 				{/if}
 				{#if field.value.url}
@@ -93,10 +111,20 @@
 					{#if !field.value.url}
 						<span>Upload</span>
 					{/if}
-					<input on:change={uploadImage} type="file" accept="image/*" />
+					<input
+						on:change={({ target }) => {
+							const { files } = target
+							if (files.length > 0) {
+								const image = files[0]
+								uploadImage(image)
+							}
+						}}
+						type="file"
+						accept="image/*"
+					/>
 				</label>
-			</div>
-		{/if}
+			{/if}
+		</div>
 		<div class="inputs">
 			<TextInput bind:value={field.value.alt} on:input label="Description" />
 			<TextInput
@@ -104,13 +132,30 @@
 				label="URL"
 				on:input={({ detail: value }) => {
 					imagePreview = value
-					setValue({
-						url: value,
-						size: null
-					})
+					set_url(value)
 					dispatch('input', field)
 				}}
 			/>
+			{#if field.options.type && field.options.type !== 'svg+xml'}
+				{@const original_active = field.options.type === field.options.original_type}
+				{@const webp_active = field.options.type === 'webp'}
+				<div class="image-type-buttons">
+					<button
+						on:click={() => convert_image(field.value.url, field.options.original_type)}
+						class:active={original_active}
+						disabled={original_active}
+					>
+						{field.options.original_type?.toUpperCase()}
+					</button>
+					<button
+						on:click={() => convert_image(field.value.url, 'webp')}
+						class:active={webp_active}
+						disabled={webp_active}
+					>
+						WEBP
+					</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>
@@ -122,18 +167,18 @@
 	}
 	.image-field {
 		display: grid;
-		gap: 1rem;
+		gap: 0.5rem;
 	}
 	.field-label {
 		font-weight: 600;
 		display: inline-block;
-		font-weight: 500;
 		font-size: var(--label-font-size, 1rem);
 	}
 	.image-info {
-		display: grid;
-		grid-template-columns: 9rem 4fr;
+		display: flex;
+		gap: 0.75rem;
 		overflow: hidden;
+		align-items: flex-start;
 		/* border: 1px solid var(--primo-color-brand); */
 		/* padding: 0.5rem; */
 
@@ -153,12 +198,10 @@
 	.image-preview {
 		border: 1px dashed #3e4041;
 		border-radius: 4px;
-		aspect-ratio: 1 / 1;
-		/* width: 100%; */
+		aspect-ratio: 1;
 		height: 100%;
-		/* padding-top: 50%; */
+		width: 13rem;
 		position: relative;
-		/* margin-bottom: 0.25rem; */
 
 		.image-upload {
 			flex: 1 1 0%;
@@ -195,10 +238,6 @@
 				width: 0;
 				position: absolute;
 			}
-
-			svg {
-				max-width: 4rem;
-			}
 		}
 
 		.field-size {
@@ -217,7 +256,7 @@
 		img {
 			position: absolute;
 			inset: 0;
-			object-fit: contain;
+			object-fit: cover;
 			height: 100%;
 			width: 100%;
 		}
@@ -225,8 +264,30 @@
 
 	.inputs {
 		display: grid;
-		gap: 1rem;
+		row-gap: 6px;
 		width: 100%;
-		padding: 0 1.3125rem;
+		--TextInput-font-size: 0.75rem;
+	}
+
+	.image-type-buttons {
+		margin-top: 3px;
+		font-size: 0.75rem;
+		display: flex;
+		border-radius: var(--primo-border-radius);
+		border: 1px solid var(--color-gray-8);
+		justify-self: flex-start;
+
+		button {
+			padding: 2px 6px;
+
+			&.active {
+				cursor: unset;
+				color: var(--primo-color-brand);
+			}
+
+			&:last-child {
+				border-left: 1px solid var(--color-gray-8);
+			}
+		}
 	}
 </style>
