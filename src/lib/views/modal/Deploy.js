@@ -10,10 +10,11 @@ import _ from 'lodash-es'
 import { page } from '$app/stores'
 import { site } from '$lib/stores/data/site'
 
-export async function push_site(repo_name, create_new = false) {
+export async function push_site(repo_name, create_new = false, primary_language = 'en') {
 	const site_bundle = await build_site_bundle({
 		pages: get(pages),
-		symbols: get(symbols)
+		symbols: get(symbols),
+		primary_language
 	})
 	if (!site_bundle) {
 		return null
@@ -28,7 +29,7 @@ export async function push_site(repo_name, create_new = false) {
 	return await deploy({ files, site_id: get(site).id, repo_name }, create_new)
 }
 
-export async function build_site_bundle({ pages, symbols }) {
+export async function build_site_bundle({ pages, symbols, primary_language }) {
 	let site_bundle
 
 	let all_sections = []
@@ -124,7 +125,7 @@ export async function build_site_bundle({ pages, symbols }) {
 		}
 
 		// add language prefix
-		if (language !== 'en') {
+		if (language !== primary_language) {
 			path = `${language}/${path}`
 			full_url = `${language}/${full_url}`
 		}
