@@ -127,10 +127,11 @@ export async function build_site_bundle({ pages, symbols }) {
 		if (language !== 'en') {
 			path = `${language}/${path}`
 			full_url = `${language}/${full_url}`
+		} else {
+			// only add en sections and pages to primo.json
+			all_sections = [...all_sections, ...sections]
+			all_pages = [...all_pages, page]
 		}
-
-		all_sections = [...all_sections, ...sections]
-		all_pages = [...all_pages, page]
 
 		const page_tree = [
 			{
