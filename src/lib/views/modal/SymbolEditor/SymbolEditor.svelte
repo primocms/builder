@@ -247,10 +247,8 @@
 		}
 
 		if (!disableSave) {
-			// parse content - static content gets saved to symbol, dynamic content gets saved to instance
-
 			// code & fields gets saved to symbol
-			actions.symbols.update(symbol.id, {
+			await actions.symbols.update(symbol.id, {
 				code: local_code,
 				content: local_content,
 				fields

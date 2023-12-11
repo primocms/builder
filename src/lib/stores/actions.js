@@ -55,6 +55,7 @@ export const symbols = {
 					action: 'insert',
 					data: symbol
 				})
+				await symbols.rearrange(get(stores.symbols))
 			},
 			undoing: async () => {
 				stores.symbols.update((store) => store.filter((s) => s.id !== symbol.id))
@@ -63,6 +64,7 @@ export const symbols = {
 					action: 'delete',
 					id: symbol.id
 				})
+				await symbols.rearrange(get(stores.symbols))
 			}
 		})
 	},

@@ -94,12 +94,10 @@
 		draggable_symbols = detail.items
 	}
 
-	function finalize_dnd({ detail }) {
-		console.log({ detail })
+	async function finalize_dnd({ detail }) {
 		if (detail.info.trigger === 'droppedIntoZone') {
 			const rearranged = detail.items.map((item, index) => ({ ...item, index }))
-			console.log({ rearranged })
-			symbol_actions.rearrange(rearranged)
+			await symbol_actions.rearrange(rearranged)
 		}
 		refresh_symbols()
 		dragging = null

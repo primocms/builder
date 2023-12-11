@@ -207,7 +207,9 @@
 				<Icon icon="bxs:error" />
 			</div>
 		{:else}
-			<IFrame bind:height {componentCode} />
+			{#key componentCode}
+				<IFrame bind:height {componentCode} />
+			{/key}
 		{/if}
 	</div>
 </div>
