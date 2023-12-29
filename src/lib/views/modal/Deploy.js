@@ -77,7 +77,6 @@ export async function build_site_bundle({ pages, symbols }) {
 	}
 
 	async function build_page_tree(page, language) {
-		const { url } = page
 		const sections = await dataChanged({
 			table: 'sections',
 			action: 'select',
@@ -113,14 +112,14 @@ export async function build_site_bundle({ pages, symbols }) {
 		}
 
 		let path
-		let full_url = url
-		if (url === 'index' || url === '404') {
-			path = `${url}.html`
+		let full_url = page.url
+		if (page.url === 'index' || page.url === '404') {
+			path = `${page.url}.html`
 		} else if (parent) {
-			path = `${parent_urls.join('/')}/${url}/index.html`
-			full_url = `${parent_urls.join('/')}/${url}`
+			path = `${parent_urls.join('/')}/${page.url}/index.html`
+			full_url = `${parent_urls.join('/')}/${page.url}`
 		} else {
-			path = `${url}/index.html`
+			path = `${page.url}/index.html`
 		}
 
 		// add language prefix

@@ -136,7 +136,11 @@ export async function buildStaticPage({
 					.filter((section) => section.symbol === symbol.id)
 					.map((section) => {
 						const section_id = section.id.split('-')[0]
-						const instance_content = get_content_with_static({ component: section, symbol, locale })
+						const instance_content = get_content_with_static({
+							component: section,
+							symbol,
+							loc: locale
+						})
 						return `
             new App({
               target: document.querySelector('#section-${section_id}'),
@@ -155,7 +159,15 @@ export async function buildStaticPage({
 }
 
 // Include static content alongside the component's content
-export function get_content_with_static({ component, symbol, loc = get(locale) }) {
+/**
+ * @param {{
+ *  component?: import('$lib').Section
+ *  symbol?: import('$lib').Symbol
+ *  loc?: string
+ * }} details
+ * @returns {import('$lib').Content}
+ * */
+export function get_content_with_static({ component, symbol, loc }) {
 	if (!symbol) return { en: {} }
 	const content = _chain(symbol.fields)
 		.map((field) => {
