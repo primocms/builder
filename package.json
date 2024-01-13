@@ -1,6 +1,7 @@
 {
   "name": "@primocms/builder",
   "version": "0.1.55",
+  "node-version": "v20.10.0",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && bun run package",
