@@ -93,6 +93,7 @@
   "type": "module",
   "dependencies": {
     "bun-types": "^1.0.22",
+    "lates": "",
     "svelte-adapter-bun": "^0.5.1"
   }
 }
