@@ -4,6 +4,7 @@
 	import { find, cloneDeep, chain as _chain, set as _set, get as _get } from 'lodash-es'
 	import { Card } from './misc'
 	import { createUniqueID } from '$lib/utilities'
+	import NonExistantField from '../field-types/EmptyField.svelte'
 
 	import { userRole, fieldTypes } from '../stores/app'
 	import { Field } from '../const'
@@ -71,7 +72,7 @@
 			return fieldType.component
 		} else {
 			console.warn(`Field type '${field.type}' no longer exists, removing '${field.label}' field`)
-			return null
+			return NonExistantField
 		}
 	}
 

@@ -8,6 +8,7 @@
 	import { find as _find, chain as _chain, cloneDeep as _cloneDeep } from 'lodash-es'
 	import Icon from '@iconify/svelte'
 	import { createEventDispatcher, onDestroy, tick } from 'svelte'
+	import NonExistantField from './EmptyField.svelte'
 
 	// idb crashes chrome (try primo, server)
 	import * as idb from 'idb-keyval'
@@ -105,7 +106,7 @@
 
 	function getFieldComponent(subfield) {
 		const field = _find($fieldTypes, ['id', subfield.type])
-		return field ? field.component : null
+		return field ? field.component : NonExistantField
 	}
 
 	$: singularLabel = $pluralize && $pluralize.singular(field.label)
