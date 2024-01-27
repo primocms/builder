@@ -35,8 +35,6 @@
 
 	$: symbol = primo_symbol || $symbols.find((symbol) => symbol.id === block.symbol)
 
-	$: console.log({ block, symbol, primo_symbol, $symbols })
-
 	let node
 
 	$: component_data = get_content_with_static({
