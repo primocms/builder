@@ -10,6 +10,7 @@
  * @property {Array<File>} files - Array containing files to be deployed.
  * @property {string} site_id - The unique identifier for the site where the files will be deployed.
  * @property {string} repo_name - The name of the repository where the files will be stored.
+ * @property {'github' | 'gitlab'} provider
  */
 
 /**

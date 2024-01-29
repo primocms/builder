@@ -10,7 +10,15 @@ import _ from 'lodash-es'
 import { page } from '$app/stores'
 import { site } from '$lib/stores/data/site'
 
-export async function push_site(repo_name, create_new = false) {
+/**
+ * @param {{
+ * 	repo_name: string,
+ * 	provider: 'github' | 'gitlab'
+ * }} params
+ * @param {boolean} create_new
+ * @returns {Promise<import('$lib/deploy.js').DeploymentResponse>}
+ */
+export async function push_site({ repo_name, provider }, create_new = false) {
 	const site_bundle = await build_site_bundle({
 		pages: get(pages),
 		symbols: get(symbols)
@@ -25,7 +33,7 @@ export async function push_site(repo_name, create_new = false) {
 		size: new Blob([file.content], { type: 'text/plain' }).size / 1024
 	}))
 
-	return await deploy({ files, site_id: get(site).id, repo_name }, create_new)
+	return await deploy({ files, site_id: get(site).id, repo_name, provider }, create_new)
 }
 
 export async function build_site_bundle({ pages, symbols }) {
