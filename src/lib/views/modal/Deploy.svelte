@@ -35,10 +35,15 @@
 		axios
 			.get(`/api/deploy/user?provider=github`)
 			.then(({ data }) => {
-				github_account = data
+				if (data) {
+					github_account = data
+					fetched_git_account = true
+				}
+			})
+			.catch((e) => {
+				console.error({ e })
 				fetched_git_account = true
 			})
-			.catch((e) => console.log(e))
 	} else {
 		fetched_git_account = true
 	}
@@ -47,8 +52,16 @@
 	if (!gitlab_account) {
 		axios
 			.get(`/api/deploy/user?provider=gitlab`)
-			.then(({ data }) => (gitlab_account = data))
-			.catch((e) => console.log(e))
+			.then(({ data }) => {
+				if (data) {
+					gitlab_account = data
+					fetched_git_account = true
+				}
+			})
+			.catch((e) => {
+				console.error({ e })
+				fetched_git_account = true
+			})
 	}
 
 	async function download_site() {
