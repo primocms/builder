@@ -1,5 +1,6 @@
 import Primo from './Primo.svelte'
 
+import TextInput from './ui/TextInput.svelte'
 import { saved, onMobile, userRole } from './stores/app/misc'
 import { site, content } from './stores/data/site'
 import activePage from './stores/app/activePage'
@@ -18,6 +19,10 @@ import { deploy, deploy_subscribe } from './deploy'
 
 import * as utils from './utils'
 import * as components from './components'
+
+export const components = {
+	TextInput
+}
 
 const stores = {
 	saved,
