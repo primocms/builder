@@ -1,4 +1,5 @@
 <script>
+	import axios from 'axios'
 	import { createEventDispatcher, getContext } from 'svelte'
 	import _ from 'lodash-es'
 	import Icon from '@iconify/svelte'
@@ -6,7 +7,7 @@
 	import { showingIDE, userRole } from '$lib/stores/app/misc'
 	import MenuPopup from '$lib/components/MenuPopup.svelte'
 	import IconButton from '$lib/components/IconButton.svelte'
-	import { processCode, processCSS } from '$lib/utils'
+	import { processCSS, wrapInStyleTags } from '$lib/utils'
 	import { code as siteCode } from '$lib/stores/data/site'
 	import { code as pageCode } from '$lib/stores/app/activePage'
 	import { locale } from '$lib/stores/app/misc'
@@ -106,27 +107,25 @@
 			return
 		}
 
-		const parent_css = await processCSS($siteCode.css + $pageCode.css)
-		let res = await processCode({
-			component: {
-				...symbol.code,
-				head: $siteCode.html.head + $pageCode.html.head,
-				css: parent_css + symbol.code.css,
-				html: `
-          ${symbol.code.html}
-          ${$pageCode.html.below}`,
-				data: symbol.content[language]
-			},
-			buildStatic: true,
-			hydrated: true
-		})
-		if (res.error) {
-			component_error = res.error
-		} else {
-			component_error = null
-			res.css = res.css + parent_css
-			componentCode = res
+		const res = await axios.get(`/api/render?symbol=${symbol.id}`).catch((e) => console.error(e))
+		if (res?.data) {
+			const { ssr, data } = res.data
+			const blob = new Blob([ssr], { type: 'text/javascript' })
+			const url = URL.createObjectURL(blob)
+			const { default: App } = await import(url /* @vite-ignore */)
+			URL.revokeObjectURL(url)
+			const rendered = App.render(data)
+			const parent_css = await processCSS($siteCode.css + $pageCode.css)
+			const updated_componentCode = {
+				html: rendered.html,
+				css: parent_css + rendered.css.code,
+				head: `${rendered.head}\n${wrapInStyleTags(rendered.css.code)}`
+			}
+			if (!_.isEqual(componentCode, updated_componentCode)) {
+				componentCode = updated_componentCode
+			}
 			cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content })
+			component_error = null
 		}
 	}
 </script>
