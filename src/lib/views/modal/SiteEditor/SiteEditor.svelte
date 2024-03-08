@@ -6,7 +6,7 @@
 	const topPaneSize = writable(get(onMobile) ? '100%' : '50%')
 	const bottomPaneSize = writable('50%')
 	const orientation = writable('horizontal')
-	const activeTab = writable(0)
+	const activeTab = writable('code')
 </script>
 
 <script>
@@ -263,7 +263,30 @@
 		onclick: saveComponent,
 		disabled: disableSave
 	}}
-/>
+>
+	<div slot="title">
+		<Tabs
+			tabs={[
+				{
+					id: 'content',
+					label: 'Content',
+					icon: 'uil:edit'
+				},
+				{
+					id: 'fields',
+					label: 'Fields',
+					icon: 'fluent:form-multiple-24-regular'
+				},
+				{
+					id: 'code',
+					label: 'Code',
+					icon: 'gravity-ui:code'
+				}
+			]}
+			bind:active_tab_id={$activeTab}
+		/>
+	</div>
+</ModalHeader>
 
 <main class:showing-ide={$showingIDE} class:showing-cms={!$showingIDE}>
 	<HSplitPane
@@ -276,32 +299,29 @@
 		hideLeftOverflow={$showingIDE && $activeTab === 0}
 	>
 		<div slot="left" lang={$locale}>
-			{#if $showingIDE}
-				<Tabs {tabs} bind:activeTab={$activeTab} />
-				{#if $activeTab === 0}
-					<FullCodeEditor
-						bind:html={rawHTML}
-						bind:css={rawCSS}
-						{data}
-						on:save={saveComponent}
-						on:refresh={refreshPreview}
-					/>
-				{:else if $activeTab === 1}
-					<GenericFields
-						bind:fields
-						on:input={() => {
-							refreshPreview()
-							saveLocalContent()
-						}}
-						on:delete={async () => {
-							await tick() // wait for fields to update
-							saveLocalContent()
-							refreshPreview()
-						}}
-						showCode={true}
-					/>
-				{/if}
-			{:else}
+			{#if $activeTab === 'code'}
+				<FullCodeEditor
+					bind:html={rawHTML}
+					bind:css={rawCSS}
+					{data}
+					on:save={saveComponent}
+					on:refresh={refreshPreview}
+				/>
+			{:else if $activeTab === 'fields'}
+				<GenericFields
+					bind:fields
+					on:input={() => {
+						refreshPreview()
+						saveLocalContent()
+					}}
+					on:delete={async () => {
+						await tick() // wait for fields to update
+						saveLocalContent()
+						refreshPreview()
+					}}
+					showCode={true}
+				/>
+			{:else if $activeTab === 'content'}
 				<GenericFields
 					bind:fields
 					on:save={saveComponent}

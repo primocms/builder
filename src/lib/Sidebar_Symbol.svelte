@@ -23,6 +23,7 @@
 		modal.show(
 			'SYMBOL_EDITOR',
 			{
+				tab: 'content',
 				symbol,
 				header: {
 					title: `Edit ${symbol.name || 'Block'}`,
@@ -48,6 +49,7 @@
 		modal.show(
 			'SYMBOL_EDITOR',
 			{
+				tab: 'code',
 				symbol,
 				header: {
 					title: `Edit ${symbol.title || 'Block'}`,

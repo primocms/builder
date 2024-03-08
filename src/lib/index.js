@@ -20,9 +20,9 @@ import { deploy, deploy_subscribe } from './deploy'
 import * as utils from './utils'
 import * as components from './components'
 
-export const components = {
-	TextInput
-}
+// export const components = {
+// 	TextInput
+// }
 
 const stores = {
 	saved,

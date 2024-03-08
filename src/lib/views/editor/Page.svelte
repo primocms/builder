@@ -214,6 +214,7 @@
 		modal.show(
 			'COMPONENT_EDITOR',
 			{
+				tab: $showingIDE ? 'code' : 'content',
 				component: block,
 				header: {
 					title: `Edit Block`,

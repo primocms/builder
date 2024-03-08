@@ -220,11 +220,12 @@
 
 <style lang="postcss">
 	main {
+		width: 100%;
 		display: grid;
 		gap: 1rem;
-		padding: 0.5rem 0;
+		/* padding: 0.5rem 0;
 		padding-right: 0.5rem;
-		padding-bottom: 1rem;
+		padding-bottom: 1rem; */
 		color: var(--color-gray-2);
 		background: var(--primo-color-black);
 		min-width: 23rem;

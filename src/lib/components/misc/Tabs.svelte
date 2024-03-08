@@ -5,105 +5,47 @@
 	const dispatch = createEventDispatcher()
 
 	export let tabs
-	export let activeTab = 0
+	export let active_tab_id = tabs[0]?.id
 
-	$: dispatch('switch', activeTab)
+	$: dispatch('switch', active_tab_id)
 </script>
 
 {#if tabs.length > 1}
 	<div class="tabs" in:fade={{ duration: 200 }}>
-		<ul xyz="fade stagger">
-			{#each tabs as tab, i}
-				<li class:is-active={activeTab === i}>
-					<button on:click={() => (activeTab = i)} id={tab.id ? `tab-${tab.id}` : null}>
-						{#if tab.icon}
-							<Icon icon={tab.icon} />
-						{/if}
-						{typeof tab === 'string' ? tab : tab.label}
-					</button>
-				</li>
-			{/each}
-		</ul>
+		{#each tabs as tab, i}
+			<button
+				class:active={active_tab_id === tab.id}
+				on:click={() => (active_tab_id = tab.id)}
+				id={tab.id ? `tab-${tab.id}` : null}
+			>
+				{#if tab.icon}
+					<Icon icon={tab.icon} />
+				{/if}
+				{typeof tab === 'string' ? tab : tab.label}
+			</button>
+		{/each}
 	</div>
 {/if}
 
-<link
-	rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
-	integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
-	crossorigin="anonymous"
-	referrerpolicy="no-referrer"
-/>
-
 <style lang="postcss">
 	.tabs {
-		color: var(--color-gray-3);
+		display: flex;
+		justify-content: center;
+		border-bottom: 1px solid #222;
+		color: white;
+		font-size: 0.875rem;
+		button {
+			font-size: 0.875rem;
+			padding: 0.75rem 1rem;
+			display: flex;
+			align-items: center;
+			gap: 0.25rem;
+			border-bottom: 1px solid #222;
+			transition: 0.1s;
 
-		.tabs.secondary {
-			height: 35px;
-
-			ul {
-				display: flex;
-				justify-content: space-around;
-
-				li {
-					flex: 1;
-					border-color: transparent;
-					font-size: var(--font-size-1);
-					font-weight: 700;
-					border-bottom: 2px solid transparent;
-
-					&.is-active {
-						background: var(--primo-color-codeblack);
-						color: var(--primo-color-white);
-						border-color: var(--primo-color-codeblack);
-					}
-
-					button {
-						width: 100%;
-						text-align: center;
-						padding: 0.5rem 0;
-						outline: 0;
-						font-size: var(--font-size-1);
-						font-weight: 700;
-					}
-				}
+			&.active {
+				border-bottom-color: var(--primo-color-brand);
 			}
 		}
-
-		&:not(.secondary) {
-			min-height: 2.5rem;
-			border: 1px solid var(--color-gray-8);
-			margin-bottom: 0.25rem;
-
-			ul {
-				display: flex;
-				justify-content: space-around;
-
-				li {
-					flex: 1;
-					border-bottom: 2px solid transparent;
-					&.is-active {
-						border-color: var(--primo-color-brand);
-					}
-
-					button {
-						width: 100%;
-						text-align: center;
-						padding: 0.5rem 0;
-						outline: 0;
-
-						display: flex;
-						align-items: center;
-						justify-content: center;
-						gap: 0.5rem;
-					}
-				}
-			}
-		}
-	}
-
-	button {
-		transition: var(--transition-colors);
 	}
 </style>
