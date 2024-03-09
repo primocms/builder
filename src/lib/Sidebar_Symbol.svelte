@@ -106,25 +106,18 @@
 		) {
 			return
 		}
+		cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content })
 
 		const res = await axios.get(`/api/render?symbol=${symbol.id}`).catch((e) => console.error(e))
 		if (res?.data) {
-			const { ssr, data } = res.data
-			const blob = new Blob([ssr], { type: 'text/javascript' })
-			const url = URL.createObjectURL(blob)
-			const { default: App } = await import(url /* @vite-ignore */)
-			URL.revokeObjectURL(url)
-			const rendered = App.render(data)
-			const parent_css = await processCSS($siteCode.css + $pageCode.css)
-			const updated_componentCode = {
-				html: rendered.html,
-				css: parent_css + rendered.css.code,
-				head: `${rendered.head}\n${wrapInStyleTags(rendered.css.code)}`
-			}
+			const updated_componentCode = res.data
 			if (!_.isEqual(componentCode, updated_componentCode)) {
-				componentCode = updated_componentCode
+				const parent_css = await processCSS($siteCode.css + $pageCode.css)
+				componentCode = {
+					...updated_componentCode,
+					css: parent_css + updated_componentCode.css
+				}
 			}
-			cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content })
 			component_error = null
 		}
 	}
