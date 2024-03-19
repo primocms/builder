@@ -12,6 +12,7 @@
 	import { code as pageCode } from '$lib/stores/app/activePage'
 	import { locale } from '$lib/stores/app/misc'
 	import { click_to_copy } from '$lib/utilities'
+	import { browser } from '$app/environment'
 	import IFrame from '$lib/views/modal/ComponentLibrary/IFrame.svelte'
 	const dispatch = createEventDispatcher()
 
@@ -98,7 +99,7 @@
 	let componentCode
 	let cachedSymbol = {}
 	let component_error
-	$: compile_component_code(symbol, $locale)
+	$: browser && compile_component_code(symbol, $locale)
 	async function compile_component_code(symbol, language) {
 		if (
 			_.isEqual(cachedSymbol.code, symbol.code) &&
@@ -106,18 +107,27 @@
 		) {
 			return
 		}
-		cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content })
-
-		const res = await axios.get(`/api/render?symbol=${symbol.id}`).catch((e) => console.error(e))
-		if (res?.data) {
+		const res = await axios
+			.post(`/api/render`, {
+				id: symbol.id,
+				code: {
+					html: symbol.code.html,
+					css: $siteCode.css + $pageCode.css + symbol.code.css,
+					js: symbol.code.js
+				},
+				content: symbol.content
+			})
+			.catch((e) => console.error(e))
+		if (res?.data?.error) {
+			console.log({ res })
+			component_error = res.data.error
+		} else if (res?.data) {
 			const updated_componentCode = res.data
 			if (!_.isEqual(componentCode, updated_componentCode)) {
-				const parent_css = await processCSS($siteCode.css + $pageCode.css)
-				componentCode = {
-					...updated_componentCode,
-					css: parent_css + updated_componentCode.css
-				}
+				componentCode = updated_componentCode
+				cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content })
 			}
+
 			component_error = null
 		}
 	}
