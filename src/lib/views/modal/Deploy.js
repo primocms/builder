@@ -1,4 +1,5 @@
 import { get } from 'svelte/store'
+import { createUniqueID } from '$lib/utilities'
 import pages from '$lib/stores/data/pages'
 import symbols from '$lib/stores/data/symbols'
 // import beautify from 'js-beautify' // remove for now to reduce bundle size, dynamically import later if wanted
@@ -36,11 +37,13 @@ export async function push_site({ repo_name, provider }, create_new = false) {
 	return await deploy({ files, site_id: get(site).id, repo_name, provider }, create_new)
 }
 
-export async function build_site_bundle({ pages, symbols }) {
+export async function build_site_bundle({ pages, symbols }, include_assets = false) {
 	let site_bundle
 
-	let all_sections = []
-	let all_pages = []
+	const all_sections = []
+	const all_pages = []
+	const image_files = []
+
 	try {
 		const page_files = await Promise.all(
 			pages.map((page) => {
@@ -92,6 +95,17 @@ export async function build_site_bundle({ pages, symbols }) {
 			order: ['index', { ascending: true }]
 		})
 
+		// Download images & replace urls in sections
+		if (include_assets && has_nested_property(sections, 'alt')) {
+			await Promise.all(
+				sections.map(async (section, i) => {
+					const response = await swap_in_local_asset_urls(section.content)
+					image_files.push(...response.image_files) // store image blobs for later download
+					sections[i]['content'] = response.content // replace image urls in content with relative urls
+				})
+			)
+		}
+
 		const { html } = await buildStaticPage({
 			page,
 			page_sections: sections,
@@ -136,8 +150,8 @@ export async function build_site_bundle({ pages, symbols }) {
 			full_url = `${language}/${full_url}`
 		} else {
 			// only add en sections and pages to primo.json
-			all_sections = [...all_sections, ...sections]
-			all_pages = [...all_pages, page]
+			all_sections.push(...sections)
+			all_pages.push(page)
 		}
 
 		const page_tree = [
@@ -192,6 +206,7 @@ export async function build_site_bundle({ pages, symbols }) {
 		})
 
 		return [
+			...image_files,
 			..._.flattenDeep(pages),
 			{
 				path: `primo.json`,
@@ -221,4 +236,68 @@ export async function build_site_bundle({ pages, symbols }) {
 			}
 		]
 	}
+}
+
+/**
+ * @param {import('$lib').Content}
+ */
+async function swap_in_local_asset_urls(content) {
+	const files_to_fetch = []
+
+	const updated_content = _.mapValues(content, (lang_value) =>
+		_.mapValues(lang_value, (field_value) => {
+			if (typeof field_value === 'object' && field_value.hasOwnProperty('alt')) {
+				const urlObject = new URL(field_value.url)
+				const pathname = urlObject.pathname
+				const extension = pathname.slice(pathname.lastIndexOf('.'))
+				const filename =
+					field_value.alt.replace(/[\/:*?"<>|\s]/g, '_') + `---${createUniqueID()}` + extension
+
+				files_to_fetch.push({
+					url: field_value.url,
+					filename
+				})
+				return {
+					...field_value,
+					url: `./images/${filename}`
+				}
+			} else {
+				return field_value
+			}
+		})
+	)
+
+	// Download images
+	const image_files = []
+	await Promise.all(
+		files_to_fetch.map(async ({ url, filename }) => {
+			const response = await fetch(url)
+			const blob = await response.blob()
+			console.log({ blob })
+
+			image_files.push({
+				path: `./images/${filename}`,
+				blob
+			})
+		})
+	)
+
+	return {
+		content: updated_content,
+		image_files
+	}
+}
+
+function has_nested_property(obj, key) {
+	if (obj.hasOwnProperty(key)) {
+		return true
+	}
+	for (let i in obj) {
+		if (typeof obj[i] === 'object') {
+			if (has_nested_property(obj[i], key)) {
+				return true
+			}
+		}
+	}
+	return false
 }
