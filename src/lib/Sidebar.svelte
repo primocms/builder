@@ -28,12 +28,19 @@
 		refresh_symbols()
 	}
 
+	/**
+	 * @param {string} symbol_id
+	 */
 	async function delete_symbol(symbol_id) {
 		const symbol = $symbols.find((s) => s.id === symbol_id)
 		symbol_actions.delete(symbol)
 		refresh_symbols()
 	}
 
+	/**
+	 * @param {string} symbol_id
+	 * @param {number} index - The index at which the new symbol should be inserted.
+	 */
 	async function duplicate_symbol(symbol_id, index) {
 		const symbol = $symbols.find((s) => s.id === symbol_id)
 		const new_symbol = _.cloneDeep(symbol)
@@ -70,6 +77,9 @@
 		reader.readAsText(target.files[0])
 	}
 
+	/**
+	 * @param {string} symbol_id - The id of the symbol to be downloaded.
+	 */
 	async function download_symbol(symbol_id) {
 		const symbol = $symbols.find((s) => s.id === symbol_id)
 		const json = JSON.stringify(symbol)

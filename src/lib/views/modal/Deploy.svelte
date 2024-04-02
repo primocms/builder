@@ -29,6 +29,8 @@
 
 	let entered_github_token = ''
 
+	let download_all_images = true;
+
 	let github_account = $site.active_deployment?.repo?.owner
 	if (!github_account) {
 		axios
@@ -58,7 +60,7 @@
 
 	async function download_site() {
 		loading = true
-		const files = await build_site_bundle({ pages: $pages, symbols: $symbols })
+		const files = await build_site_bundle({ pages: $pages, symbols: $symbols }, download_all_images)
 		if (!files) {
 			loading = false
 			return
@@ -69,14 +71,16 @@
 
 		async function create_site_zip(files) {
 			const zip = new JSZip()
-			files.forEach(({ path, content }) => {
-				zip.file(path, content)
+			files.forEach(({ path, content, blob }) => {
+				if (blob) {
+					zip.file(path, blob, { binary: true })
+				} else {
+					zip.file(path, content)
+				}
 			})
 			return await zip.generateAsync({ type: 'blob' })
 		}
 	}
-
-	$: console.log({ $active_deployment })
 
 	let new_repo_name = ''
 	let existing_repo_name = ''
@@ -164,6 +168,9 @@
 						<span>Connect to Github</span>
 					</button>
 				{/if}
+			</div>
+			<div>
+				<input type="checkbox" checked={download_all_images} on:input={() => download_all_images = !download_all_images}> Include images when downloading site.
 			</div>
 		</div>
 	{:else if stage === 'CONNECT_GITHUB'}
