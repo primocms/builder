@@ -253,7 +253,7 @@ async function swap_in_local_asset_urls(content) {
 				})
 				return {
 					...field_value,
-					url: `./images/${filename}`
+					url: `/images/${filename}`
 				}
 			}
 
