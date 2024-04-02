@@ -1,6 +1,6 @@
 {
 	"name": "@primocms/builder",
-	"version": "0.1.58",
+	"version": "0.1.59",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
@@ -14,7 +14,8 @@
 		"test:integration": "playwright test",
 		"test:unit": "vitest",
 		"lint": "prettier --plugin-search-dir . --check .",
-		"format": "prettier --plugin-search-dir . --write ."
+		"format": "prettier --plugin-search-dir . --write .",
+		"prepare": "npm run build"
 	},
 	"exports": {
 		".": {
