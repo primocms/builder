@@ -46,6 +46,7 @@ export async function build_site_bundle({ pages, symbols }, include_assets = fal
 				)
 			})
 		)
+		
 		const symbol_files = await Promise.all(
 			symbols.filter((s) => s.code.js).map((symbol) => build_symbol_tree(symbol))
 		)
@@ -235,10 +236,11 @@ export async function build_site_bundle({ pages, symbols }, include_assets = fal
  */
 async function swap_in_local_asset_urls(content) {
 	const files_to_fetch = []
-
+	
 	const updated_content = _.mapValues(content, (lang_value) =>
 		_.mapValues(lang_value, (field_value) => {
-			if (typeof field_value === 'object' && field_value.hasOwnProperty('alt')) {
+
+			function swap_image(field_value) {
 				const urlObject = new URL(field_value.url)
 				const pathname = urlObject.pathname
 				const extension = pathname.slice(pathname.lastIndexOf('.'))
@@ -251,11 +253,34 @@ async function swap_in_local_asset_urls(content) {
 				})
 				return {
 					...field_value,
-					url: `./images/${filename}`
+					url: `/images/${filename}`
 				}
+			}
+
+			if (typeof field_value === 'object' && field_value.hasOwnProperty('alt') && field_value.url != "") {
+				return swap_image(field_value);
+			} else if (Array.isArray(field_value)) {
+				
+				let field_value_copy = [];
+				_.each(field_value, (value) => {
+					if (typeof value === 'object' && value.hasOwnProperty('image') && typeof value.image === 'object') {
+						let img = value.image;
+						if (img.url != "" && img.url.indexOf("data:image") == -1) {
+							field_value_copy.push({
+								...value,
+								image: swap_image(img)
+							});
+						}
+					} else {
+						field_value_copy.push(value);
+					}
+				});
+				return field_value_copy;
 			} else {
 				return field_value
 			}
+
+
 		})
 	)
 
@@ -263,14 +288,17 @@ async function swap_in_local_asset_urls(content) {
 	const image_files = []
 	await Promise.all(
 		files_to_fetch.map(async ({ url, filename }) => {
-			const response = await fetch(url)
-			const blob = await response.blob()
-			console.log({ blob })
-
-			image_files.push({
-				path: `./images/${filename}`,
-				blob
-			})
+			try {
+				const response = await fetch(url);
+				const blob = await response.blob();
+	
+				image_files.push({
+					path: `./images/${filename}`,
+					blob
+				});
+			} catch (e) {
+				console.log(e.message);
+			}
 		})
 	)
 
