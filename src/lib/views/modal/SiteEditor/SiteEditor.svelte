@@ -247,7 +247,7 @@
 </script>
 
 <ModalHeader
-	label="Page"
+	label="Site"
 	warn={() => {
 		// if (!isEqual(local_component, component)) {
 		//   const proceed = window.confirm(
