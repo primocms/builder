@@ -89,5 +89,10 @@
 	},
 	"svelte": "./dist/index.js",
 	"types": "./dist/index.d.ts",
-	"type": "module"
+	"type": "module",
+	"dependencies": {
+		"@tiptap/extension-image": "^2.2.6",
+		"install": "^0.13.0",
+		"npm": "^10.5.1"
+	}
 }

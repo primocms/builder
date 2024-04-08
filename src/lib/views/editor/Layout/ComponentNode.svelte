@@ -12,6 +12,7 @@
 	import { fade } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
 	import StarterKit from '@tiptap/starter-kit'
+	import Image from '@tiptap/extension-image'
 	import Highlight from '@tiptap/extension-highlight'
 	import Link from '@tiptap/extension-link'
 	import BubbleMenu from '@tiptap/extension-bubble-menu'
@@ -73,6 +74,7 @@
 			element,
 			extensions: [
 				StarterKit,
+				Image,
 				Link.configure({
 					HTMLAttributes: {
 						class: 'link'
@@ -553,17 +555,17 @@
 			icon="list-ol"
 			on:click={() => active_editor.chain().focus().toggleOrderedList().run()}
 		/>
-		<!-- <MarkdownButton
+		<MarkdownButton
 			icon="image"
 			on:click={() =>
 				modal.show('DIALOG', {
 					component: 'IMAGE',
 					onSubmit: ({ url, alt }) => {
-						active_editor.chain().focus().setImage({ src: url, alt }).run();
-						modal.hide();
+						active_editor.chain().focus().setImage({ src: url, alt }).run()
+						modal.hide()
 					}
 				})}
-		/> -->
+		/>
 	{/if}
 </div>
 <div class="menu bubble-menu primo-reset" bind:this={bubbleMenu}>

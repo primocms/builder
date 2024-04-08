@@ -31,7 +31,6 @@
 	.tabs {
 		display: flex;
 		justify-content: center;
-		border-bottom: 1px solid #222;
 		color: white;
 		font-size: 0.875rem;
 		button {
