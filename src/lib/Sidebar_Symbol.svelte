@@ -1,4 +1,5 @@
 <script>
+	import axios from 'axios'
 	import { createEventDispatcher, getContext } from 'svelte'
 	import _ from 'lodash-es'
 	import Icon from '@iconify/svelte'
@@ -6,11 +7,12 @@
 	import { showingIDE, userRole } from '$lib/stores/app/misc'
 	import MenuPopup from '$lib/components/MenuPopup.svelte'
 	import IconButton from '$lib/components/IconButton.svelte'
-	import { processCode, processCSS } from '$lib/utils'
+	import { processCSS, wrapInStyleTags } from '$lib/utils'
 	import { code as siteCode } from '$lib/stores/data/site'
 	import { code as pageCode } from '$lib/stores/app/activePage'
 	import { locale } from '$lib/stores/app/misc'
 	import { click_to_copy } from '$lib/utilities'
+	import { browser } from '$app/environment'
 	import IFrame from '$lib/views/modal/ComponentLibrary/IFrame.svelte'
 	const dispatch = createEventDispatcher()
 
@@ -23,6 +25,7 @@
 		modal.show(
 			'SYMBOL_EDITOR',
 			{
+				tab: 'content',
 				symbol,
 				header: {
 					title: `Edit ${symbol.name || 'Block'}`,
@@ -48,6 +51,7 @@
 		modal.show(
 			'SYMBOL_EDITOR',
 			{
+				tab: 'code',
 				symbol,
 				header: {
 					title: `Edit ${symbol.title || 'Block'}`,
@@ -95,7 +99,7 @@
 	let componentCode
 	let cachedSymbol = {}
 	let component_error
-	$: compile_component_code(symbol, $locale)
+	$: browser && compile_component_code(symbol, $locale)
 	async function compile_component_code(symbol, language) {
 		if (
 			_.isEqual(cachedSymbol.code, symbol.code) &&
@@ -103,28 +107,28 @@
 		) {
 			return
 		}
+		const res = await axios
+			.post(`/api/render`, {
+				id: symbol.id,
+				code: {
+					html: symbol.code.html,
+					css: $siteCode.css + $pageCode.css + symbol.code.css,
+					js: symbol.code.js
+				},
+				content: symbol.content
+			})
+			.catch((e) => console.error(e))
+		if (res?.data?.error) {
+			console.log({ res })
+			component_error = res.data.error
+		} else if (res?.data) {
+			const updated_componentCode = res.data
+			if (!_.isEqual(componentCode, updated_componentCode)) {
+				componentCode = updated_componentCode
+				cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content })
+			}
 
-		const parent_css = await processCSS($siteCode.css + $pageCode.css)
-		let res = await processCode({
-			component: {
-				...symbol.code,
-				head: $siteCode.html.head + $pageCode.html.head,
-				css: parent_css + symbol.code.css,
-				html: `
-          ${symbol.code.html}
-          ${$pageCode.html.below}`,
-				data: symbol.content[language]
-			},
-			buildStatic: true,
-			hydrated: true
-		})
-		if (res.error) {
-			component_error = res.error
-		} else {
 			component_error = null
-			res.css = res.css + parent_css
-			componentCode = res
-			cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content })
 		}
 	}
 </script>

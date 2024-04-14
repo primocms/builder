@@ -5,7 +5,7 @@
 	export let id = null
 	export let label = null
 	export let prefix = ''
-	export let value
+	export let value = ''
 	export let placeholder = ''
 	export let variants = ''
 	export let type = 'text'

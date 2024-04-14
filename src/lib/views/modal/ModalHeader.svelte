@@ -8,6 +8,8 @@
 	export let icon = ''
 	export let svg = ''
 	export let title = ''
+
+	/** @type {{ icon: string, label?: string, onclick: function, disabled: boolean } | null} */
 	export let button = null
 	export let warn = () => true
 	export let onclose = () => {}
@@ -35,40 +37,21 @@
 		</button>
 	</div>
 	<div class="center-container">
-		{#if icon}
-			<span class="icon">
-				<Icon {icon} />
-			</span>
-		{:else if svg}
-			<div class="svg">{@html svg}</div>
-		{/if}
-		<span class="modal-title">{title}</span>
+		<slot name="title">
+			{#if icon}
+				<span class="icon">
+					<Icon {icon} />
+				</span>
+			{:else if svg}
+				<div class="svg">{@html svg}</div>
+			{/if}
+			<span class="modal-title">{title}</span>
+		</slot>
 	</div>
 	<div class="right-container">
 		<slot />
 		{#if !$showingIDE && !$modal.hideLocaleSelector && showLocaleSelector}
-			<LocaleSelector align="left" />
-		{/if}
-		{#if $userRole === 'DEV' && $modal.showSwitch}
-			{#if $showingIDE}
-				<button
-					class="code-mode"
-					on:click={() => ($showingIDE = !$showingIDE)}
-					class:on={$showingIDE}
-					aria-label="Toggle code mode"
-				>
-					<Icon icon="material-symbols:edit-square-outline-rounded" />
-				</button>
-			{:else}
-				<button
-					class="code-mode"
-					on:click={() => ($showingIDE = !$showingIDE)}
-					class:on={$showingIDE}
-					aria-label="Toggle code mode"
-				>
-					<Icon icon="ic:round-code" />
-				</button>
-			{/if}
+			<!-- <LocaleSelector align="left" /> -->
 		{/if}
 		{#if button && button.onclick}
 			<button

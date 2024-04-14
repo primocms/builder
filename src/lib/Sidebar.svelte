@@ -95,7 +95,6 @@
 	}
 
 	let draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
-	$: console.log({ draggable_symbols })
 	$: refresh_symbols($symbols)
 
 	const flipDurationMs = 200
@@ -115,7 +114,7 @@
 
 	async function refresh_symbols() {
 		await tick()
-		draggable_symbols = $symbols.map((s, i) => ({ ...s, _drag_id: s.id }))
+		draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
 	}
 
 	let dragging = null
