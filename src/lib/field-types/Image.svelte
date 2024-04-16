@@ -5,6 +5,7 @@
 	import Spinner from '$lib/ui/Spinner.svelte'
 	import site from '$lib/stores/data/site'
 	import { storageChanged } from '$lib/database'
+	import { v4 as uuidv4 } from 'uuid';
 
 	const dispatch = createEventDispatcher()
 
@@ -64,7 +65,7 @@
 	async function uploadImage(image) {
 		loading = true
 
-		const key = `${$site.id}/${image.lastModified + image.name}`
+		const key = `${$site.id}/${uuidv4() + image.name.slice(image.name.lastIndexOf("."))}`
 		const url = await storageChanged({
 			bucket: 'images',
 			action: 'upload',
