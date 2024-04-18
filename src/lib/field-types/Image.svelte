@@ -64,25 +64,30 @@
 	async function uploadImage(image) {
 		loading = true
 
-		const key = `${$site.id}/${image.lastModified + image.name}`
-		const url = await storageChanged({
-			bucket: 'images',
-			action: 'upload',
-			key,
-			file: image
-		})
+		await upload(image)
 
-		if (url) {
-			imagePreview = url
-			set_url(url)
-			set_options({
-				original_type: field.options.original_type || image.type.replace('image/', ''),
-				type: image.type.replace('image/', ''),
-				size: Math.round(image.size / 1000)
+		async function upload(file) {
+			const key = `${$site.id}/${file.lastModified + file.name}`
+			const { url, size } = await storageChanged({
+				bucket: 'images',
+				action: 'upload',
+				key,
+				file: file,
+				options: {}
 			})
-			dispatch('input', field)
+
+			if (url) {
+				imagePreview = url
+				set_url(url)
+				set_options({
+					original_type: field.options.original_type || file.type.replace('image/', ''),
+					type: file.type.replace('image/', ''),
+					size: Math.round(size / 1000)
+				})
+				dispatch('input', field)
+			}
+			loading = false
 		}
-		loading = false
 	}
 
 	let imagePreview = field.value.url || ''
@@ -147,13 +152,15 @@
 					>
 						{field.options.original_type?.toUpperCase()}
 					</button>
-					<button
-						on:click={() => convert_image(field.value.url, 'webp')}
-						class:active={webp_active}
-						disabled={webp_active}
-					>
-						WEBP
-					</button>
+					{#if field.options.original_type?.toUpperCase() !== 'WEBP'}
+						<button
+							on:click={() => convert_image(field.value.url, 'webp')}
+							class:active={webp_active}
+							disabled={webp_active}
+						>
+							WEBP
+						</button>
+					{/if}
 				</div>
 			{/if}
 		</div>

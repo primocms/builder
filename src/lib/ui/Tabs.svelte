@@ -13,11 +13,7 @@
 {#if tabs.length > 1}
 	<div class="tabs" in:fade={{ duration: 200 }}>
 		{#each tabs as tab, i}
-			<button
-				class:active={active_tab_id === tab.id}
-				on:click={() => (active_tab_id = tab.id)}
-				id={tab.id ? `tab-${tab.id}` : null}
-			>
+			<button class:active={active_tab_id === tab.id} on:click={() => (active_tab_id = tab.id)} id={tab.id ? `tab-${tab.id}` : null}>
 				{#if tab.icon}
 					<Icon icon={tab.icon} />
 				{/if}
@@ -39,7 +35,7 @@
 			display: flex;
 			align-items: center;
 			gap: 0.25rem;
-			border-bottom: 1px solid #222;
+			border-bottom: 1px solid var(--color-gray-8);
 			transition: 0.1s;
 
 			&.active {

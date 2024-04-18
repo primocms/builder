@@ -1,11 +1,11 @@
 let database_listener = () => {}
 
 export function database_subscribe(fn) {
-  database_listener = fn
+	database_listener = fn
 }
 
 export function database_unsubscribe() {
-  database_listener = null
+	database_listener = null
 }
 
 /**
@@ -13,43 +13,44 @@ export function database_unsubscribe() {
  * @param {{
  *  table: string,
  *  action: string,
- *  [id]: string,
- *  [data]: object,
+ *  id?: string,
+ *  data?: object | string,
+ *  match?: object
  * }} payload - The data that changed
  */
 export async function dataChanged(payload) {
-  return await database_listener(payload)
+	return await database_listener(payload)
 }
 
 let storage_listener = () => {}
 
 export function storage_subscribe(fn) {
-  storage_listener = fn
+	storage_listener = fn
 }
 
 export function storage_unsubscribe(fn) {
-  storage_listener = null
+	storage_listener = null
 }
 
 /**
  * Runs when storing files
  * @param {{
-*  bucket: string,
-*  action: string,
-*  key: string,
-*  file: string,
-*  options: object,
-* }} payload - The data that changed
-*/
+ *  bucket: string,
+ *  action: string,
+ *  key: string,
+ *  file: string,
+ *  options: object,
+ * }} payload - The data that changed
+ * @return Promise<{{ url: string, size: number }}>
+ */
 export async function storageChanged(payload) {
-  return await storage_listener(payload)
+	return await storage_listener(payload)
 }
-
 
 let realtime_listener = () => {}
 export function realtime_subscribe(fn) {
-  realtime_listener = fn
+	realtime_listener = fn
 }
 export async function realtimeChanged(payload) {
-  return await realtime_listener(payload)
+	return await realtime_listener(payload)
 }

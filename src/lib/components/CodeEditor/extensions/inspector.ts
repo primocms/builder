@@ -36,7 +36,7 @@ export default function highlight_active_line(Editor, loc) {
   for (let { from, to } of Editor.visibleRanges) {
     for (let pos = from; pos <= to;) {
       let line = Editor.state.doc.lineAt(pos)
-      if (line.number === (loc.line + 1) && line.from !== line.to) {
+      if (line.number === (loc.line) && line.from !== line.to) {
         activeLine = line
         break;
       } else {

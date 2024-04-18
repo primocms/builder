@@ -1,5 +1,6 @@
 <script>
-	import TextInput from '$lib/components/inputs/TextInput.svelte'
+	import { getIcon, loadIcon, buildIcon } from '@iconify/svelte'
+	import TextInput from '$lib/ui/TextInput.svelte'
 	import { createEventDispatcher } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
@@ -8,9 +9,23 @@
 	const dispatch = createEventDispatcher()
 
 	export let field
+	export let search_query = ''
 
-	let search_query = ''
 	let searched = false
+
+	console.log({ field })
+	if (!getIcon(field.value) && !getIcon(field.options.icon)) {
+		// reset value when invalid (i.e. when switching field type)
+		field.value = ''
+	} else if (getIcon(field.value)) {
+		// convert icon-id to icon-svg
+		select_icon(field.value)
+	}
+
+	// search immediately when passed a query
+	if (search_query) {
+		search()
+	}
 
 	// hide icons when clearing search text
 	$: if (search_query === '') {
@@ -31,18 +46,36 @@
 			})
 	}
 
-	function select_icon(icon) {
-		field.value = icon
-		dispatch('input')
+	// function select_icon(icon) {
+	// 	const icon_data = getIcon(icon)
+	// 	if (icon_data) {
+	// 		console.log({ icon_data })
+	// 		field.value = icon_data.body
+	// 		dispatch('input', icon_data.body)
+	// 	}
+	// }
+
+	async function select_icon(icon) {
+		const icon_data = await loadIcon(icon)
+		if (icon_data) {
+			// TODO: on-page icon picker
+			const { attributes } = buildIcon(icon_data)
+			const svg = `<svg xmlns="http://www.w3.org/2000/svg" data-key="${field.key}" aria-hidden="true" role="img" height="${attributes.height}" width="${attributes.width}" viewBox="${attributes.viewBox}" preserveAspectRatio="${attributes.preserveAspectRatio}">${icon_data.body}</svg>`
+			field.value = svg
+			field.options.icon = icon
+			dispatch('input', { svg, icon })
+		}
 	}
 </script>
 
-<div>
-	<p class="label">{field.label}</p>
+<div class="IconPicker">
+	{#if field.label}
+		<p class="label">{field.label}</p>
+	{/if}
 	<div class="container">
-		{#if field.value}
+		{#if getIcon(field.options.icon)}
 			<div class="icon-preview">
-				<Icon icon={field.value} />
+				<Icon icon={field.options.icon} />
 			</div>
 		{/if}
 		<form on:submit|preventDefault={search}>
@@ -50,14 +83,29 @@
 				bind:value={search_query}
 				prefix_icon="tabler:search"
 				label="Search icons"
-				button={{ label: 'Search', type: 'submit' }}
+				button={{ label: 'Search', type: 'submit', disabled: !search_query }}
 			/>
 		</form>
 	</div>
 	{#if searched}
 		<div class="icons" in:fade>
+			<button
+				class="close"
+				aria-label="Close"
+				on:click={() => {
+					searched = false
+					search_query = ''
+				}}
+			>
+				<Icon icon="material-symbols:close" />
+			</button>
 			{#each icons as icon}
-				<button class:active={field.value === icon} on:click={() => select_icon(icon)}>
+				<button
+					class="icon"
+					class:active={field.value === icon}
+					on:click={() => select_icon(icon)}
+					type="button"
+				>
 					<Icon {icon} width="50px" />
 				</button>
 			{:else}
@@ -89,7 +137,7 @@
 
 	.icon-preview {
 		font-size: 3rem;
-		border: 1px solid var(--color-gray-6);
+		border: 1px solid var(--color-gray-8);
 		padding: 0.25rem;
 		border-radius: var(--primo-border-radius);
 	}
@@ -101,9 +149,23 @@
 	.icons {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-		border: 1px solid var(--color-gray-7);
+		border: 1px solid var(--color-gray-8);
 		margin-top: 0.25rem;
 		border-radius: var(--primo-border-radius);
+		position: relative;
+		margin-top: 0.25rem;
+		padding: 0.75rem;
+
+		button.close {
+			position: absolute;
+			top: 0;
+			right: 0;
+			padding: 0.5rem;
+
+			&:hover {
+				color: var(--color-gray-4);
+			}
+		}
 	}
 
 	button {

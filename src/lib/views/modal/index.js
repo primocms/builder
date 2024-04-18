@@ -5,13 +5,6 @@ import PageEditor from './PageEditor/PageEditor.svelte'
 import SiteEditor from './SiteEditor/SiteEditor.svelte'
 import SitePages from './SitePages/SitePages.svelte'
 import Dialog from './Dialog.svelte'
+import BlockPicker from './BlockPicker.svelte'
 
-export {
-  Deploy,
-  ComponentEditor,
-  SymbolEditor,
-  PageEditor,
-  SiteEditor,
-  SitePages,
-  Dialog
-}
+export { Deploy, ComponentEditor, SymbolEditor, PageEditor, SiteEditor, SitePages, Dialog, BlockPicker }

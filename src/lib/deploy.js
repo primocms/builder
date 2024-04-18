@@ -10,7 +10,6 @@
  * @property {Array<File>} files - Array containing files to be deployed.
  * @property {string} site_id - The unique identifier for the site where the files will be deployed.
  * @property {string} repo_name - The name of the repository where the files will be stored.
- * @property {'github' | 'gitlab'} provider
  */
 
 /**
@@ -42,10 +41,10 @@ export function deploy_unsubscribe() {
 /**
  * Used internally to deploy the site
  * @param {DeploymentPayload} payload - The site bundle & destination repo
- * @param {boolean} create_new - Flag indicating whether a new repository should be created if it doesn't exist.
+ * @param {boolean} action - Which action to take related to deployment
  * @returns {Promise<DeploymentResponse>}
  */
-export async function deploy(payload, create_new) {
+export async function deploy(payload, action) {
 	// When data changes, notify the listener
-	return await listener(payload, create_new)
+	return await listener(payload, action)
 }

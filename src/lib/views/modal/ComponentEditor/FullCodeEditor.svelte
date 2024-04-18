@@ -15,11 +15,24 @@
 	if (!import.meta.env.SSR) {
 		import('../../../components/CodeEditor/CodeMirror.svelte').then((module) => {
 			CodeMirror.set(module.default)
+			fetch_dev_libraries()
 		})
+	}
+
+	let libraries
+	async function fetch_dev_libraries() {
+		libraries = {
+			prettier: await import('prettier'),
+			prettier_css: (await import('prettier/esm/parser-postcss')).default,
+			prettier_babel: (await import('prettier/esm/parser-babel')).default,
+			prettier_svelte: (await import('$lib/libraries/prettier/prettier-svelte')).default
+		}
 	}
 </script>
 
 <script>
+	import { fade } from 'svelte/transition'
+	import Icon from '@iconify/svelte'
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 	import * as Mousetrap from 'mousetrap'
@@ -75,6 +88,27 @@
 	if (!js && $activeTabs['js']) {
 		toggleTab(2)
 	}
+
+	let showing_format_button = true
+	async function format_all_code() {
+		html = format(html, 'svelte', libraries.prettier_svelte)
+		css = format(css, 'css', libraries.prettier_css)
+		js = format(js, 'babel', libraries.prettier_babel)
+	}
+
+	function format(code, mode, plugin) {
+		let formatted
+		try {
+			formatted = libraries.prettier.format(code, {
+				parser: mode,
+				bracketSameLine: true,
+				plugins: [plugin]
+			})
+		} catch (e) {
+			console.warn(e)
+		}
+		return formatted
+	}
 </script>
 
 {#if $onMobile}
@@ -108,7 +142,12 @@
 					bind:value={html}
 					bind:selection={selections['html']}
 					on:tab-switch={() => toggleTab(0)}
-					on:change={() => dispatch('htmlChange')}
+					on:change={() => {
+						dispatch('htmlChange')
+					}}
+					on:format={() => {
+						showing_format_button = false
+					}}
 					on:save
 					on:refresh
 				/>
@@ -120,7 +159,12 @@
 					bind:value={css}
 					mode="css"
 					docs="https://docs.primo.so/development#css"
-					on:change={() => dispatch('cssChange')}
+					on:change={() => {
+						dispatch('cssChange')
+					}}
+					on:format={() => {
+						showing_format_button = false
+					}}
 					on:save
 					on:refresh
 				/>
@@ -132,7 +176,10 @@
 					bind:value={js}
 					docs="https://docs.primo.so/development#javascript"
 					mode="javascript"
-					on:change={() => dispatch('jsChange')}
+					on:change={() => {
+						dispatch('jsChange')
+					}}
+					on:format={() => (showing_format_button = false)}
 					on:save
 					on:refresh
 				/>
@@ -163,7 +210,11 @@
 					bind:value={html}
 					bind:selection={selections['html']}
 					on:tab-switch={({ detail }) => toggleTab(detail)}
-					on:change={() => dispatch('htmlChange')}
+					on:change={() => {
+						// showing_format_button = true
+						dispatch('htmlChange')
+					}}
+					on:format={() => (showing_format_button = false)}
 					on:save
 					on:refresh
 				/>
@@ -185,7 +236,11 @@
 					bind:value={css}
 					mode="css"
 					docs="https://docs.primo.so/development#css"
-					on:change={() => dispatch('cssChange')}
+					on:change={() => {
+						// showing_format_button = true
+						dispatch('cssChange')
+					}}
+					on:format={() => (showing_format_button = false)}
 					on:save
 					on:refresh
 				/>
@@ -207,7 +262,11 @@
 					bind:value={js}
 					mode="javascript"
 					docs="https://docs.primo.so/development#javascript"
-					on:change={() => dispatch('jsChange')}
+					on:change={() => {
+						// showing_format_button = true
+						dispatch('jsChange')
+					}}
+					on:format={() => (showing_format_button = false)}
 					on:save
 					on:refresh
 				/>
@@ -216,9 +275,24 @@
 	</HSplitPane>
 {/if}
 
+<footer>
+	{#if showing_format_button}
+		<button on:click={() => format_all_code()} transition:fade={{ duration: 100 }}>
+			<Icon icon="carbon:clean" />
+			<span>Format</span>
+		</button>
+	{/if}
+	<a target="blank" href={'https://docs.primocms.org/development'}>
+		<span>Docs</span>
+		<Icon icon="mdi:external-link" />
+	</a>
+</footer>
+
 <style lang="postcss">
 	[slot] {
 		width: 100%;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.mobile-tabs {
@@ -288,5 +362,33 @@
 	.tabs ul li.is-active {
 		background: var(--primo-color-codeblack);
 		color: var(--primo-color-white);
+	}
+
+	footer {
+		position: sticky;
+		bottom: 0.25rem;
+		left: 100%;
+		margin-right: 0.25rem;
+		display: flex;
+		justify-content: flex-end;
+		gap: 0.25rem;
+		z-index: 99;
+		pointer-events: none;
+
+		a,
+		button {
+			color: var(--color-gray-2);
+			background: var(--color-gray-9);
+			transition: 0.1s background;
+			padding: 0.25rem 0.5rem;
+			font-size: 0.75rem;
+			display: inline-flex;
+			align-items: center;
+			gap: 0.25rem;
+
+			&:hover {
+				background: var(--color-gray-8);
+			}
+		}
 	}
 </style>

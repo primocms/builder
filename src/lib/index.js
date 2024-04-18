@@ -1,6 +1,4 @@
 import Primo from './Primo.svelte'
-
-import TextInput from './ui/TextInput.svelte'
 import { saved, onMobile, userRole } from './stores/app/misc'
 import { site, content } from './stores/data/site'
 import activePage from './stores/app/activePage'
@@ -8,27 +6,26 @@ import fieldTypes from './stores/app/fieldTypes'
 import modal from './stores/app/modal'
 import { locale, locked_blocks } from './stores/app/misc'
 import { processCode } from './utils'
-import { buildStaticPage, getPageData, get_content_with_static } from './stores/helpers'
+import { buildStaticPage } from './stores/helpers'
 import { registerProcessors } from './component'
-import { Page, Site, languages } from './const'
-import PrimoFieldTypes from './field-types'
+import * as factories from './factories'
+import PrimoFieldTypes from './field-types/index'
 import { validate_site_structure_v2 } from './converter'
 import PrimoPage from './views/editor/Page.svelte'
 import { database_subscribe, storage_subscribe, realtime_subscribe } from './database'
 import { deploy, deploy_subscribe } from './deploy'
+import UI from './ui'
 
 import * as utils from './utils'
-import * as components from './components'
-
-// export const components = {
-// 	TextInput
-// }
+import * as components from './components/index'
 
 const stores = {
 	saved,
 	onMobile,
 	userRole
 }
+
+export { UI, factories }
 
 export {
 	database_subscribe,
@@ -44,8 +41,6 @@ export {
 	modal,
 	utils,
 	components,
-	Page,
-	Site,
 	fieldTypes,
 	PrimoFieldTypes,
 	stores,
@@ -53,9 +48,6 @@ export {
 	processCode,
 	buildStaticPage,
 	validate_site_structure_v2,
-	PrimoPage,
-	languages,
-	getPageData,
-	get_content_with_static
+	PrimoPage
 }
 export default Primo

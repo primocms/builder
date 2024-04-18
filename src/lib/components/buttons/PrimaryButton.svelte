@@ -1,71 +1,80 @@
 <script>
-  import { createEventDispatcher } from 'svelte'
-  import Icon from '@iconify/svelte'
-  const dispatch = createEventDispatcher()
+	import { createEventDispatcher } from 'svelte'
+	import Icon from '@iconify/svelte'
+	const dispatch = createEventDispatcher()
 
-  /** @type {string | null} */
-  export let id = null
-  export let variants = ''
-  export let type = 'button'
-  export let disabled = false
-  export let icon = null
-  export let label = ''
+	/** @type {string | null} */
+	export let id = null
+	export let variants = ''
+	export let type = 'button'
+	export let disabled = false
+	export let icon = null
+	export let label = ''
 </script>
 
-<button
-  {id}
-  class="primary-button {variants}"
-  {disabled}
-  on:click={(e) => dispatch('click', e)}
-  {type}
->
-  {#if icon}
-    <Icon {icon} />
-  {/if}
-  <slot>
-    <span>{label}</span>
-  </slot>
+<button {id} class="primary-button {variants}" {disabled} on:click={(e) => dispatch('click', e)} {type}>
+	{#if icon}
+		<Icon {icon} />
+	{/if}
+	<slot>
+		<span>{label}</span>
+	</slot>
 </button>
 
 <style lang="postcss">
-  .primary-button {
-    width: 100%;
-    border: 1.5px solid #35d994;
-    color: #cecece;
-    padding: 0.5rem;
-    font-weight: 00;
-    margin-top: var(--PrimaryButton-mt, 0);
-    margin-bottom: var(--PrimaryButton-mb, 0);
-    margin-left: var(--PrimaryButton-ml, 0);
-    margin-right: var(--PrimaryButton-mr, 0);
+	.primary-button {
+		width: 100%;
+		border: 1.5px solid #35d994;
+		/* color: #cecece; */
+		padding: 0.5rem;
+		font-weight: 00;
+		margin-top: var(--PrimaryButton-mt, 0);
+		margin-bottom: var(--PrimaryButton-mb, 0);
+		margin-left: var(--PrimaryButton-ml, 0);
+		margin-right: var(--PrimaryButton-mr, 0);
+		transition: 0.1s;
+		font-size: 0.875rem;
 
-    border-top-right-radius: var(--PrimaryButton-round-tr, 0.25rem);
-    border-top-left-radius: var(--PrimaryButton-round-tl, 0.25rem);
-    border-bottom-right-radius: var(--PrimaryButton-round-br, 0.25rem);
-    border-bottom-left-radius: var(--PrimaryButton-round-bl, 0.25rem);
-    transition: color 0.1s, background-color 0.1s;
+		border-top-right-radius: var(--PrimaryButton-round-tr, 0.25rem);
+		border-top-left-radius: var(--PrimaryButton-round-tl, 0.25rem);
+		border-bottom-right-radius: var(--PrimaryButton-round-br, 0.25rem);
+		border-bottom-left-radius: var(--PrimaryButton-round-bl, 0.25rem);
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    gap: 0.5rem;
-    font-weight: 500;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		text-align: center;
+		gap: 0.5rem;
+		font-weight: 500;
 
-    &:hover {
-      box-shadow: var(--primo-ring-primogreen-thick);
-      /* background: var(
+		&:hover {
+			box-shadow: var(--primo-ring-primogreen-thick);
+			/* background: var(
         --PrimaryButton-bg-hover,
         var(--primo-color-brand-dark)
       );
       color: var(--PrimaryButton-color-hover, var(--primo-color-white)); */
-    }
+		}
 
-    &[disabled] {
-      color: #cecece;
-      border: 1px solid #35d994;
-      opacity: 0.2;
-      cursor: not-allowed;
-    }
-  }
+		&[disabled] {
+			color: #cecece;
+			border: 1px solid #35d994;
+			opacity: 0.2;
+			cursor: not-allowed;
+		}
+
+		&.secondary {
+			display: flex;
+			align-items: center;
+			gap: 0.25rem;
+			padding: 7px 16px;
+			padding-block: 0.75rem;
+
+			background: #1f1f1f;
+			border-radius: 0.25rem;
+			justify-self: start;
+			border-color: transparent;
+			/* height: 100%; */
+		}
+	}
 </style>

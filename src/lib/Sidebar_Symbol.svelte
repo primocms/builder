@@ -1,31 +1,30 @@
 <script>
-	import axios from 'axios'
 	import { createEventDispatcher, getContext } from 'svelte'
 	import _ from 'lodash-es'
+	import axios from 'axios'
 	import Icon from '@iconify/svelte'
 	import modal from '$lib/stores/app/modal'
-	import { showingIDE, userRole } from '$lib/stores/app/misc'
-	import MenuPopup from '$lib/components/MenuPopup.svelte'
+	import { userRole } from '$lib/stores/app/misc'
+	import MenuPopup from '$lib/ui/Dropdown.svelte'
 	import IconButton from '$lib/components/IconButton.svelte'
-	import { processCSS, wrapInStyleTags } from '$lib/utils'
-	import { code as siteCode } from '$lib/stores/data/site'
+	import { get_symbol_usage_info } from '$lib/stores/helpers'
+	import { code as siteCode, design as siteDesign } from '$lib/stores/data/site'
 	import { code as pageCode } from '$lib/stores/app/activePage'
 	import { locale } from '$lib/stores/app/misc'
 	import { click_to_copy } from '$lib/utilities'
 	import { browser } from '$app/environment'
-	import IFrame from '$lib/views/modal/ComponentLibrary/IFrame.svelte'
+	import IFrame from '$lib/components/IFrame.svelte'
 	const dispatch = createEventDispatcher()
 
 	export let symbol
 	export let controls_enabled = true
 	export let header_hidden = false
+	export let append = ''
 
 	function edit_symbol_content(symbol) {
-		$showingIDE = false
 		modal.show(
 			'SYMBOL_EDITOR',
 			{
-				tab: 'content',
 				symbol,
 				header: {
 					title: `Edit ${symbol.name || 'Block'}`,
@@ -37,7 +36,8 @@
 							modal.hide()
 						}
 					}
-				}
+				},
+				tab: 'content'
 			},
 			{
 				showSwitch: true,
@@ -47,11 +47,9 @@
 	}
 
 	function edit_symbol_code(symbol) {
-		$showingIDE = true
 		modal.show(
 			'SYMBOL_EDITOR',
 			{
-				tab: 'code',
 				symbol,
 				header: {
 					title: `Edit ${symbol.title || 'Block'}`,
@@ -63,7 +61,8 @@
 							modal.hide()
 						}
 					}
-				}
+				},
+				tab: 'code'
 			},
 			{
 				showSwitch: true,
@@ -115,11 +114,12 @@
 					css: $siteCode.css + $pageCode.css + symbol.code.css,
 					js: symbol.code.js
 				},
-				content: symbol.content
+				content: symbol.content,
+				dev_mode: false
 			})
 			.catch((e) => console.error(e))
+
 		if (res?.data?.error) {
-			console.log({ res })
 			component_error = res.data.error
 		} else if (res?.data) {
 			const updated_componentCode = res.data
@@ -130,6 +130,11 @@
 
 			component_error = null
 		}
+	}
+
+	let active_symbol_label = ''
+	async function get_label() {
+		active_symbol_label = await get_symbol_usage_info(symbol.id)
 	}
 </script>
 
@@ -158,27 +163,39 @@
 		{:else}
 			<div class="name">
 				<h3>{symbol.name}</h3>
+				{#if controls_enabled}
+					<div
+						class="info"
+						title={active_symbol_label}
+						on:mouseover={get_label}
+						on:focus={get_label}
+					>
+						<Icon icon="mdi:info" />
+					</div>
+				{/if}
 			</div>
 		{/if}
 		{#if controls_enabled}
 			<div class="symbol-options">
+				{#if $userRole === 'DEV'}
+					<IconButton icon="material-symbols:code" on:click={() => edit_symbol_code(symbol)} />
+				{/if}
 				<IconButton
 					icon="material-symbols:edit-square-outline-rounded"
 					on:click={() => edit_symbol_content(symbol)}
 				/>
-				{#if $userRole === 'DEV'}
-					<IconButton icon="material-symbols:code" on:click={() => edit_symbol_code(symbol)} />
-				{/if}
 				<MenuPopup
 					icon="carbon:overflow-menu-vertical"
 					options={[
-						getContext('DEBUGGING')
-							? {
-									label: `${symbol.id.slice(0, 5)}...`,
-									icon: 'ph:copy-duotone',
-									on_click: (e) => click_to_copy(e.target, symbol.id)
-							  }
-							: {},
+						...(getContext('DEBUGGING')
+							? [
+									{
+										label: `${symbol.id.slice(0, 5)}...`,
+										icon: 'ph:copy-duotone',
+										on_click: (e) => click_to_copy(e.target, symbol.id)
+									}
+							  ]
+							: []),
 						{
 							label: 'Duplicate',
 							icon: 'bxs:duplicate',
@@ -212,7 +229,7 @@
 			</div>
 		{:else}
 			{#key componentCode}
-				<IFrame bind:height {componentCode} />
+				<IFrame bind:height {append} {componentCode} />
 			{/key}
 		{/if}
 	</div>
@@ -235,6 +252,9 @@
 			transition: opacity 0.2s;
 
 			.name {
+				display: flex;
+				align-items: center;
+				gap: 0.25rem;
 				font-size: 13px;
 				line-height: 16px;
 			}
@@ -258,7 +278,7 @@
 			cursor: grab;
 			min-height: 2rem;
 			transition: box-shadow 0.2s;
-			border: 1px solid var(--color-gray-8);
+			background: var(--color-gray-8);
 		}
 	}
 	.error {

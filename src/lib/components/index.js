@@ -1,9 +1,4 @@
-import * as buttons from './buttons'
-import * as inputs from './inputs'
-import * as misc from './misc'
+import * as buttons from './buttons/index.js'
+import * as misc from './misc/misc.js'
 
-export {
-  buttons, 
-  inputs, 
-  misc
-}
+export { buttons, misc }

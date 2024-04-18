@@ -14,22 +14,18 @@
 	import HSplitPane from './HSplitPane.svelte'
 	import { getEmptyValue } from '../../../utils'
 	import ModalHeader from '../ModalHeader.svelte'
-	import { Tabs } from '../../../components/misc'
+	import Tabs from '$lib/ui/Tabs.svelte'
 	import FullCodeEditor from './FullCodeEditor.svelte'
 	import { CodePreview } from '../../../components/misc'
-	import GenericFields from '../../../components/GenericFields.svelte'
+	import GenericFields from '../../../components/GenericFields/GenericFields.svelte'
 	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'
 	import { buildStaticPage } from '../../../stores/helpers'
-	import { locale, onMobile } from '../../../stores/app/misc'
-	import { modal } from '../../../stores/app'
+	import { locale, onMobile, userRole } from '../../../stores/app/misc'
+	import modal from '../../../stores/app/modal'
 	import { active_page } from '../../../stores/actions'
-	import activePage, {
-		code as pageCode,
-		fields as pageFields,
-		content as pageContent
-	} from '../../../stores/app/activePage'
-	import { showingIDE } from '../../../stores/app'
+	import activePage, { code as pageCode, fields as pageFields, content as pageContent } from '../../../stores/app/activePage'
 	import { tick } from 'svelte'
+	import { page } from '$app/stores'
 
 	let local_code = cloneDeep($pageCode)
 	let local_content = cloneDeep($pageContent)
@@ -37,11 +33,6 @@
 		...field,
 		value: local_content[$locale][field.key]
 	}))
-
-	// switch to dev mode if no fields exist
-	if (local_fields.length === 0) {
-		$showingIDE = true
-	}
 
 	const placeholders = new Map()
 	function getCachedPlaceholder(field) {
@@ -136,7 +127,6 @@
 				..._chain(fields).keyBy('key').mapValues('value').value()
 			}
 		}
-		console.log({ local_content })
 	}
 
 	function saveLocalValue(property, value) {
@@ -164,21 +154,6 @@
 	let preview = ''
 
 	let compilationError // holds compilation error
-
-	// // ensure placeholder values always conform to form
-	// // TODO: do for remaining fields
-	// $: fields = fields.map((field) => {
-	//   if (
-	//     component.type === 'symbol' &&
-	//     field.type === 'link' &&
-	//     !field.value?.url
-	//   )
-	//     return {
-	//       ...field,
-	//       value: getCachedPlaceholder(field),
-	//     }
-	//   else return field
-	// })
 
 	let disableSave = false
 	async function compileComponentCode({ html, css, js }) {
@@ -247,108 +222,113 @@
 		}
 
 		if (!disableSave) {
-			active_page.update(Final)
+			active_page.update({ obj: Final, is_page_type: !!$page.data.page_type })
 			modal.hide()
 		}
 	}
 </script>
 
 <div class="PageEditor">
-	<ModalHeader
-		label="Page"
-		warn={() => {
-			// if (!isEqual(local_component, component)) {
-			//   const proceed = window.confirm(
-			//     'Undrafted changes will be lost. Continue?'
-			//   )
-			//   return proceed
-			// } else return true
-			return true
-		}}
-		button={{
-			icon: 'material-symbols:save',
-			label: 'Save',
-			onclick: saveComponent,
-			disabled: disableSave
-		}}
-	>
-		<div slot="title">
-			<Tabs
-				tabs={[
-					{
-						id: 'content',
-						label: 'Content',
-						icon: 'uil:edit'
-					},
-					{
-						id: 'fields',
-						label: 'Fields',
-						icon: 'fluent:form-multiple-24-regular'
-					},
-					{
-						id: 'code',
-						label: 'Code',
-						icon: 'gravity-ui:code'
-					}
-				]}
-				bind:active_tab_id={$activeTab}
-			/>
-		</div>
-	</ModalHeader>
-	<main class:showing-ide={$showingIDE} class:showing-cms={!$showingIDE}>
-		<HSplitPane
-			orientation={$orientation}
-			bind:leftPaneSize={$leftPaneSize}
-			bind:rightPaneSize={$rightPaneSize}
-			bind:topPaneSize={$topPaneSize}
-			bind:bottomPaneSize={$bottomPaneSize}
-			hideRightPanel={$onMobile}
+	{#if $userRole === 'DEV'}
+		<ModalHeader
+			warn={() => {
+				return true
+			}}
+			button={{
+				icon: 'material-symbols:save',
+				label: 'Save',
+				onclick: saveComponent,
+				disabled: disableSave
+			}}
 		>
-			<div slot="left" lang={$locale}>
-				{#if $activeTab === 'content'}
-					<GenericFields
-						bind:fields
-						on:save={saveComponent}
-						on:input={() => {
-							fields = fields.filter(Boolean) // to trigger setting `data`
-							saveLocalContent()
-						}}
-						showCode={false}
-					/>
-				{:else if $activeTab === 'fields'}
-					<GenericFields
-						bind:fields
-						on:input={() => {
-							refreshPreview()
-							saveLocalContent()
-						}}
-						on:delete={async () => {
-							await tick() // wait for fields to update
-							saveLocalContent()
-							refreshPreview()
-						}}
-						showCode={true}
-					/>
-				{:else if $activeTab === 'code'}
-					<FullCodeEditor
-						bind:html={rawHTML}
-						bind:css={rawCSS}
-						{data}
-						on:save={saveComponent}
-						on:refresh={refreshPreview}
-					/>
-				{/if}
-			</div>
-			<div slot="right">
-				<CodePreview
-					bind:orientation={$orientation}
-					view="small"
-					{loading}
-					{preview}
-					error={compilationError}
+			<div slot="title">
+				<Tabs
+					tabs={[
+						{
+							id: 'code',
+							label: 'Code',
+							icon: 'gravity-ui:code'
+						},
+						{
+							id: 'fields',
+							label: 'Fields',
+							icon: 'fluent:form-multiple-24-regular'
+						},
+						{
+							id: 'content',
+							label: 'Content',
+							icon: 'uil:edit'
+						}
+					]}
+					bind:active_tab_id={$activeTab}
 				/>
 			</div>
-		</HSplitPane>
+		</ModalHeader>
+	{:else}
+		<ModalHeader
+			title="Page"
+			warn={() => {
+				// if (!isEqual(local_component, component)) {
+				//   const proceed = window.confirm(
+				//     'Undrafted changes will be lost. Continue?'
+				//   )
+				//   return proceed
+				// } else return true
+				return true
+			}}
+			button={{
+				icon: 'material-symbols:save',
+				label: 'Save',
+				onclick: saveComponent,
+				disabled: disableSave
+			}}
+		/>
+	{/if}
+
+	<main>
+		{#if $activeTab === 'fields'}
+			<GenericFields
+				bind:fields
+				on:input={() => {
+					refreshPreview()
+					saveLocalContent()
+				}}
+				on:delete={async () => {
+					await tick() // wait for fields to update
+					saveLocalContent()
+					refreshPreview()
+				}}
+				showCode={true}
+			/>
+		{:else}
+			<HSplitPane
+				orientation={$orientation}
+				bind:leftPaneSize={$leftPaneSize}
+				bind:rightPaneSize={$rightPaneSize}
+				bind:topPaneSize={$topPaneSize}
+				bind:bottomPaneSize={$bottomPaneSize}
+				hideRightPanel={$onMobile}
+			>
+				<div slot="left" lang={$locale}>
+					{#if $activeTab === 'code'}
+						<FullCodeEditor bind:html={rawHTML} bind:css={rawCSS} {data} on:save={saveComponent} on:refresh={refreshPreview} />
+					{:else if $activeTab === 'content'}
+						<GenericFields
+							bind:fields
+							on:save={saveComponent}
+							on:input={() => {
+								fields = fields.filter(Boolean) // to trigger setting `data`
+								saveLocalContent()
+							}}
+							showCode={false}
+						/>
+					{/if}
+				</div>
+				<div slot="right">
+					<CodePreview bind:orientation={$orientation} view="small" {loading} {preview} error={compilationError} />
+				</div>
+			</HSplitPane>
+		{/if}
 	</main>
 </div>
 
@@ -374,13 +354,14 @@
 		width: 100%;
 	}
 
-	:global(.showing-cms [slot='left']) {
+	/* not sure if still needed */
+	/* :global(.showing-cms [slot='left']) {
 		height: 100% !important;
 	}
 
 	:global(.showing-cms .wrapper.vertical) {
 		height: 100% !important;
-	}
+	} */
 
 	[slot='left'] {
 		/* height: calc(100% - 45px); */

@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import modal from '../../stores/app/modal'
-	import { showingIDE } from '../../stores/app'
 	import * as Mousetrap from 'mousetrap'
 
 	export let visible
@@ -14,24 +13,12 @@
 			}
 		})
 	})
-
-	function switchView() {
-		$showingIDE = !$showingIDE
-	}
 </script>
 
 {#if visible}
-	<div
-		id="primo-modal"
-		class="primo-modal modal mousetrap primo-reset"
-		transition:fade={{ duration: 100 }}
-	>
+	<div id="primo-modal" class="primo-modal modal mousetrap primo-reset" transition:fade={{ duration: 100 }}>
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
-		<div
-			class="modal-background"
-			class:hovered={!$modal.disabledBgClose}
-			on:click={$modal.disabledBgClose ? () => {} : () => modal.hide()}
-		/>
+		<div class="modal-background" class:hovered={!$modal.disabledBgClose} on:click={$modal.disabledBgClose ? () => {} : () => modal.hide()} />
 		<div class="modal-card" style:max-width={$modal.maxWidth}>
 			<div class="modal-card-body">
 				<slot />
@@ -91,7 +78,8 @@
 		display: flex;
 		flex-direction: column;
 		border-radius: var(--primo-border-radius);
-		justify-content: center;
+		/* justify-content: center; */
+		justify-content: flex-start;
 		height: 100%;
 		pointer-events: all;
 		/* height: calc(

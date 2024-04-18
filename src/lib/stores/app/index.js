@@ -1,10 +1,4 @@
-import {showingIDE,userRole} from './misc.js'
-import modal from './modal.js'
+import { userRole } from './misc.js'
 import fieldTypes from './fieldTypes.js'
 
-export {
-  userRole,
-  showingIDE,
-  modal,
-  fieldTypes
-}
+export { userRole, fieldTypes }

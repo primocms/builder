@@ -1,10 +1,11 @@
 <script>
+	import { dataChanged } from '$lib/database'
+	import Icon from '@iconify/svelte'
+	import UI from '$lib/ui'
+	import pages from '$lib/stores/data/pages'
+	import { locale } from '$lib/stores/app/misc'
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
-	import SplitButton from '../ui/inputs/SplitButton.svelte'
-	import TextInput from '../components/inputs/TextInput.svelte'
-	import pages from '../stores/data/pages'
-	import { locale } from '../stores/app/misc'
 
 	const link = {
 		label: '',
@@ -38,9 +39,9 @@
 
 	function urlMatchesPage(url) {
 		if (url && url.startsWith('/')) {
-			return 'Page'
+			return 'page'
 		} else {
-			return 'URL'
+			return 'url'
 		}
 	}
 
@@ -68,49 +69,81 @@
 				: prefix + page.url
 		}
 	}
+
+	$: selected_page_name = get_page_name(field.value.url)
+	function get_page_name(url) {
+		if (url === '/') {
+			return $pages.find((p) => p.url === 'index')?.name
+		} else {
+			const url_parts = url.slice(1).split('/')
+			const page_url = url_parts[url_parts.length - 1]
+			console.log({ url_parts, page_url, $pages })
+			return $pages.find((p) => p.url === page_url)?.name
+		}
+	}
+	$: console.log({ selected_page_name })
+
+	let page_name_edited = !!field.value.label
 </script>
 
-<div class="primo-link">
-	<span>{field.label}</span>
+<div class="Link">
+	<span class="label">{field.label}</span>
 	<div class="inputs">
-		<TextInput
-			on:input={() => dispatch('input', field)}
+		<UI.TextInput
+			on:input={() => {
+				page_name_edited = true
+				dispatch('input', field)
+			}}
 			bind:value={field.value.label}
 			id="page-label"
 			label="Label"
 			placeholder="About Us"
 		/>
 		<div class="url-select">
-			<SplitButton
-				bind:selected
-				buttons={[
-					{ id: 'Page', icon: 'fa-solid:clone' },
-					{ id: 'URL', icon: 'akar-icons:link-chain' }
-				]}
-			/>
-			{#if selected === 'Page'}
-				<select bind:value={field.value.url} on:change={() => dispatch('input')}>
-					{#each $pages as page}
-						{@const page_url = getPageUrl(page, $locale, $pages)}
-						<option value={page_url}>
-							{page.name}
-							<pre>({page_url})</pre>
-						</option>
-						<!-- TODO: Fix this -->
-						<!-- {#if page.pages.length > 0}
-              <optgroup label={page.name}>
-                {#each page.pages as childpage}
-                  <option value={getPageUrl(childpage, $locale)}>
-                    {childpage.name}
-                    <pre>({getPageUrl(childpage, $locale)})</pre>
-                  </option>
-                {/each}
-              </optgroup>
-            {/if} -->
-					{/each}
-				</select>
+			<div class="toggle">
+				<button
+					class:active={selected === 'page'}
+					on:click={() => {
+						selected = 'page'
+					}}
+				>
+					<Icon icon="fluent:document-one-page-multiple-20-filled" />
+					<span>Page</span>
+				</button>
+				<button
+					class:active={selected === 'url'}
+					on:click={() => {
+						selected = 'url'
+					}}
+				>
+					<Icon icon="akar-icons:link-chain" />
+					<span>URL</span>
+				</button>
+			</div>
+			{#if selected === 'page'}
+				{@const top_level_pages = $pages.filter((p) => !p.parent)}
+				<UI.Dropdown
+					label={selected_page_name || 'Select Page'}
+					options={top_level_pages.map((page) => ({
+						label: page.name,
+						value: getPageUrl(page, $locale, $pages),
+						submenu: {
+							title: page.name,
+							options: $pages
+								.filter((p) => p.parent === page.id)
+								.map((p) => ({ value: getPageUrl(p, $locale, $pages), label: p.name }))
+						}
+					}))}
+					on:input={({ detail: value }) => {
+						if (!page_name_edited) {
+							field.value.label = get_page_name(value)
+						}
+						field.value.url = value
+						dispatch('input')
+					}}
+				/>
 			{:else}
-				<TextInput
+				<UI.TextInput
 					on:input={() => dispatch('input', field)}
 					bind:value={field.value.url}
 					type="url"
@@ -123,49 +156,58 @@
 <slot />
 
 <style lang="postcss">
-	.primo-link {
+	.toggle {
+		display: flex;
+		background: var(--color-gray-9);
+		border: 1px solid var(--color-gray-8);
+		padding: 2px;
+		border-radius: var(--primo-border-radius);
+		--Dropdown-font-size: 0.875rem;
+
+		button {
+			border-radius: var(--primo-border-radius);
+			font-size: 0.875rem;
+			flex: 1;
+			background: var(--color-gray-8);
+			color: #8a8c8e;
+			padding-inline: 0.5rem;
+			font-weight: 500;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 0.5rem;
+			transition: 0.1s;
+			background: transparent;
+
+			&:focus,
+			&.active {
+				color: white;
+				background: var(--color-gray-8);
+				z-index: 1;
+			}
+		}
+	}
+
+	.Link {
 		display: flex;
 		flex-direction: column;
+	}
 
-		span {
-			font-size: var(--title-font-size, 1rem);
-			font-weight: var(--title-font-weight, 700);
-			padding-bottom: 1rem;
-			letter-spacing: 1px;
-		}
+	span.label {
+		font-size: var(--title-font-size, 1rem);
+		font-weight: var(--title-font-weight, 700);
+		padding-bottom: 1rem;
+		letter-spacing: 1px;
+	}
 
-		.inputs {
-			display: grid;
-			gap: 1rem;
-			width: 100%;
-			--TextInput-mt: 0.25rem;
-			--TextInput-label-font-size: 0.75rem;
-			--SplitButton-mb: 0.25rem;
+	.inputs {
+		display: grid;
+		gap: 0.5rem;
+		width: 100%;
 
-			.url-select {
-				display: grid;
-				gap: 1rem;
-				place-items: flex-start;
-
-				select {
-					width: 100%;
-					background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
-					background-position: calc(100% - 0.25rem);
-					background-repeat: no-repeat;
-					appearance: none;
-					padding: 0.5rem 0.75rem;
-					padding-right: 0;
-					border: 0;
-					background-color: var(--input-background);
-					border: var(--input-border);
-					border-radius: var(--input-border-radius);
-					margin-top: 0.25rem;
-
-					&:focus {
-						outline: none;
-					}
-				}
-			}
+		.url-select {
+			display: flex;
+			gap: 0.25rem;
 		}
 	}
 </style>

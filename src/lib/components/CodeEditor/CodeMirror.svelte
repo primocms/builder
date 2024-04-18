@@ -1,5 +1,5 @@
 <script context="module">
-	const scrollPositions = new Map()
+	const scrollPositions = new Map() // TODO: fix
 
 	let libraries
 	if (!import.meta.env.SSR) fetch_dev_libraries()
@@ -30,11 +30,7 @@
 	import { standardKeymap, indentWithTab } from '@codemirror/commands'
 	import { EditorState, Compartment } from '@codemirror/state'
 	import { oneDarkTheme, ThemeHighlighting } from './theme'
-	import {
-		svelteCompletions,
-		cssCompletions,
-		extract_css_variables
-	} from './extensions/autocomplete'
+	import { svelteCompletions, cssCompletions, extract_css_variables } from './extensions/autocomplete'
 	import { getLanguage } from './extensions'
 	import highlight_active_line from './extensions/inspector'
 
@@ -45,16 +41,32 @@
 	export let style = ''
 	export let debounce = false
 	export let selection = 0
-	export let docs = 'https://docs.primo.so/development'
 
 	const dispatch = createEventDispatcher()
+
+	let Editor
+
+	$: if (Editor && value !== Editor.state.doc.toString()) {
+		const old_value = Editor.state.doc.toString()
+		Editor.dispatch({
+			changes: [
+				{
+					from: 0,
+					to: old_value.length,
+					insert: value
+				}
+			],
+			selection: {
+				anchor: 0
+			}
+		})
+	}
 
 	const language = getLanguage(mode)
 
 	const css_completions_compartment = new Compartment()
 	let css_variables = extract_css_variables($site_code.css + $page_code.css + value)
 
-	var Editor
 	const state = EditorState.create({
 		selection: {
 			anchor: selection
@@ -110,6 +122,7 @@
 						const position = Editor.state.selection.main.head
 						format_code(value, { mode, position }).then((res) => {
 							if (!res) return
+							dispatch('format')
 							const { formatted, cursorOffset } = res
 							Editor.dispatch({
 								changes: [
@@ -210,17 +223,6 @@
 
 <div bind:this={element} class="codemirror-container {mode}" {style}>
 	<div in:fade={{ duration: 200 }} bind:this={editorNode} />
-	<a class="docs" target="blank" href={docs}>
-		<span>Docs</span>
-		<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-			<path
-				d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"
-			/>
-			<path
-				d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"
-			/>
-		</svg>
-	</a>
 </div>
 
 <style lang="postcss">
@@ -229,33 +231,8 @@
 		overflow-y: scroll;
 		overscroll-behavior-x: contain; /* prevent from swiping back */
 		font-family: 'Fira Code', monospace !important;
-		height: calc(100% - 83px);
+		height: calc(100% - 34px);
 		position: relative;
-	}
-
-	.docs {
-		position: sticky;
-		bottom: 0.25rem;
-		left: 100%;
-		margin-right: 0.25rem;
-		color: var(--color-gray-2);
-		background: var(--color-gray-9);
-		transition: 0.1s background;
-		padding: 0.25rem 0.5rem;
-		font-size: 0.75rem;
-		display: inline-flex;
-
-		span {
-			margin-right: 0.25rem;
-		}
-
-		svg {
-			width: 0.75rem;
-		}
-
-		&:hover {
-			background: var(--color-gray-8);
-		}
 	}
 
 	:global(.highlighted) {
@@ -282,10 +259,7 @@
 		transition: 0.1s background;
 	}
 
-	:global(
-			.ͼo .cm-tooltip-autocomplete > ul > li[aria-selected='true'],
-			.ͼo .cm-tooltip-autocomplete > ul > li:hover
-		) {
+	:global(.ͼo .cm-tooltip-autocomplete > ul > li[aria-selected='true'], .ͼo .cm-tooltip-autocomplete > ul > li:hover) {
 		color: white;
 		background: var(--color-gray-7);
 		transition: 0.1s background, 0.1s color;

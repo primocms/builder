@@ -20,6 +20,7 @@
 </script>
 
 <script>
+	import Icon from '@iconify/svelte'
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 	import * as Mousetrap from 'mousetrap'
@@ -34,7 +35,6 @@
 
 	export let html = ''
 	export let css = ''
-	export let js = ''
 
 	if (!$$props.js) {
 		$leftPaneSize = '50%'
@@ -76,18 +76,18 @@
 {#if $onMobile}
 	<div class="mobile-tabs {variants}">
 		<div class="tabs">
-			<ul xyz="fade stagger delay-2">
-				<li class="xyz-in" class:is-active={activeTab === 0}>
+			<ul>
+				<li class:is-active={activeTab === 0}>
 					<button on:click={() => (activeTab = 0)}>
 						<span>HTML</span>
 					</button>
 				</li>
-				<li class="xyz-in" class:is-active={activeTab === 1}>
+				<li class:is-active={activeTab === 1}>
 					<button on:click={() => (activeTab = 1)}>
 						<span>CSS</span>
 					</button>
 				</li>
-				<li class="xyz-in" class:is-active={activeTab === 2}>
+				<li class:is-active={activeTab === 2}>
 					<button on:click={() => (activeTab = 2)}>
 						<span>JS</span>
 					</button>
@@ -178,6 +178,13 @@
 	</HSplitPane>
 {/if}
 
+<footer>
+	<a target="blank" href="https://docs.primo.so/development#css">
+		<span>Docs</span>
+		<Icon icon="mdi:external-link" />
+	</a>
+</footer>
+
 <style lang="postcss">
 	[slot] {
 		width: 100%;
@@ -250,5 +257,33 @@
 	.tabs ul li.is-active {
 		background: var(--primo-color-codeblack);
 		color: var(--primo-color-white);
+	}
+
+	footer {
+		position: sticky;
+		bottom: 0.25rem;
+		left: 100%;
+		margin-right: 0.25rem;
+		display: flex;
+		justify-content: flex-end;
+		gap: 0.25rem;
+		z-index: 99;
+		pointer-events: none;
+
+		a,
+		button {
+			color: var(--color-gray-2);
+			background: var(--color-gray-9);
+			transition: 0.1s background;
+			padding: 0.25rem 0.5rem;
+			font-size: 0.75rem;
+			display: inline-flex;
+			align-items: center;
+			gap: 0.25rem;
+
+			&:hover {
+				background: var(--color-gray-8);
+			}
+		}
 	}
 </style>

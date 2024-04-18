@@ -1,7 +1,6 @@
 <script>
 	import Icon from '@iconify/svelte'
 	import modal from '../../stores/app/modal'
-	import { showingIDE, userRole } from '../../stores/app/misc'
 	import LocaleSelector from '../../views/editor/LocaleSelector.svelte'
 
 	export let variants = ''
@@ -13,7 +12,6 @@
 	export let button = null
 	export let warn = () => true
 	export let onclose = () => {}
-	export let showLocaleSelector = true
 
 	function closeModal() {
 		if (warn()) {
@@ -50,9 +48,6 @@
 	</div>
 	<div class="right-container">
 		<slot />
-		{#if !$showingIDE && !$modal.hideLocaleSelector && showLocaleSelector}
-			<!-- <LocaleSelector align="left" /> -->
-		{/if}
 		{#if button && button.onclick}
 			<button
 				class="primo-button primary"
@@ -91,6 +86,7 @@
 		font-size: var(--font-size-3);
 		font-weight: 600;
 		padding: 0.5rem;
+		padding-bottom: 0;
 
 		.left-container {
 			flex: 1;
@@ -145,13 +141,6 @@
 			flex: 1;
 			display: flex;
 			justify-content: flex-end;
-
-			.code-mode {
-				padding: 0 1rem;
-				border-radius: 0.25rem;
-				color: var(--color-gray-1);
-				background: var(--color-gray-9);
-			}
 		}
 	}
 

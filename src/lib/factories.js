@@ -1,5 +1,5 @@
-import { customAlphabet } from 'nanoid/non-secure'
 import { v4 as uuidv4 } from 'uuid'
+import { createUniqueID } from './utilities.js'
 
 /**
  * Creates a new field object with default values.
@@ -14,7 +14,25 @@ export const Field = (field = {}) => ({
 	fields: [],
 	options: {},
 	is_static: false,
+	value: '',
 	...field
+})
+
+/**
+ * @param section
+ * @returns {import('$lib').Section}
+ */
+export const Section = (section) => ({
+	id: uuidv4(),
+	content: section.content || {
+		en: {}
+	},
+	index: section.index || 0,
+	symbol: section.symbol,
+	page: section.page,
+	page_type: section.page_type,
+	created_at: section.created_at || new Date().toISOString(),
+	instance_of: section.instance_of || null
 })
 
 /**
@@ -23,20 +41,19 @@ export const Field = (field = {}) => ({
  * @returns {import('$lib').Symbol}
  */
 export const Symbol = (symbol) => ({
-	id: uuidv4(),
-	name: 'New Block',
-	code: {
+	id: symbol.id || uuidv4(),
+	name: symbol.name || 'New Block',
+	code: symbol.code || {
 		css: '',
 		html: '',
 		js: ''
 	},
-	fields: [],
-	content: {
+	fields: symbol.fields || [],
+	content: symbol.content || {
 		en: {}
 	},
-	site: symbol.site,
-	index: 0,
-	...symbol
+	site: symbol.site || null,
+	index: symbol.index || 0
 })
 
 /**
@@ -63,6 +80,44 @@ export const Page = (page = {}) => ({
 	parent: null,
 	site: '',
 	created_at: new Date().toISOString(),
+	metadata: {
+		title: '',
+		description: '',
+		image: ''
+	},
+	page_type: null,
+	...page
+})
+
+/**
+ * Creates a new page object with default values.
+ * @param page - The page properties to be applied to the new page
+ * @returns {import('$lib').Page_Type}
+ */
+export const Page_Type = (page = {}) => ({
+	id: uuidv4(),
+	name: '',
+	code: {
+		html: {
+			head: '',
+			below: ''
+		},
+		css: '',
+		js: ''
+	},
+	fields: [],
+	content: {
+		en: {}
+	},
+	site: '',
+	created_at: new Date().toISOString(),
+	metadata: {
+		title: '',
+		description: '',
+		image: ''
+	},
+	color: '#2B407D',
+	icon: 'mdi:rocket',
 	...page
 })
 
@@ -71,57 +126,16 @@ export const Page = (page = {}) => ({
  * @param site - The site properties to be applied to the new site
  * @returns {import('$lib').Site}
  */
-export const Site = ({ url, name } = { url: 'default', name: 'Default' }) => ({
+export const Site = (site = {}) => ({
 	id: uuidv4(),
-	url,
-	name,
+	url: '',
+	name: '',
 	code: {
 		html: {
 			head: ``,
 			below: ''
 		},
-		css: `
-@import url("https://unpkg.com/@primo-app/primo@1.3.64/reset.css");
-
-#page {
-  font-family: system-ui, sans-serif;
-  color: var(--color);
-  line-height: 1.6; 
-  font-size: 1rem;
-  background: var(--background);
-}
-
-.section-container {
-  max-width: var(--max-width, 1200px);
-  margin: 0 auto;
-  padding: 3rem var(--padding, 1rem); 
-}
-
-.heading {
-  font-size: 3rem;
-  line-height: 1;
-  font-weight: 700;
-  margin: 0;
-}
-
-.button {
-  color: white;
-  background: var(--color-accent);
-  border-radius: 5px;
-  padding: 8px 20px;
-  transition: var(--transition);
-
-  &:hover {
-    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.1);
-  } 
-
-  &.inverted {
-    background: transparent; 
-    color: var(--color-accent); 
-    border: 2px solid var(--color-accent);
-  }
-}
-`,
+		css: ``,
 		js: ''
 	},
 	fields: [],
@@ -130,9 +144,82 @@ export const Site = ({ url, name } = { url: 'default', name: 'Default' }) => ({
 			// locale
 		}
 	},
-	active_deployment: null,
-	created_at: new Date().toISOString()
+	design: {
+		heading_font: 'open-sans',
+		body_font: 'open-sans',
+		brand_color: 'red',
+		accent_color: 'blue',
+		roundness: '8px',
+		depth: '0px 4px 30px rgba(0, 0, 0, 0.2)'
+	},
+	metadata: {
+		favicon: '',
+		title: site.name || '',
+		description: '',
+		image: ''
+	},
+	custom_domain: '',
+	created_at: new Date().toISOString(),
+	...site
 })
+
+export const design_tokens = {
+	heading_font: {
+		label: 'Heading Font',
+		type: 'font-family',
+		variable: 'font-heading',
+		group: ''
+	},
+	body_font: {
+		label: 'Body Font',
+		type: 'font-family',
+		variable: 'font-body',
+		group: ''
+	},
+	brand_color: {
+		label: 'Brand Color',
+		type: 'color',
+		variable: 'color-brand',
+		group: ''
+	},
+	accent_color: {
+		label: 'Accent Color',
+		type: 'color',
+		variable: 'color-accent',
+		group: ''
+	},
+	roundness: {
+		label: 'Roundness (Border Radius)',
+		type: 'border-radius',
+		variable: 'border-radius',
+		group: ''
+	},
+	depth: {
+		label: 'Depth (Shadows)',
+		type: 'box-shadow',
+		variable: 'box-shadow',
+		group: ''
+	}
+}
+
+export const Site_Tokens_CSS = (values) => {
+	return `
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=${values['heading_font'].replace(
+			/ /g,
+			'+'
+		)}:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=${values['body_font'].replace(
+		/ /g,
+		'+'
+	)}:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700" rel="stylesheet">
+	<style>
+	:root {\n${Object.entries(design_tokens)
+		.map(([token, { variable }]) => `--${variable}: ${values[token]};`)
+		.join('\n')}}
+	</style>
+	`
+}
 
 export const languages = [
 	{
@@ -352,8 +439,3 @@ export const languages = [
 		name: 'Estonian'
 	}
 ]
-
-function createUniqueID(length = 5) {
-	const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz', length)
-	return nanoid()
-}

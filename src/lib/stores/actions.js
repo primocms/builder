@@ -12,7 +12,8 @@ import { buildStaticPage } from './helpers'
 import { dataChanged, storageChanged } from '$lib/database'
 import { swap_array_item_index } from '$lib/utilities'
 import { v4 as uuidv4 } from 'uuid'
-import { Page } from '../const'
+import { Page, Page_Type, Symbol, Section } from '$lib/factories'
+import { page } from '$app/stores'
 
 /**
  * Hydrates the active site, page, section, and symbol stores for th editor
@@ -21,6 +22,7 @@ import { Page } from '../const'
 export async function hydrate_active_data(data) {
 	// stores.sections.set(data.sections)
 	stores.pages.set(data.pages)
+	stores.page_types.set(data.page_types)
 	stores.symbols.set(data.symbols)
 	update_site(data.site)
 }
@@ -49,11 +51,15 @@ export const symbols = {
 						symbol.content[language] = symbol.content['en']
 					}
 				}
-				stores.symbols.update((store) => [...store.slice(0, index), symbol, ...store.slice(index)])
+				stores.symbols.update((store) => [
+					...store.slice(0, index),
+					Symbol(symbol),
+					...store.slice(index)
+				])
 				await dataChanged({
 					table: 'symbols',
 					action: 'insert',
-					data: symbol
+					data: Symbol(symbol)
 				})
 				await symbols.rearrange(get(stores.symbols))
 			},
@@ -188,17 +194,30 @@ export const active_site = {
 export const active_page = {
 	add_block: async (symbol, position) => {
 		const original_sections = _.cloneDeep(get(stores.sections))
-		console.log({ original_sections })
 
-		const new_section = {
-			id: uuidv4(),
-			index: position,
-			page: get(activePageID),
-			content: symbol.content,
-			symbol: symbol.id
+		const { data } = get(page)
+
+		// if adding to page type, also add section to every instance of section
+		let new_section
+		if (data.page_type) {
+			// adding to page type
+			new_section = Section({
+				index: position,
+				page: null,
+				page_type: data.page_type.id,
+				content: symbol.content,
+				symbol: symbol.id
+			})
+		} else {
+			// adding to page
+			new_section = Section({
+				index: position,
+				page: get(activePageID),
+				content: symbol.content,
+				symbol: symbol.id
+			})
 		}
-
-		const new_sections = [
+		const updated_sections = [
 			...original_sections.slice(0, position),
 			new_section,
 			...original_sections.slice(position)
@@ -206,11 +225,38 @@ export const active_page = {
 
 		await update_timeline({
 			doing: async () => {
-				stores.sections.set(new_sections)
+				// is page type
+				if (data.page_type) {
+					// fetch pages with given page type
+					const page_instances = await dataChanged({
+						table: 'pages',
+						action: 'select',
+						match: { page_type: data.page_type.id }
+					})
+					// add new section with given page type
+					await Promise.all(
+						page_instances?.map(async (page) => {
+							await dataChanged({
+								table: 'sections',
+								action: 'insert',
+								data: Section({
+									index: position,
+									content: symbol.content,
+									symbol: symbol.id,
+									page: page.id,
+									page_type: null,
+									instance_of: new_section.id
+								})
+							})
+						})
+					)
+				}
+
+				stores.sections.set(updated_sections)
 				await dataChanged({
 					table: 'sections',
 					action: 'upsert',
-					data: new_sections.map((s) => ({ ...s, symbol: s.symbol }))
+					data: updated_sections
 				})
 			},
 			undoing: async () => {
@@ -219,7 +265,7 @@ export const active_page = {
 				await dataChanged({
 					table: 'sections',
 					action: 'upsert',
-					data: original_sections.map((s) => ({ ...s, symbol: s.symbol }))
+					data: original_sections
 				})
 			}
 		})
@@ -402,13 +448,19 @@ export const active_page = {
 		})
 		update_page_preview()
 	},
-	update: async (obj) => {
+	update: async ({ obj, is_page_type = false }) => {
 		const current_page = _.cloneDeep(get(activePage.default))
 
+		console.log({ obj, current_page })
 		await update_timeline({
 			doing: async () => {
 				activePage.set(obj)
-				await dataChanged({ table: 'pages', action: 'update', id: current_page.id, data: obj })
+				await dataChanged({
+					table: is_page_type ? 'page_types' : 'pages',
+					action: 'update',
+					id: current_page.id,
+					data: obj
+				})
 			},
 			undoing: async () => {
 				activePage.set(current_page)
@@ -424,41 +476,125 @@ export const active_page = {
 	}
 }
 
-export const pages = {
+export const page_types = {
 	/** @param {{ details: { id: string, name: string, url: string, parent: string | null}, source: string | null }} new_page */
-	create: async ({ details, source = null }) => {
+	create: async ({ details }) => {
 		const original_pages = cloneDeep(get(stores.pages))
 
-		const source_page = find(original_pages, { id: source }) || Page()
 		const new_page = {
-			...source_page,
+			...Page_Type(),
 			...details
 		}
 
-		let new_sections = []
-		if (source) {
-			const res = await dataChanged({
-				table: 'sections',
-				action: 'select',
-				match: { page: source }
-			})
-			new_sections = res?.map((section) => ({
-				...section,
-				id: uuidv4(),
-				page: new_page.id
-			}))
-		}
 		await update_timeline({
 			doing: async () => {
-				stores.pages.update((store) => [...store, new_page])
+				stores.page_types.update((store) => [...store, new_page])
 				await dataChanged({
-					table: 'pages',
+					table: 'page_types',
 					action: 'insert',
 					data: {
 						...new_page,
 						site: get(site)['id'],
 						created_at: new Date().toISOString()
 					}
+				})
+			},
+			undoing: async () => {
+				stores.pages.set(original_pages)
+				await dataChanged({ table: 'page_types', action: 'delete', id: new_page.id })
+			}
+		})
+		return new_page
+	},
+	delete: async (page_type_id) => {
+		const original_page_types = cloneDeep(get(stores.page_types))
+		const updated_page_types = original_page_types.filter(
+			(page_type) => page_type.id !== page_type_id
+		)
+		let deleted_sections = []
+		let deleted_page_types = original_page_types.filter(
+			(page_type) => page_type.id === page_type_id
+		)
+
+		await update_timeline({
+			doing: async () => {
+				stores.page_types.set(updated_page_types)
+				await dataChanged({ table: 'page_types', action: 'delete', id: page_type_id })
+
+				// Go to home page if active page is deleted
+				if (get(activePageID) === page_type_id) {
+					await goto(`/${get(site)['url']}`)
+				}
+			},
+			undoing: async () => {
+				stores.page_types.set(original_page_types)
+				await dataChanged({ table: 'page_types', action: 'insert', data: deleted_page_types })
+				await dataChanged({ table: 'sections', action: 'insert', data: deleted_sections })
+			}
+		})
+	},
+	update: async (page_id, obj) => {
+		const original_page = cloneDeep(get(stores.page_types).find((page) => page.id === page_id))
+		const current_page_types = cloneDeep(get(stores.page_types))
+		const updated_page_types = current_page_types.map((page) =>
+			page.id === page_id ? { ...page, ...obj } : page
+		)
+		stores.page_types.set(updated_page_types)
+		await update_timeline({
+			doing: async () => {
+				stores.page_types.set(updated_page_types)
+				await dataChanged({ table: 'page_types', action: 'update', id: page_id, data: obj })
+			},
+			undoing: async () => {
+				stores.page_types.set(current_page_types)
+				await dataChanged({
+					table: 'page_types',
+					action: 'update',
+					id: page_id,
+					data: original_page
+				})
+			}
+		})
+	}
+}
+
+export const pages = {
+	/** @param {import('$lib').Page} new_page */
+	create: async (new_page) => {
+		const original_pages = cloneDeep(get(stores.pages))
+
+		let new_sections = []
+		if (new_page.page_type) {
+			// page has a page type
+			// fetch sections from page type
+			const res = await dataChanged({
+				table: 'sections',
+				action: 'select',
+				match: { page_type: new_page.page_type.id }
+			})
+
+			new_sections = res?.map((section) => ({
+				...section,
+				id: uuidv4(), // recreate with unique IDs
+				page: new_page.id, // attach to new page
+				page_type: null, // remove attachment to page type (?)
+				instance_of: section.id // attach to master blocks
+			}))
+		}
+
+		await update_timeline({
+			doing: async () => {
+				stores.pages.update((store) => [...store, Page(new_page)])
+				await dataChanged({
+					table: 'pages',
+					action: 'insert',
+					data: Page({
+						...new_page,
+						metadata: new_page?.page_type?.metadata || { title: '', description: '', image: '' },
+						site: get(site)['id'],
+						created_at: new Date().toISOString(),
+						page_type: new_page.page_type?.id
+					})
 				})
 				await dataChanged({
 					table: 'sections',
@@ -585,6 +721,7 @@ export async function update_page_preview(page = get(activePage.default)) {
 
 // extract symbol/instance content from updated section content
 export async function update_section_content(section, updated_content) {
+	console.log({ section })
 	const symbol = get(stores.symbols).find((symbol) => symbol.id === section.symbol)
 
 	const original_symbol_content = _.cloneDeep(symbol.content)
@@ -939,4 +1076,15 @@ export async function delete_language(key) {
 
 export async function set_language(loc) {
 	locale.set(loc)
+}
+
+export default {
+	active_site,
+	active_page,
+	pages,
+	update_page_preview,
+	update_section_content,
+	add_language,
+	delete_language,
+	set_language
 }

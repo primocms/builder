@@ -4,7 +4,7 @@
 
 	const dispatch = createEventDispatcher()
 	import PrimaryButton from '../../../components/buttons/PrimaryButton.svelte'
-	import Spinner from '../../../components/misc/Spinner.svelte'
+	import UI from '$lib/ui'
 	import { storageChanged } from '$lib/database'
 	import site from '$lib/stores/data/site'
 
@@ -39,14 +39,14 @@
 			// const compressed = await imageCompression(image, {
 			// 	maxSizeMB: 0.5
 			// })
-			let size = new Blob([image]).size
 
 			const key = `${$site.id}/${image.lastModified + image.name}`
-			const url = await storageChanged({
+			const { url, size } = await storageChanged({
 				bucket: 'images',
 				action: 'upload',
 				key,
-				file: image
+				file: image,
+				options: {}
 			})
 
 			if (url) {
@@ -71,9 +71,7 @@
 <div>
 	<div class="image-info">
 		{#if loading}
-			<div class="spinner-container">
-				<Spinner />
-			</div>
+			<UI.Spinner />
 		{:else}
 			<div class="image-preview">
 				{#if value.size}
@@ -128,15 +126,7 @@
 		overflow: hidden;
 		background: #1a1a1a;
 		padding: 0.25rem 0.75rem 0.75rem 0.75rem;
-
-		.spinner-container {
-			height: 100%;
-			width: 100%;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			padding: 3rem;
-		}
+		--Spinner-padding: 3rem;
 	}
 	input {
 		background: var(--color-gray-8);

@@ -1,10 +1,11 @@
 <script>
+	import Icon from '@iconify/svelte'
 	import { tick } from 'svelte'
-	import Spinner from '../../../components/misc/Spinner.svelte'
-	import { componentPreview } from '../../../components/misc/misc'
+	import { componentPreview } from './misc/misc'
 
 	export let componentCode
 	export let height
+	export let append = ''
 
 	let container
 	let iframe
@@ -42,14 +43,30 @@
 	$: if (container && iframe) {
 		if (load_observer) load_observer.disconnect()
 		if (resize_observer) resize_observer.disconnect()
-		resize_observer = new ResizeObserver(setScaleRatio).observe(container.closest('.sidebar'))
-		load_observer = new ResizeObserver(() => {
-			// workaround for on:load not working reliably
-			if (iframe?.contentWindow.document.body?.childNodes) {
-				setScaleRatio()
-				setHeight()
-			}
-		}).observe(iframe)
+		const sidebar = container.closest('.sidebar')
+		if (sidebar) {
+			resize_observer = new ResizeObserver(setScaleRatio).observe(sidebar)
+			load_observer = new ResizeObserver(() => {
+				// workaround for on:load not working reliably
+				if (iframe?.contentWindow.document.body?.childNodes) {
+					setScaleRatio()
+					setHeight()
+				}
+			}).observe(iframe)
+		}
+	}
+
+	$: iframe && append_to_iframe(append)
+	function append_to_iframe(code) {
+		var container = document.createElement('div')
+
+		// Set the innerHTML of the container to your HTML string
+		container.innerHTML = code
+
+		// Append each element in the container to the document head
+		Array.from(container.childNodes).forEach((node) => {
+			iframe.contentWindow.document.body.appendChild(node)
+		})
 	}
 </script>
 
@@ -58,14 +75,10 @@
 <div class="IFrame">
 	{#if !iframeLoaded}
 		<div class="spinner-container">
-			<Spinner />
+			<Icon icon="eos-icons:three-dots-loading" />
 		</div>
 	{/if}
-	<div
-		bind:this={container}
-		class="iframe-container"
-		style:height="{container_height * scaleRatio}px"
-	>
+	<div bind:this={container} class="iframe-container" style:height="{container_height * scaleRatio}px">
 		{#if componentCode}
 			<iframe
 				class:fadein={finishedResizing}
@@ -74,7 +87,7 @@
 				scrolling="no"
 				title="Preview HTML"
 				on:load={() => (iframeLoaded = true)}
-				srcdoc={componentPreview(componentCode)}
+				srcdoc={componentPreview(componentCode) + append}
 				bind:this={iframe}
 			/>
 		{/if}
@@ -85,6 +98,7 @@
 	.IFrame {
 		position: relative;
 		inset: 0;
+		min-height: 2rem;
 		/* height: 100%; */
 	}
 

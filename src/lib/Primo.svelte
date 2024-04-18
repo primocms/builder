@@ -7,6 +7,7 @@
 	import Modal from './views/modal/ModalContainer.svelte'
 	import modal from './stores/app/modal'
 	import * as modals from './views/modal'
+	import { onMobile } from './stores/app/misc'
 	import HSplitPane from './ui/HSplitPane.svelte'
 	import Sidebar from './Sidebar.svelte'
 	import { overrideItemIdKeyNameBeforeInitialisingDndZones } from 'svelte-dnd-action'
@@ -17,17 +18,22 @@
 	import { hydrate_active_data } from './stores/actions'
 
 	/** @type {{
+   * page: import('$lib').Page
    * site: import('$lib').Site
    * pages: Array<import('$lib').Page>
+   * page_types: Array<import('$lib').Page_Type>
    * symbols: Array<import('$lib').Symbol>
   }} */
 	export let data
 
 	export let role = 'DEV'
 
+	export let buttons = []
+
 	$: $userRole = role
 
 	hydrate_active_data(data)
+	$: hydrate_active_data(data)
 
 	$: activeModal = getActiveModal($modal.type)
 	function getActiveModal(modalType) {
@@ -45,11 +51,7 @@
 	let showing_sidebar = true
 
 	let leftPaneSize = browser ? (showing_sidebar ? window.innerWidth / 5 + `px` : '0px') : '200px'
-	let rightPaneSize = browser
-		? showing_sidebar
-			? (window.innerWidth / 5) * 5 + 'px'
-			: 'auto'
-		: 'auto'
+	let rightPaneSize = browser ? (showing_sidebar ? (window.innerWidth / 5) * 5 + 'px' : 'auto') : 'auto'
 
 	$: if (parseInt(leftPaneSize) < 100) {
 		leftPaneSize = '20px'
@@ -98,23 +100,38 @@
 	enableCache('local')
 </script>
 
-<HSplitPane bind:leftPaneSize bind:rightPaneSize style="margin-top:54px">
-	<div slot="left">
-		{#if showing_sidebar}
-			<Sidebar />
-		{:else}
-			<div class="expand primo-reset">
-				<IconButton on:click={reset} icon="tabler:layout-sidebar-left-expand" />
+{#if data.page.page_type}
+	<div style="margin-top:54px">
+		<Toolbar {buttons}>
+			<div slot="toolbar-left">
+				<slot name="toolbar-left" />
 			</div>
-		{/if}
-	</div>
-	<div slot="right">
-		<Toolbar>
 			<slot name="toolbar"><!-- optional fallback --></slot>
 		</Toolbar>
 		<slot />
 	</div>
-</HSplitPane>
+{:else}
+	<HSplitPane bind:leftPaneSize bind:rightPaneSize style="margin-top:54px">
+		<div slot="left">
+			{#if showing_sidebar}
+				<Sidebar />
+			{:else if !$onMobile}
+				<div class="expand primo-reset">
+					<IconButton on:click={reset} icon="tabler:layout-sidebar-left-expand" />
+				</div>
+			{/if}
+		</div>
+		<div slot="right">
+			<Toolbar {buttons}>
+				<div slot="toolbar-left">
+					<slot name="toolbar-left" />
+				</div>
+				<slot name="toolbar"><!-- optional fallback --></slot>
+			</Toolbar>
+			<slot />
+		</div>
+	</HSplitPane>
+{/if}
 
 <Modal visible={!!activeModal}>
 	<svelte:component this={activeModal} {...$modal.componentProps} />
@@ -190,11 +207,9 @@
 		--button-hover-color: #7d8082;
 
 		box-shadow: 0 0 #0000 0 0 #0000, 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-		--box-shadow-xl: 0 0 #0000, 0 0 #0000, 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-			0 10px 10px -5px rgba(0, 0, 0, 0.04);
+		--box-shadow-xl: 0 0 #0000, 0 0 #0000, 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
-		--transition-colors: background-color 0.1s, border-color 0.1s, color 0.1s, fill 0.1s,
-			stroke 0.1s;
+		--transition-colors: background-color 0.1s, border-color 0.1s, color 0.1s, fill 0.1s, stroke 0.1s;
 
 		--padding-container: 15px;
 		--max-width-container: 1900px;

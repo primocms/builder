@@ -1,8 +1,6 @@
-import {writable} from 'svelte/store'
+import { writable } from 'svelte/store'
 
 export const saved = writable(true)
-
-export const showingIDE = writable(false)
 
 export const userRole = writable('DEV')
 

@@ -1,14 +1,22 @@
 <script>
 	import { createEventDispatcher } from 'svelte'
 	import Icon from '@iconify/svelte'
-	import { find, cloneDeep, chain as _chain, set as _set, get as _get } from 'lodash-es'
-	import { Card } from './misc'
+	import _, {
+		find,
+		cloneDeep,
+		chain as _chain,
+		set as _set,
+		get as _get,
+		isRegExp as _isRegExp
+	} from 'lodash-es'
+	import UI from '$lib/ui'
+	import Card from '$lib/ui/Card.svelte'
 	import { createUniqueID } from '$lib/utilities'
-	import NonExistantField from '../field-types/EmptyField.svelte'
 
-	import { userRole, fieldTypes } from '../stores/app'
-	import { Field } from '../const'
+	import { userRole, fieldTypes } from '$lib/stores/app'
+	import { Field } from '$lib/factories'
 	import FieldItem from './FieldItem.svelte'
+	import { is_regex } from '$lib/utils'
 
 	export let fields
 	export let showCode = true
@@ -20,7 +28,7 @@
 		dispatch('input')
 	}
 
-	function createSubfield({ detail: field }) {
+	function createSubfield(field) {
 		const idPath = getFieldPath(fields, field.id)
 		let updatedFields = cloneDeep(fields)
 		handleSubfieldCreation(fields)
@@ -40,7 +48,7 @@
 		dispatch('input')
 	}
 
-	function deleteField({ detail: field }) {
+	function delete_field(field) {
 		const idPath = getFieldPath(fields, field.id)
 		let updatedFields = cloneDeep(fields)
 
@@ -72,12 +80,11 @@
 			return fieldType.component
 		} else {
 			console.warn(`Field type '${field.type}' no longer exists, removing '${field.label}' field`)
-			return NonExistantField
+			return null
 		}
 	}
 
-	function duplicateField({ detail }) {
-		const field = detail
+	function duplicate_field(field) {
 		const idPath = getFieldPath(fields, field.id)
 
 		let updatedFields = cloneDeep(fields)
@@ -113,8 +120,7 @@
 		fields = updatedFields
 	}
 
-	function moveField({ detail }) {
-		const { field, direction } = detail
+	function move_field({ field, direction }) {
 		const idPath = getFieldPath(fields, field.id)
 
 		let updatedFields = cloneDeep(fields)
@@ -164,19 +170,56 @@
 			}
 		}
 	}
+
+	function check_condition(field) {
+		if (!field.options.condition) return true // has no condition
+		const field_to_compare = fields.find((f) => f.id === field.options.condition?.field)
+		if (!field_to_compare) {
+			// field has been deleted, reset condition
+			field.options.condition = null
+			return false
+		}
+		const { value, comparison } = field.options.condition
+		if (is_regex(value)) {
+			const regex = new RegExp(value.slice(1, -1))
+			if (comparison === '=' && regex.test(field_to_compare.value)) {
+				return true
+			} else if (comparison === '!=' && !regex.test(field_to_compare.value)) {
+				return true
+			}
+		} else if (comparison === '=' && value === field_to_compare.value) {
+			return true
+		} else if (comparison === '!=' && value !== field_to_compare.value) {
+			return true
+		}
+		return false
+	}
 </script>
 
-<main>
+<div class="GenericFields">
 	{#if showCode}
-		{#each fields as field, i (field.id)}
+		{#each fields as field (field.id)}
 			<FieldItem
+				{fields}
 				{field}
-				isFirst={i === 0}
-				isLast={i === fields.length - 1}
-				on:duplicate={duplicateField}
-				on:delete={deleteField}
-				on:move={moveField}
-				on:createsubfield={createSubfield}
+				on:duplicate={({ detail: field }) => duplicate_field(field)}
+				on:delete={({ detail: field }) => delete_field(field)}
+				on:move={({ detail }) => move_field(detail)}
+				on:createsubfield={({ detail: field }) => createSubfield(field)}
+				on:addcondition={({ detail: field }) => {
+					field = {
+						...field,
+						options: {
+							...field.options,
+							condition: {
+								field: null,
+								comparison: '=',
+								value: ''
+							}
+						}
+					}
+					dispatch('input')
+				}}
 				on:input={({ detail }) => {
 					field = detail
 					dispatch('input')
@@ -184,15 +227,22 @@
 			/>
 		{/each}
 		<button class="field-button" on:click={addField} {disabled}>
-			<Icon icon="fa-solid:plus" />
+			<div class="icon">
+				<Icon icon="fa-solid:plus" />
+			</div>
 			<span>Add a Field</span>
 		</button>
 	{:else}
 		{#each fields as field}
+			{@const is_visible = check_condition(field)}
 			{@const isValid = (field.key || field.type === 'info') && getComponent(field)}
 			{@const hasChildFields = field.fields.length > 0}
-			{#if isValid}
-				<Card title={hasChildFields ? field.label : null} pill={field.is_static ? 'Static' : null}>
+			{#if isValid && is_visible}
+				<Card
+					title={hasChildFields ? field.label : null}
+					icon={$fieldTypes.find((ft) => ft.id === field.type)?.icon}
+					pill={field.is_static ? 'Static' : null}
+				>
 					<div class="field-item" id="field-{field.key}" class:repeater={field.key === 'repeater'}>
 						<svelte:component
 							this={getComponent(field)}
@@ -203,8 +253,8 @@
 						/>
 					</div>
 				</Card>
-			{:else}
-				<p class="empty-description">Field requires an Key</p>
+			{:else if is_visible}
+				<p class="empty-description">Field requires a key</p>
 			{/if}
 		{:else}
 			<p class="empty-description">
@@ -216,16 +266,14 @@
 			</p>
 		{/each}
 	{/if}
-</main>
+</div>
 
 <style lang="postcss">
-	main {
+	.GenericFields {
 		width: 100%;
 		display: grid;
 		gap: 1rem;
-		/* padding: 0.5rem 0;
-		padding-right: 0.5rem;
-		padding-bottom: 1rem; */
+		padding-bottom: 1rem;
 		color: var(--color-gray-2);
 		background: var(--primo-color-black);
 		min-width: 23rem;
@@ -256,7 +304,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 0.25rem;
+		gap: 0.5rem;
 		font-size: 0.875rem;
 		padding: 0.75rem;
 		border-radius: 4px;

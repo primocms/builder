@@ -1,94 +1,93 @@
 <script>
 	import { getContext } from 'svelte'
+	import { fade } from 'svelte/transition'
 	import { find as _find } from 'lodash-es'
 	import { browser } from '$app/environment'
+	import Icon from '@iconify/svelte'
+	import { clickOutside } from '$lib/utilities'
 	import ToolbarButton from './ToolbarButton.svelte'
-	import LocaleSelector from './LocaleSelector.svelte'
 	import { timeline } from '../../stores/data'
 	import sections from '../../stores/data/sections'
-	import { fields as site_fields } from '../../stores/data/site'
 	import { undo_change, redo_change } from '../../stores/actions'
 	import { PrimoButton } from '../../components/buttons'
 	import site from '../../stores/data/site'
 	import { userRole } from '../../stores/app'
-	import {
-		id as page_id,
-		name as page_name,
-		fields as page_fields
-	} from '../../stores/app/activePage'
+	import { id as page_id, name as page_name, page_type } from '../../stores/app/activePage'
 	import modal from '../../stores/app/modal'
 	import { click_to_copy } from '$lib/utilities'
+	import { page } from '$app/stores'
+	import Letter from '$lib/ui/Letter.svelte'
+	// import { active_users } from '$lib/stores'
 
-	const page_field_button = {
-		id: 'toolbar--page',
-		title: 'Page',
-		label: 'Page',
-		svg: '<svg width="10" height="16" viewBox="0 0 12 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.425" y="0.925" width="10.4834" height="14.15" rx="1.575" fill="#121212"/><rect x="2.41675" y="3.625" width="2" height="2" fill="#D9D9D9"/><rect x="2.41675" y="7.125" width="6" height="0.75" fill="#D9D9D9"/><rect x="2.41675" y="9.375" width="5" height="0.75" fill="#D9D9D9"/><rect x="2.41675" y="11.625" width="6.5" height="0.75" fill="#D9D9D9"/><rect x="0.425" y="0.925" width="10.4834" height="14.15" rx="1.575" stroke="#CECECE" stroke-width="0.85"/></svg>',
-		onclick: () => modal.show('PAGE_EDITOR', {}, { showSwitch: true, disabledBgClose: true })
-	}
+	export let buttons
 
-	const site_field_button = {
-		id: 'toolbar--site',
-		svg: `<svg width="12" height="18" viewBox="0 0 15 18" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.50831" y="0.925" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="3.50831" y="0.925" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/><rect x="2.09169" y="2.34199" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="2.09169" y="2.34199" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/><rect x="0.675" y="3.75801" width="10.4834" height="13.3167" rx="1.575" fill="#121212"/><rect x="2.66669" y="6.4165" width="2" height="2" fill="#D9D9D9"/><rect x="2.66669" y="9.6665" width="5.75" height="0.75" fill="#D9D9D9"/><rect x="2.66669" y="11.6665" width="5" height="0.75" fill="#D9D9D9"/><rect x="2.66669" y="13.6665" width="6.5" height="0.75" fill="#D9D9D9"/><rect x="0.675" y="3.75801" width="10.4834" height="13.3167" rx="1.575" stroke="#CECECE" stroke-width="0.85"/></svg>`,
-		title: 'Site',
-		label: 'Site',
-		onclick: () => modal.show('SITE_EDITOR', {}, { showSwitch: true, disabledBgClose: true })
-	}
-
-	$: show_page_fields = $userRole === 'DEV' || $page_fields.length > 0
-	$: show_site_fields = $userRole === 'DEV' || $site_fields.length > 0
-
-	let field_buttons = []
-
-	// for content editors, only show page/site field buttons if fields exist
-	$: if (show_page_fields && show_site_fields) {
-		field_buttons = [page_field_button, site_field_button]
-	} else if (show_page_fields) {
-		field_buttons = [page_field_button]
-	} else if (show_site_fields) {
-		field_buttons = [site_field_button]
-	}
-
-	$: buttons = [
-		{
-			id: 'toolbar--pages',
-			title: 'Pages',
-			svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M10 19q-.425 0-.713-.288T9 18q0-.425.288-.713T10 17h10q.425 0 .713.288T21 18q0 .425-.288.713T20 19H10Zm0-6q-.425 0-.713-.288T9 12q0-.425.288-.713T10 11h10q.425 0 .713.288T21 12q0 .425-.288.713T20 13H10Zm0-6q-.425 0-.713-.288T9 6q0-.425.288-.713T10 5h10q.425 0 .713.288T21 6q0 .425-.288.713T20 7H10ZM5 20q-.825 0-1.413-.588T3 18q0-.825.588-1.413T5 16q.825 0 1.413.588T7 18q0 .825-.588 1.413T5 20Zm0-6q-.825 0-1.413-.588T3 12q0-.825.588-1.413T5 10q.825 0 1.413.588T7 12q0 .825-.588 1.413T5 14Zm0-6q-.825 0-1.413-.588T3 6q0-.825.588-1.413T5 4q.825 0 1.413.588T7 6q0 .825-.588 1.413T5 8Z"/></svg>',
-			onclick: () =>
-				modal.show(
-					'SITE_PAGES',
-					{},
-					{ hideLocaleSelector: true, maxWidth: '600px', showSwitch: false }
-				)
-		},
-		field_buttons
-	]
 	$: pageEmpty =
 		$sections && $sections.length <= 1 && $sections.length > 0 && $sections[0]['type'] === 'options'
 
 	let DEBUGGING
 	if (browser) DEBUGGING = getContext('DEBUGGING')
+
+	let showing_dropdown = false
 </script>
 
 <nav aria-label="toolbar" id="primo-toolbar" class="primo-reset">
 	<div class="menu-container">
 		<div class="left">
 			<PrimoButton on:signOut />
-			<div class="buttons">
-				{#each buttons as button}
-					{#if Array.isArray(button)}
-						{@const group = button}
-						<div class="button-group">
-							{#each group as button}
-								<ToolbarButton {...button} />
-							{/each}
-						</div>
-					{:else}
-						<div class="icon-button">
-							<ToolbarButton {...button} />
-						</div>
-					{/if}
-				{/each}
+			<div class="icon-button">
+				<ToolbarButton
+					label="Pages"
+					icon="fluent:document-one-page-multiple-20-filled"
+					on:click={() =>
+						modal.show(
+							'SITE_PAGES',
+							{},
+							{ hideLocaleSelector: true, maxWidth: '600px', showSwitch: false }
+						)}
+				/>
+			</div>
+			{#if $userRole === 'DEV'}
+				<div class="button-group">
+					<ToolbarButton
+						label="Page"
+						on:click={() =>
+							modal.show('PAGE_EDITOR', {}, { showSwitch: true, disabledBgClose: true })}
+					/>
+					<ToolbarButton
+						label="Site"
+						on:click={() =>
+							modal.show('SITE_EDITOR', {}, { showSwitch: true, disabledBgClose: true })}
+					/>
+				</div>
+			{/if}
+			<div
+				class="dropdown"
+				class:active={showing_dropdown}
+				use:clickOutside
+				on:click_outside={() => {
+					showing_dropdown = false
+				}}
+			>
+				<button class="down" on:click={() => (showing_dropdown = !showing_dropdown)}>
+					<div class="icon">
+						<Icon icon="charm:menu-kebab" />
+					</div>
+				</button>
+				{#if showing_dropdown}
+					<div class="list" in:fade={{ duration: 100 }}>
+						{#each buttons as button}
+							<button
+								on:click={() => {
+									showing_dropdown = false
+									button.onclick()
+								}}
+							>
+								<Icon icon={button.icon} />
+								<span>{button.label}</span>
+							</button>
+						{/each}
+					</div>
+				{/if}
 			</div>
 		</div>
 		<div class="site-name">
@@ -98,11 +97,34 @@
 					{$page_name}
 					<button use:click_to_copy>({$page_id})</button>
 				</span>
+			{:else if $page_type}
+				<span class="page">{$page_name}</span>
+				<a
+					class="page-type-badge"
+					style="background-color: {$page_type?.color};"
+					href="/{$site.id}/page-type--{$page_type?.id}"
+				>
+					<Icon icon={$page_type.icon} />
+				</a>
+			{:else if $page.data.page_type}
+				<span class="page-type" style:background={$page.data.page_type.color}>
+					<Icon icon={$page.data.page_type.icon} />
+					<span>{$page_name}</span>
+				</span>
 			{:else}
 				<span class="page">{$page_name}</span>
 			{/if}
 		</div>
 		<div class="right">
+			<!-- {#if $active_users.length > 1}
+				<div class="active-editors" style="display: flex; gap: 0.25rem">
+					{#each $active_users.filter((u) => u.email !== $page.data.user.email) as user}
+						<div class="editor" transition:fade={{ duration: 200 }}>
+							<Letter letter={user.email.slice(0, 1)} />
+						</div>
+					{/each}
+				</div>
+			{/if} -->
 			{#if !$timeline.first}
 				<ToolbarButton id="undo" title="Undo" icon="material-symbols:undo" on:click={undo_change} />
 			{/if}
@@ -110,12 +132,12 @@
 				<ToolbarButton id="redo" title="Redo" icon="material-symbols:redo" on:click={redo_change} />
 			{/if}
 			<slot />
-			<LocaleSelector />
+			<!-- <LocaleSelector /> -->
 			<ToolbarButton
 				type="primo"
-				label="Deploy"
+				label="Publish"
 				active={false}
-				on:click={() => modal.show('DEPLOY', {}, { maxWidth: '450px', hideLocaleSelector: true })}
+				on:click={() => modal.show('DEPLOY', {}, { maxWidth: '800px', hideLocaleSelector: true })}
 				disabled={pageEmpty}
 			/>
 		</div>
@@ -136,12 +158,60 @@
 		/* width: 100%; */
 		display: flex;
 		justify-content: flex-start;
-		gap: 1rem;
+		gap: 0.5rem;
 	}
 
-	.buttons {
+	.dropdown {
 		display: flex;
-		margin-left: 0.25rem;
+		position: relative;
+
+		&.active {
+			button.down {
+				border-bottom-right-radius: 0;
+				border-bottom-left-radius: 0;
+			}
+		}
+
+		button.down {
+			display: flex;
+			color: white;
+			border: 1px solid var(--color-gray-8);
+			border-radius: 0.25rem;
+			padding-inline: 12px;
+			align-items: center;
+			justify-content: center;
+			transition: 0.1s;
+
+			&:hover {
+				background: var(--color-gray-8);
+			}
+
+			.icon {
+				transition: 0.1s;
+			}
+		}
+
+		.list {
+			display: grid;
+			position: absolute;
+			background: rgb(17, 17, 17);
+			top: 100%;
+			border: 1px solid var(--color-gray-8);
+			box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.2);
+
+			button {
+				padding: 0.25rem 0.5rem;
+				color: white;
+				display: flex;
+				align-items: center;
+				gap: 0.25rem;
+				transition: 0.1s;
+
+				&:hover {
+					background: var(--color-gray-8);
+				}
+			}
+		}
 	}
 
 	.left .button-group {
@@ -151,11 +221,35 @@
 
 	.site-name {
 		font-size: 14px;
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
 		.site {
 			color: #b6b6b6;
 		}
 		.page {
 			color: white;
+		}
+		.page-type {
+			display: flex;
+			align-items: center;
+			gap: 0.25rem;
+			color: white;
+			border-radius: 1rem;
+			padding: 2px 6px;
+			font-size: 0.875rem;
+			margin-left: 3px;
+		}
+		.page-type-badge {
+			padding: 5px;
+			border-radius: 1rem;
+			aspect-ratio: 1;
+			font-size: 0.75rem;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			color: white;
+			margin-left: 3px;
 		}
 
 		@media (max-width: 670px) {
@@ -169,6 +263,7 @@
 		justify-content: space-between;
 		margin: 0 auto;
 		padding: 0.5rem 1rem;
+		/* overflow: auto; */
 	}
 
 	.menu-container:after {
@@ -186,7 +281,7 @@
 	.right {
 		display: flex;
 		align-items: center;
-		/* gap: 1rem; */
+		gap: 0.5rem;
 	}
 
 	.button-group {

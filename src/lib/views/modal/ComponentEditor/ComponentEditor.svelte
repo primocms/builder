@@ -6,36 +6,33 @@
 	const topPaneSize = writable(get(onMobile) ? '100%' : '50%')
 	const bottomPaneSize = writable('50%')
 	const orientation = writable('horizontal')
-	const activeTab = writable(0)
 </script>
 
 <script>
+	import Tabs from '$lib/ui/Tabs.svelte'
 	import { setContext } from 'svelte'
 	import _, { cloneDeep, find, isEqual, chain as _chain } from 'lodash-es'
 	import HSplitPane from './HSplitPane.svelte'
-	import { Tabs } from '../../../components/misc'
-
-	import { getEmptyValue } from '../../../utils'
+	import { getEmptyValue } from '$lib/utils'
 	import ModalHeader from '../ModalHeader.svelte'
 	import FullCodeEditor from './FullCodeEditor.svelte'
-	import { CodePreview } from '../../../components/misc'
-	import GenericFields from '../../../components/GenericFields.svelte'
-	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'
+	import { CodePreview } from '$lib/components/misc'
+	import GenericFields from '$lib/components/GenericFields/GenericFields.svelte'
+	import { autoRefresh } from '$lib/components/misc/CodePreview.svelte'
+	import { processCode, processCSS, wrapInStyleTags } from '$lib/utils'
+	import { locale, onMobile, userRole } from '$lib/stores/app/misc'
 
-	import { processCode, processCSS, wrapInStyleTags } from '../../../utils'
-	import { locale, onMobile, userRole } from '../../../stores/app/misc'
-
-	import symbols from '../../../stores/data/symbols'
-	import * as actions from '../../../stores/actions'
-	import { content, code as siteCode } from '../../../stores/data/site'
-	import { code as pageCode } from '../../../stores/app/activePage'
-	import { showingIDE } from '../../../stores/app'
-	import { getPageData } from '../../../stores/helpers'
+	import { Site_Tokens_CSS } from '$lib/constants'
+	import symbols from '$lib/stores/data/symbols'
+	import * as actions from '$lib/stores/actions'
+	import { content, design as siteDesign, code as siteCode } from '$lib/stores/data/site'
+	import { code as pageCode } from '$lib/stores/app/activePage'
+	import { getPageData } from '$lib/stores/helpers'
 	import { tick } from 'svelte'
 
 	/** @type {import('$lib').Section} */
 	export let component
-	export let tab = 'code'
+	export let tab = 'content'
 
 	export let header = {
 		label: 'Create Component',
@@ -220,12 +217,13 @@
 			const res = await processCode({
 				component: {
 					html: `
+			${html}
       <svelte:head>
         ${$siteCode.html.head}
         ${$pageCode.html.head}
         ${wrapInStyleTags(parentCSS, 'parent-styles')}
+				${Site_Tokens_CSS($siteDesign)}
       </svelte:head>
-      ${html}
       ${$pageCode.html.below}
       ${$siteCode.html.below}
       `,
@@ -264,21 +262,19 @@
 
 		if (!disable_save) {
 			// parse content - static content gets saved to symbol, dynamic content gets saved to instance
-			const updated_symbol_content = symbol.content
-			const updated_section_content = {}
+			const updated_symbol_content = cloneDeep(symbol.content)
+			const updated_section_content = cloneDeep(component.content)
 
 			Object.entries(local_content).forEach(([language_key, language_content]) => {
 				Object.entries(language_content).forEach(([field_key, field_value]) => {
 					const matching_field = fields.find((field) => field.key === field_key)
 					if (matching_field.is_static) {
-						updated_symbol_content[language_key] = {
-							...updated_symbol_content[language_key],
-							[field_key]: field_value
-						}
+						updated_symbol_content[language_key][field_key] = field_value
 					} else {
-						updated_section_content[language_key] = {
-							...updated_section_content[language_key],
-							[field_key]: field_value
+						updated_section_content[language_key][field_key] = field_value
+						// if symbol content doesn't have field key, save to symbol
+						if (symbol.content[language_key][field_key] === undefined) {
+							updated_symbol_content[language_key][field_key] = field_value
 						}
 					}
 				})
@@ -320,17 +316,13 @@
 			disabled: disable_save
 		}}
 	>
-		<div class="tabs" slot="title">
+		<div slot="title">
 			<Tabs
-				active_tab_id={tab}
-				on:switch={({ detail: active }) => {
-					tab = active
-				}}
 				tabs={[
 					{
-						id: 'content',
-						label: 'Content',
-						icon: 'uil:edit'
+						id: 'code',
+						label: 'Code',
+						icon: 'gravity-ui:code'
 					},
 					{
 						id: 'fields',
@@ -338,11 +330,12 @@
 						icon: 'fluent:form-multiple-24-regular'
 					},
 					{
-						id: 'code',
-						label: 'Code',
-						icon: 'gravity-ui:code'
+						id: 'content',
+						label: 'Content',
+						icon: 'uil:edit'
 					}
 				]}
+				bind:active_tab_id={tab}
 			/>
 		</div>
 	</ModalHeader>
@@ -390,7 +383,6 @@
 			bind:topPaneSize={$topPaneSize}
 			bind:bottomPaneSize={$bottomPaneSize}
 			hideRightPanel={$onMobile}
-			hideLeftOverflow={$showingIDE && $activeTab === 0}
 		>
 			<div slot="left" style="display: flex; flex-direction: column">
 				{#if tab === 'content'}
@@ -430,7 +422,6 @@
 
 <style lang="postcss">
 	main {
-		width: 100%;
 		display: flex; /* to help w/ positioning child items in code view */
 		background: var(--primo-color-black);
 		color: var(--color-gray-2);

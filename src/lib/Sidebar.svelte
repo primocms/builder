@@ -4,10 +4,12 @@
 	import fileSaver from 'file-saver'
 	import axios from 'axios'
 	import { userRole } from './stores/app/misc'
+	import modal from './stores/app/modal'
 	import site from './stores/data/site'
 	import symbols from './stores/data/symbols'
 	import Icon from '@iconify/svelte'
-	import { Symbol } from './const'
+	import { Site_Tokens_CSS } from './constants'
+	import { Symbol } from './factories'
 	import Sidebar_Symbol from './Sidebar_Symbol.svelte'
 	import { symbols as symbol_actions, active_page } from './stores/actions'
 	import { v4 as uuidv4 } from 'uuid'
@@ -23,24 +25,37 @@
 		refresh_symbols()
 	}
 
+	async function show_block_picker() {
+		const primo_blocks = await get_primo_blocks()
+		modal.show(
+			'BLOCK_PICKER',
+			{
+				blocks: primo_blocks,
+				site: $site,
+				append: Site_Tokens_CSS($site.design),
+				onsave: async (selected) => {
+					modal.hide()
+					await Promise.all(selected.map(async (symbol) => symbol_actions.create(symbol)))
+					// refresh_symbols()
+				}
+			},
+			{
+				hideLocaleSelector: true
+			}
+		)
+	}
+
 	async function rename_symbol(id, name) {
 		symbol_actions.update(id, { name })
 		refresh_symbols()
 	}
 
-	/**
-	 * @param {string} symbol_id
-	 */
 	async function delete_symbol(symbol_id) {
 		const symbol = $symbols.find((s) => s.id === symbol_id)
 		symbol_actions.delete(symbol)
 		refresh_symbols()
 	}
 
-	/**
-	 * @param {string} symbol_id
-	 * @param {number} index - The index at which the new symbol should be inserted.
-	 */
 	async function duplicate_symbol(symbol_id, index) {
 		const symbol = $symbols.find((s) => s.id === symbol_id)
 		const new_symbol = _.cloneDeep(symbol)
@@ -77,9 +92,6 @@
 		reader.readAsText(target.files[0])
 	}
 
-	/**
-	 * @param {string} symbol_id - The id of the symbol to be downloaded.
-	 */
 	async function download_symbol(symbol_id) {
 		const symbol = $symbols.find((s) => s.id === symbol_id)
 		const json = JSON.stringify(symbol)
@@ -94,7 +106,9 @@
 		return data.symbols.map((s) => ({ ...s, _drag_id: uuidv4() }))
 	}
 
-	let draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
+	let draggable_symbols = $symbols
+		.map((s) => ({ ...s, _drag_id: s.id }))
+		.sort((a, b) => a.index - b.index)
 	$: refresh_symbols($symbols)
 
 	const flipDurationMs = 200
@@ -105,36 +119,37 @@
 
 	async function finalize_dnd({ detail }) {
 		if (detail.info.trigger === 'droppedIntoZone') {
-			const rearranged = detail.items.map((item, index) => ({ ...item, index }))
-			await symbol_actions.rearrange(rearranged)
+			await symbol_actions.rearrange(detail.items)
 		}
-		refresh_symbols()
 		dragging = null
+		refresh_symbols()
 	}
 
 	async function refresh_symbols() {
 		await tick()
-		draggable_symbols = $symbols.map((s) => ({ ...s, _drag_id: s.id }))
+		draggable_symbols = $symbols
+			.map((s, i) => ({ ...s, _drag_id: s.id }))
+			.sort((a, b) => a.index - b.index)
 	}
 
 	let dragging = null
 </script>
 
 <div class="sidebar primo-reset">
-	<div class="tabs">
-		<button on:click={() => (active_tab = 'site')} class:active={active_tab === 'site'}>
-			Site Blocks
-		</button>
-		<button on:click={() => (active_tab = 'primo')} class:active={active_tab === 'primo'}>
-			Primo Blocks
-		</button>
-	</div>
+	<!-- <div class="tabs">
+		<button on:click={() => (active_tab = 'site')} class:active={active_tab === 'site'}>Site Blocks</button>
+		<button on:click={() => (active_tab = 'primo')} class:active={active_tab === 'primo'}>Primo Blocks</button>
+	</div> -->
 	{#if active_tab === 'site'}
 		{#if $symbols.length > 0}
 			<div class="primo-buttons">
+				<button class="primo-button" on:click={show_block_picker}>
+					<Icon icon="mdi:plus" />
+					<span>Add</span>
+				</button>
 				{#if $userRole === 'DEV'}
 					<button class="primo-button" on:click={create_symbol}>
-						<Icon icon="mdi:plus" />
+						<Icon icon="mdi:code" />
 						<span>Create</span>
 					</button>
 				{/if}
@@ -163,6 +178,7 @@
 					<div animate:flip={{ duration: flipDurationMs }}>
 						<Sidebar_Symbol
 							{symbol}
+							append={Site_Tokens_CSS($site.design)}
 							header_hidden={dragging === symbol._drag_id}
 							on:mousedown={() => (dragging = symbol._drag_id)}
 							on:mouseup={() => (dragging = null)}
@@ -180,8 +196,12 @@
 				<p>Create a Block from scratch, upload an existing Block, or use the Primo Blocks.</p>
 			</div>
 			<div class="primo-buttons">
-				<button class="primo-button" on:click={create_symbol}>
+				<button class="primo-button" on:click={show_block_picker}>
 					<Icon icon="mdi:plus" />
+					<span>Add</span>
+				</button>
+				<button class="primo-button" on:click={create_symbol}>
+					<Icon icon="mdi:code" />
 					<span>Create</span>
 				</button>
 				<label class="primo-button">
@@ -208,6 +228,7 @@
 				{#each primo_blocks as symbol, i}
 					<Sidebar_Symbol
 						{symbol}
+						append={Site_Tokens_CSS($site.design)}
 						controls_enabled={false}
 						header_hidden={dragging === symbol._drag_id}
 					/>
@@ -225,37 +246,11 @@
 		display: flex;
 		flex-direction: column;
 		height: calc(100vh - 54px);
-		gap: 1rem;
+		gap: 0.5rem;
 		z-index: 9;
 		position: relative;
 		overflow: hidden;
-	}
-
-	.tabs {
-		background: #171717;
-		border-bottom: 1px solid #292929;
-		padding-top: 1rem;
-		padding-inline: 1.5rem;
-		display: flex;
-		gap: 1rem;
-		position: sticky;
-		top: 0;
-		z-index: 1;
-
-		button {
-			color: #71788e;
-			font-weight: 400;
-			font-size: 14px;
-			white-space: nowrap;
-			border-bottom: 3px solid transparent;
-			padding: 0.5rem 0;
-			transition: 0.1s;
-
-			&.active {
-				color: #dadada;
-				border-bottom: 2px solid var(--primo-color-brand);
-			}
-		}
+		padding-top: 1.5rem;
 	}
 
 	.empty {
@@ -271,6 +266,7 @@
 
 	.primo-buttons {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 0.5rem;
 		padding-inline: 1.5rem;
 

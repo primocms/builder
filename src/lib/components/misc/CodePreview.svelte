@@ -20,6 +20,7 @@
 	export let preview = null
 	export let error = null
 	export let data = {}
+	export let append = ''
 
 	let channel
 	onMount(() => {
@@ -43,6 +44,19 @@
 		// open clicked links in browser
 		iframe.contentWindow.document.querySelectorAll('a').forEach((link) => {
 			link.target = '_blank'
+		})
+	}
+
+	$: iframe && append_to_iframe(append)
+	function append_to_iframe(code) {
+		var container = document.createElement('div')
+
+		// Set the innerHTML of the container to your HTML string
+		container.innerHTML = code
+
+		// Append each element in the container to the document head
+		Array.from(container.childNodes).forEach((node) => {
+			iframe.contentWindow.document.head.appendChild(node)
 		})
 	}
 
@@ -191,6 +205,7 @@
 	>
 		{#if componentApp}
 			<iframe
+				tabindex="-1"
 				style:transform={view === 'large' ? scale : ''}
 				style:height={view === 'large' ? height : '100%'}
 				style:width={view === 'large' ? `${active_static_width}px` : '100%'}
@@ -201,6 +216,7 @@
 			/>
 		{:else}
 			<iframe
+				tabindex="-1"
 				style:transform={view === 'large' ? scale : ''}
 				style:height={view === 'large' ? height : '100%'}
 				style:width={view === 'large' ? `${active_static_width}px` : '100%'}

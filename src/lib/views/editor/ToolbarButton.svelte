@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
-	import Spinner from '../../components/misc/Spinner.svelte'
+	import UI from '$lib/ui'
 	import { showKeyHint } from '../../stores/app/misc'
 
 	const dispatch = createEventDispatcher()
@@ -49,7 +49,7 @@
 			</span>
 		{/if}
 		{#if loading}
-			<Spinner />
+			<UI.Spinner />
 		{:else if label && svg}
 			<div class="svg">
 				{@html svg}
@@ -73,13 +73,13 @@
 </button>
 
 <style lang="postcss">
-	@tailwind base;
+	/* @tailwind base; */
 
 	.primo-button {
 		font-size: 0.85rem;
 		user-select: none;
 		border-radius: 0;
-
+		border: 1px solid var(--color-gray-8);
 		--Spinner-size: 0.75rem;
 
 		/* &:first-child {
@@ -100,7 +100,7 @@
 	}
 
 	.primo-button.primo {
-		padding: 7px 14px;
+		padding: 10px 14px;
 		color: var(--primo-color-white);
 		border: 1.5px solid var(--primo-color-brand);
 		border-radius: 0.25rem;

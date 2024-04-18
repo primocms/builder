@@ -1,13 +1,15 @@
+import TextInput from './TextInput.svelte'
+import Spinner from './Spinner.svelte'
+import Dropdown from './Dropdown.svelte'
+import Switch from './Switch.svelte'
 import Card from './Card.svelte'
-import Slider from './inputs/Slider.svelte'
-import TextField from './inputs/TextField.svelte'
-import Select from './inputs/Select.svelte'
-import Spinner from './misc/Spinner.svelte'
+import ListItem from './ListItem.svelte'
 
-export {
-  Card,
-  Slider,
-  TextField,
-  Select,
-  Spinner
+export default {
+	TextInput,
+	Spinner,
+	Dropdown,
+	Switch,
+	Card,
+	ListItem
 }

@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher } from 'svelte'
+	import { onMount, createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 	import autosize from 'autosize'
 	import { convert_markdown_to_html } from '$lib/utils'
@@ -24,11 +24,9 @@
 
 	let element
 
-	$: if (element) {
-		// grow textarea to size of content
+	onMount(() => {
 		autosize(element)
-	}
-
+	})
 	// easily delete default content
 	function selectAll({ target }) {
 		if (field.default === field.value.markdown) target.select()
@@ -50,12 +48,13 @@
 <label for={field.id}>
 	<span>{field.label}</span>
 	<textarea
+		rows="1"
+		bind:this={element}
 		id={field.id}
 		on:focus={selectAll}
 		on:keydown={handleSave}
 		on:input={({ target }) => parseContent(target.value)}
 		{value}
-		bind:this={element}
 	/>
 </label>
 
@@ -73,16 +72,18 @@
 		}
 
 		textarea {
-			background: var(--input-background, #2a2b2d);
-			border: var(--input-border, 1px solid #3e4041);
-			border-radius: 4px;
+			background: #1f1f1f; /* TODO: set to variable (this is nice inbetween color) */
+			border: 1px solid var(--color-gray-8);
+			color: var(--color-gray-2);
+			font-weight: 400;
+			border-radius: var(--input-border-radius);
+			padding: 0.75rem;
+			transition: 0.1s;
 			font-size: 0.875rem;
-			outline: 0 !important;
-			transition: 0.1s border;
-			padding: 0.75rem 1rem;
 
 			&:focus {
-				border-color: #646668;
+				border-color: var(--color-gray-7);
+				outline: 0;
 			}
 		}
 	}

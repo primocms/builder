@@ -11,14 +11,19 @@
 	import _ from 'lodash-es'
 	import { fade } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
+	import Typography from '@tiptap/extension-typography'
 	import StarterKit from '@tiptap/starter-kit'
 	import Image from '@tiptap/extension-image'
+	import Youtube from '@tiptap/extension-youtube'
 	import Highlight from '@tiptap/extension-highlight'
+	import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 	import Link from '@tiptap/extension-link'
+	import { all, createLowlight } from 'lowlight'
 	import BubbleMenu from '@tiptap/extension-bubble-menu'
 	import FloatingMenu from '@tiptap/extension-floating-menu'
 	import { tick, createEventDispatcher } from 'svelte'
 	import { browser } from '$app/environment'
+	import { createUniqueID } from '$lib/utils'
 	import { processCode, convert_html_to_markdown } from '$lib/utils'
 	import { hovering_outside } from '$lib/utilities'
 	import pages from '$lib/stores/data/pages'
@@ -28,6 +33,8 @@
 	import MarkdownButton from './MarkdownButton.svelte'
 	import modal from '$lib/stores/app/modal'
 	import { get_content_with_static } from '$lib/stores/helpers'
+
+	const lowlight = createLowlight(all)
 
 	const dispatch = createEventDispatcher()
 
@@ -66,15 +73,34 @@
 	let link_editor_is_visible = false
 
 	let active_editor
+	const markdown_classes = {}
 	async function set_editable_markdown({ key, element }) {
 		const html = element.innerHTML.trim()
 		element.innerHTML = ''
+
+		// move element classes to tiptap div
+		const markdown_id = element.getAttribute('data-markdown-id') || createUniqueID()
+		let saved_markdown_classes = markdown_classes[markdown_id]
+		if (!saved_markdown_classes) {
+			markdown_classes[markdown_id] = element.className
+			saved_markdown_classes = markdown_classes[markdown_id]
+			element.classList.remove(...element.classList)
+			element.setAttribute('data-markdown-id', markdown_id) // necessary since data-markdown-id gets cleared when hydrating (i.e. editing from fields)
+		}
+
 		const editor = new Editor({
 			content: html,
 			element,
 			extensions: [
 				StarterKit,
 				Image,
+				Youtube.configure({
+					modestBranding: true
+				}),
+				Typography,
+				CodeBlockLowlight.configure({
+					lowlight
+				}),
 				Link.configure({
 					HTMLAttributes: {
 						class: 'link'
@@ -103,7 +129,13 @@
 						})
 					}
 				})
-			]
+			],
+			editorProps: {
+				attributes: {
+					class: saved_markdown_classes,
+					'data-markdown-id': markdown_id
+				}
+			}
 		})
 	}
 
@@ -140,6 +172,8 @@
 			}
 		}
 	}
+
+	let isScrolling = false
 
 	async function make_content_editable() {
 		if (!node) return
@@ -198,22 +232,29 @@
 			}
 		}
 
-		function match_value_to_element({ key, value, type, element }) {
-			if (value === '' || !value) return false
-			// First, match by explicitly set key
-			const key_matches = element.dataset.key === key
-			if (key_matches) {
-				if (type === 'MARKDOWN') {
-					set_editable_markdown({ element, key })
-				} else if (type === 'IMAGE') {
-					set_editable_image({ element, key })
-				} else if (type === 'LINK') {
-					set_editable_link({ element, key, url: value.url })
-				} else {
-					set_editable_text({ element, key })
-				}
-				return true
+		function match_value_to_element({ element, key, value, type }) {
+			// if (value === '' || !value) return false
+
+			// ignore element
+			if (element.dataset.key === '') {
+				return false
 			}
+
+			// Match by explicitly set key
+			const key_matches = element.dataset.key === key
+			if (key_matches)
+				if (key_matches) {
+					if (type === 'MARKDOWN') {
+						set_editable_markdown({ element, key })
+					} else if (type === 'IMAGE') {
+						set_editable_image({ element, key })
+					} else if (type === 'LINK') {
+						set_editable_link({ element, key, url: value.url })
+					} else {
+						set_editable_text({ element, key })
+					}
+					return true
+				}
 
 			if (type === 'LINK' && typeof element.href === 'string') {
 				const external_url_matches =
@@ -281,7 +322,12 @@
 		async function set_editable_image({ element, key = '' }) {
 			let rect
 			element.setAttribute(`data-key`, key)
-			element.onmouseover = async (e) => {
+			element.onmousemove = (e) => {
+				if (!image_editor_is_visible) {
+					attach_image_overlay(e)
+				}
+			}
+			async function attach_image_overlay(e) {
 				image_editor_is_visible = true
 				await tick() // wait for image_editor to mount
 				rect = element.getBoundingClientRect()
@@ -290,6 +336,11 @@
 				image_editor.style.width = `${rect.width}px`
 				image_editor.style.height = `${rect.height}px`
 				image_editor.style.borderRadius = getComputedStyle(element).borderRadius
+
+				image_editor.onwheel = (e) => {
+					image_editor_is_visible = false
+				}
+
 				image_editor.onmouseleave = (e) => {
 					const is_outside =
 						e.x >= Math.floor(rect.right) ||
@@ -392,22 +443,19 @@
 				dispatch('lock')
 			}
 			element.contentEditable = true
-			// await tick()
 		}
 	}
 
 	let local_component_data
-	$: if (component_data) {
-		local_component_data = _.cloneDeep(component_data)
-	}
 	$: hydrate_component(component_data)
 	async function hydrate_component(data) {
-		if (!component) return
-		else if (error) {
+		if (!component) {
+			local_component_data = data
+			return
+		} else if (error) {
 			error = null
 			compile_component_code(symbol.code)
-			// } else if (!_.isEqual(data, local_component_data)) {
-		} else {
+		} else if (!_.isEqual(data, local_component_data)) {
 			// TODO: re-render the component if `data` doesn't match its fields (e.g. when removing a component field to add to the page)
 			component.$set(data)
 			// sometimes data hydration doesn't work on some fields,
@@ -495,7 +543,7 @@
 		node.closest('#page').addEventListener('scroll', on_page_scroll)
 		node.closest('body').addEventListener('mouseover', (e) => {
 			if (hovering_outside(e, image_editor)) {
-				image_editor_is_visible = false
+				// image_editor_is_visible = false
 			}
 		})
 	}
@@ -507,7 +555,12 @@
 </script>
 
 {#if image_editor_is_visible}
-	<button in:fade={{ duration: 100 }} class="primo-reset image-editor" bind:this={image_editor}>
+	<button
+		style:pointer-events={isScrolling ? 'none' : 'all'}
+		in:fade={{ duration: 100 }}
+		class="primo-reset image-editor"
+		bind:this={image_editor}
+	>
 		<Icon icon="uil:image-upload" />
 	</button>
 {/if}
@@ -536,32 +589,56 @@
 <div class="menu floating-menu primo-reset" bind:this={floatingMenu}>
 	{#if active_editor}
 		<MarkdownButton
-			icon="heading"
+			icon="fa-solid:heading"
 			on:click={() => active_editor.chain().focus().toggleHeading({ level: 1 }).run()}
 		/>
 		<MarkdownButton
-			icon="code"
+			icon="fa-solid:code"
 			on:click={() => active_editor.chain().focus().toggleCodeBlock().run()}
 		/>
 		<MarkdownButton
-			icon="quote-left"
+			icon="fa-solid:quote-left"
 			on:click={() => active_editor.chain().focus().toggleBlockquote().run()}
 		/>
 		<MarkdownButton
-			icon="list-ul"
+			icon="fa-solid:list"
 			on:click={() => active_editor.chain().focus().toggleBulletList().run()}
 		/>
 		<MarkdownButton
-			icon="list-ol"
+			icon="fa-solid:list-ol"
 			on:click={() => active_editor.chain().focus().toggleOrderedList().run()}
 		/>
 		<MarkdownButton
-			icon="image"
+			icon="fa-solid:image"
 			on:click={() =>
 				modal.show('DIALOG', {
 					component: 'IMAGE',
+					header: {
+						icon: 'ic:twotone-image',
+						title: 'Image'
+					},
 					onSubmit: ({ url, alt }) => {
 						active_editor.chain().focus().setImage({ src: url, alt }).run()
+						modal.hide()
+					}
+				})}
+		/>
+		<MarkdownButton
+			icon="lucide:youtube"
+			on:click={() =>
+				modal.show('DIALOG', {
+					header: {
+						icon: 'mdi:youtube',
+						title: 'Youtube Video Embed'
+					},
+					component: 'VIDEO',
+					onSubmit: ({ url }) => {
+						if (url) {
+							active_editor.commands.setYoutubeVideo({
+								src: url,
+								width: '100%'
+							})
+						}
 						modal.hide()
 					}
 				})}
@@ -571,7 +648,7 @@
 <div class="menu bubble-menu primo-reset" bind:this={bubbleMenu}>
 	{#if active_editor}
 		<MarkdownButton
-			icon="link"
+			icon="fa-solid:link"
 			on:click={() =>
 				modal.show('DIALOG', {
 					component: 'LINK',
@@ -582,17 +659,17 @@
 				})}
 		/>
 		<MarkdownButton
-			icon="bold"
+			icon="fa-solid:bold"
 			on:click={() => active_editor.chain().focus().toggleBold().run()}
 			active={active_editor.isActive('bold')}
 		/>
 		<MarkdownButton
-			icon="italic"
+			icon="fa-solid:italic"
 			on:click={() => active_editor.chain().focus().toggleItalic().run()}
 			active={active_editor.isActive('italic')}
 		/>
 		<MarkdownButton
-			icon="highlighter"
+			icon="fa-solid:highlighter"
 			on:click={() => active_editor.chain().focus().toggleHighlight().run()}
 			active={active_editor.isActive('highlight')}
 		/>
@@ -617,7 +694,7 @@
 		font-size: var(--font-size-1);
 		display: flex;
 		border-radius: var(--input-border-radius);
-		margin-left: 0.5rem;
+		/* margin-left: 0.5rem; */
 		transition: opacity 0.1s;
 		z-index: 999999 !important;
 		box-shadow: 0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -647,7 +724,7 @@
 		justify-content: center;
 		align-items: center;
 		font-size: 2rem;
-		overflow: hidden;
+		overflow: visible;
 
 		:global(svg) {
 			height: clamp(0.5rem, 50%, 4rem);

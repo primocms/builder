@@ -6,6 +6,7 @@
 	import { userRole } from '$lib/stores/app/misc'
 	import { click_to_copy } from '$lib/utilities'
 	import Icon from '@iconify/svelte'
+	import { page } from '$app/stores'
 
 	const dispatch = createEventDispatcher()
 
@@ -22,39 +23,41 @@
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-<div in:fade={{ duration: 100 }} class="block-buttons primo-reset" bind:this={node}>
+<div in:fade={{ duration: 100 }} class="BlockToolbar primo-reset" bind:this={node}>
 	<div class="top">
 		<div class="component-button">
-			<button on:click={() => dispatch('edit-content')}>
-				<Icon icon="material-symbols:edit-square-outline-rounded" />
-			</button>
 			{#if $userRole === 'DEV'}
 				<button on:click={() => dispatch('edit-code')}>
 					<Icon icon="ph:code-bold" />
 				</button>
 			{/if}
+			<button on:click={() => dispatch('edit-content')}>
+				<Icon icon="material-symbols:edit-square-outline-rounded" />
+			</button>
 			{#if DEBUGGING}
 				<button class="block-id" use:click_to_copy>
 					{id}
 				</button>
 			{/if}
 		</div>
-		<div class="top-right">
-			<button on:click={() => dispatch('delete')} class="button-delete">
-				<Icon icon="ion:trash" />
-			</button>
-			<button on:click={() => dispatch('duplicate')}>
-				<Icon icon="ion:duplicate" />
-			</button>
-			{#if !isFirst}
-				<button on:click={() => dispatch('moveUp')}>
-					<Icon icon="heroicons-outline:chevron-up" />
+		{#if !$page.data.page.page_type}
+			<div class="top-right">
+				<button on:click={() => dispatch('delete')} class="button-delete">
+					<Icon icon="ion:trash" />
 				</button>
-			{/if}
-		</div>
+				<button on:click={() => dispatch('duplicate')}>
+					<Icon icon="ion:duplicate" />
+				</button>
+				{#if !isFirst}
+					<button on:click={() => dispatch('moveUp')}>
+						<Icon icon="heroicons-outline:chevron-up" />
+					</button>
+				{/if}
+			</div>
+		{/if}
 	</div>
 	<div class="bottom">
-		{#if !isLast}
+		{#if !isLast && !$page.data.page.page_type}
 			<button class="bottom-right" on:click={() => dispatch('moveDown')}>
 				<Icon icon="heroicons-outline:chevron-down" />
 			</button>
@@ -63,7 +66,7 @@
 </div>
 
 <style lang="postcss">
-	.block-buttons {
+	.BlockToolbar {
 		box-shadow: inset 0 0 0 calc(4px) var(--color-gray-8);
 		z-index: 999999;
 		position: fixed;
@@ -71,6 +74,7 @@
 		display: flex;
 		justify-content: space-between;
 		flex-direction: column;
+		font-size: 0.875rem;
 	}
 	.component-button {
 		display: flex;
@@ -103,17 +107,18 @@
 
 	button {
 		pointer-events: all;
-		padding: 0 1rem;
+		padding: 0.5rem 1rem;
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		height: 2rem;
+		font-size: 1rem;
+		/* height: 2rem; */
 		/* color: var(--primo-color-white); */
 		/* background-color: var(--primo-color-black-opaque); */
 		background: #1f1f1f;
 		color: #cecece;
 
-		font-size: var(--font-size-2);
+		/* font-size: var(--font-size-2); */
 		font-weight: 500;
 		transition: background-color 0.1s, color 0.1s;
 		box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),

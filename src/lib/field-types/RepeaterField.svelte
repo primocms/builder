@@ -8,7 +8,6 @@
 	import { find as _find, chain as _chain, cloneDeep as _cloneDeep } from 'lodash-es'
 	import Icon from '@iconify/svelte'
 	import { createEventDispatcher, onDestroy, tick } from 'svelte'
-	import NonExistantField from './EmptyField.svelte'
 
 	// idb crashes chrome (try primo, server)
 	import * as idb from 'idb-keyval'
@@ -21,6 +20,8 @@
 
 	export let field
 	export let level = 0
+	export let show_label = false
+	export let hidden_keys = []
 
 	// ensure value is an array
 	if (!Array.isArray(field.value)) {
@@ -28,6 +29,7 @@
 	}
 
 	function add_repeater_item() {
+		dispatch('add')
 		const subfield = createSubfield()
 		visibleRepeaters[`${field.key}-${repeaterFieldValues.length}`] = true
 		repeaterFieldValues = [...repeaterFieldValues, subfield]
@@ -35,6 +37,7 @@
 	}
 
 	function removeRepeaterItem(itemIndex) {
+		dispatch('remove')
 		repeaterFieldValues = repeaterFieldValues.filter((_, i) => i !== itemIndex)
 		onInput()
 	}
@@ -43,17 +46,9 @@
 		const item = repeaterFieldValues[indexOfItem]
 		const withoutItem = repeaterFieldValues.filter((_, i) => i !== indexOfItem)
 		if (direction === 'up') {
-			repeaterFieldValues = [
-				...withoutItem.slice(0, indexOfItem - 1),
-				item,
-				...withoutItem.slice(indexOfItem - 1)
-			]
+			repeaterFieldValues = [...withoutItem.slice(0, indexOfItem - 1), item, ...withoutItem.slice(indexOfItem - 1)]
 		} else if (direction === 'down') {
-			repeaterFieldValues = [
-				...withoutItem.slice(0, indexOfItem + 1),
-				item,
-				...withoutItem.slice(indexOfItem + 1)
-			]
+			repeaterFieldValues = [...withoutItem.slice(0, indexOfItem + 1), item, ...withoutItem.slice(indexOfItem + 1)]
 		} else {
 			console.error('Direction must be up or down')
 		}
@@ -98,18 +93,17 @@
 	}
 
 	function onInput() {
-		field.value = repeaterFieldValues.map((items, i) =>
-			_chain(items).keyBy('key').mapValues('value').value()
-		)
+		field.value = repeaterFieldValues.map((items, i) => _chain(items).keyBy('key').mapValues('value').value())
+
 		dispatch('input', field)
 	}
 
 	function getFieldComponent(subfield) {
 		const field = _find($fieldTypes, ['id', subfield.type])
-		return field ? field.component : NonExistantField
+		return field ? field.component : null
 	}
 
-	$: singularLabel = $pluralize && $pluralize.singular(field.label)
+	$: singularLabel = $pluralize && $pluralize?.singular(field.label)
 
 	function getImage(repeaterItem) {
 		const [firstField] = repeaterItem
@@ -119,9 +113,7 @@
 	}
 
 	function getTitle(repeaterItem) {
-		const firstField = repeaterItem.find((subfield) =>
-			['text', 'link', 'number'].includes(subfield.type)
-		)
+		const firstField = repeaterItem.find((subfield) => ['text', 'link', 'number'].includes(subfield.type))
 		if (firstField) {
 			let { value } = repeaterItem[0]
 			if (firstField.type === 'link') return value?.label
@@ -133,6 +125,7 @@
 	}
 
 	let visibleRepeaters = {}
+
 	idb.get(field.id).then((res) => {
 		if (res) {
 			visibleRepeaters = res
@@ -145,7 +138,10 @@
 	})
 </script>
 
-<div class="repeater-level-{level}">
+<div class="RepeaterField repeater-level-{level}">
+	{#if show_label}
+		<p class="label">{field.label}</p>
+	{/if}
 	<div class="fields">
 		{#each repeaterFieldValues as repeaterItem, i (repeaterItem._key)}
 			{@const subfieldID = `${field.key}-${i}`}
@@ -153,10 +149,7 @@
 			{@const itemTitle = getTitle(repeaterItem, field)}
 			<div class="repeater-item" id="repeater-{field.key}-{i}">
 				<div class="item-options">
-					<button
-						class="title"
-						on:click={() => (visibleRepeaters[subfieldID] = !visibleRepeaters[subfieldID])}
-					>
+					<button class="title" on:click={() => (visibleRepeaters[subfieldID] = !visibleRepeaters[subfieldID])}>
 						{#if itemImage}
 							<img src={itemImage} alt={itemTitle || `Preview for item ${i} in ${field.label}`} />
 						{:else}
@@ -171,10 +164,7 @@
 							</button>
 						{/if}
 						{#if i !== repeaterFieldValues.length - 1}
-							<button
-								title="Move {singularLabel} down"
-								on:click={() => moveRepeaterItem(i, 'down')}
-							>
+							<button title="Move {singularLabel} down" on:click={() => moveRepeaterItem(i, 'down')}>
 								<Icon icon="mdi:arrow-down" />
 							</button>
 						{/if}
@@ -186,24 +176,15 @@
 				{#if visibleRepeaters[subfieldID]}
 					<div class="field-values">
 						{#each repeaterItem as subfield (repeaterItem._key + subfield.key)}
-							<div class="repeater-item-field" id="repeater-{field.key}-{i}-{subfield.key}">
-								{#if subfield.type === 'repeater'}
-									<span class="repeater-label">{subfield.label}</span>
-									<svelte:self
-										field={subfield}
-										on:input={onInput}
-										level={level + 1}
-										visible={true}
-									/>
-								{:else}
-									<svelte:component
-										this={getFieldComponent(subfield)}
-										field={subfield}
-										level={level + 1}
-										on:input={onInput}
-									/>
-								{/if}
-							</div>
+							{#if !hidden_keys.includes(subfield.key)}
+								<div class="repeater-item-field" id="repeater-{field.key}-{i}-{subfield.key}">
+									{#if subfield.type === 'repeater'}
+										<svelte:self field={subfield} on:input={onInput} level={level + 1} visible={true} show_label={true} />
+									{:else}
+										<svelte:component this={getFieldComponent(subfield)} field={subfield} level={level + 1} on:input={onInput} />
+									{/if}
+								</div>
+							{/if}
 						{/each}
 					</div>
 				{/if}
@@ -217,9 +198,19 @@
 </div>
 
 <style lang="postcss">
+	.RepeaterField {
+		width: 100%;
+	}
 	.fields {
 		display: grid;
 		gap: 1.5rem;
+	}
+
+	.label {
+		font-size: var(--title-font-size, 1rem);
+		font-weight: var(--title-font-weight, 600);
+		padding-bottom: 1rem;
+		letter-spacing: 1px;
 	}
 
 	.repeater-level-0 {
@@ -320,14 +311,7 @@
 
 		.field-values {
 			display: grid;
-			gap: 2rem;
-
-			.repeater-label {
-				display: block;
-				font-size: var(--title-font-size);
-				font-weight: var(--title-font-weight);
-				margin-bottom: 1rem;
-			}
+			gap: 0.5rem;
 		}
 	}
 	.repeater-item-field {

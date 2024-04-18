@@ -7,31 +7,36 @@
 	import PageForm from './PageForm.svelte'
 
 	async function create_page(new_page) {
-		await actions.create(new_page)
+		const url_taken = $pages.some((page) => page.url === new_page.url)
+		if (url_taken) {
+			alert(`That URL is already in use`)
+		} else {
+			await actions.create(new_page)
+		}
 	}
 
 	async function delete_page(page_id) {
 		actions.delete(page_id)
 	}
 
-	let creating_page = false
+	let creating_page = null
 </script>
 
 <ul class="page-list root">
-	{#each $pages.filter((p) => !p.parent) as page, i}
-		{@const children = $pages.filter((p) => p.parent === page.id)}
+	{#each $pages.filter((p) => !p.parent) as page}
+		{@const children = $pages.filter((p) => p.id !== page.id && p.parent === page.id)}
 		<li>
 			<Item
 				{page}
 				{children}
 				active={$activePageID === page.id}
 				on:create={({ detail: page }) => create_page(page)}
-				on:delete={({ detail: page }) => delete_page(page.id)}
+				on:delete={({ detail: terminal_page }) => delete_page(terminal_page.id)}
 			/>
 		</li>
 	{/each}
 	{#if creating_page}
-		<li>
+		<li style="background: #1a1a1a;">
 			<PageForm
 				on:create={({ detail: new_page }) => {
 					creating_page = false
@@ -41,37 +46,28 @@
 		</li>
 	{/if}
 </ul>
-{#if !creating_page}
-	<PrimaryButton
-		on:click={() => (creating_page = true)}
-		label="Create Page"
-		icon="akar-icons:plus"
-	/>
-{/if}
+<PrimaryButton
+	variants="secondary"
+	disabled={creating_page === true}
+	on:click={() => (creating_page = true)}
+	label="New Page"
+	icon="akar-icons:plus"
+/>
 
 <style lang="postcss">
 	ul.page-list {
 		display: grid;
+		gap: 0.5rem;
 		color: var(--primo-color-white);
-		background: #1a1a1a;
-		border-radius: var(--primo-border-radius);
+
 		margin-bottom: 1rem;
 
-		&.root > li:not(:first-child) {
-			border-top: 1px solid #222;
+		li {
+			/* overflow: hidden; */
 		}
-	}
-	#duplicate label {
-		display: flex;
-		gap: 0.5rem;
-		margin: 0.25rem 0;
-	}
-	form {
-		padding: 0.25rem;
-		display: grid;
-		gap: 0.5rem;
-		max-width: 450px;
-		padding: 0.825rem 1.125rem;
-		margin-bottom: 0.5rem;
+
+		/* &.root > li:not(:first-child) {
+			border-top: 1px solid #222;
+		} */
 	}
 </style>

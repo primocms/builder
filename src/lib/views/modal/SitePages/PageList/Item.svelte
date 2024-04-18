@@ -10,6 +10,7 @@
 	import { pages as actions } from '$lib/stores/actions'
 	import { content_editable, validate_url } from '$lib/utilities'
 	import PageForm from './PageForm.svelte'
+	import MenuPopup from '$lib/ui/Dropdown.svelte'
 
 	/** @type {import('$lib').Page | null}*/
 	export let parent = null
@@ -28,7 +29,7 @@
 		? `/${site_url}/${parent_urls.join('/')}/${page.url}`
 		: `/${site_url}/${page.url}`
 
-	let showing_children = true
+	let showing_children = false
 	$: has_children = children.length > 0
 
 	get(`page-list-toggle--${page.id}`).then((toggled) => {
@@ -48,7 +49,12 @@
 	}
 </script>
 
-<div class="page-item-container" class:active={page.id === $activePageID}>
+<div
+	class="page-item-container"
+	class:contains-child={parent}
+	class:active={page.id === $activePageID}
+	class:expanded={showing_children && has_children}
+>
 	<div class="left">
 		{#if editing_page}
 			<div class="details">
@@ -80,10 +86,24 @@
 				{/if}
 			</div>
 		{:else}
-			<a class="details" class:active href={full_url} on:click={() => modal.hide()}>
-				<span>{page.name}</span>
-				<span class="url">/{page.url !== 'index' ? page.url : ''}</span>
-			</a>
+			{@const url = page.url !== 'index' ? page.url : ''}
+			<div class="details">
+				<a class:active href={full_url} on:click={() => modal.hide()} class="name">{page.name}</a>
+				<span class="url">/{url}</span>
+				{#if page.page_type}
+					<span
+						style="font-size: 0.75rem;
+						background: {page.page_type.color};
+						padding: 6px;
+						border-radius: 1rem;
+						display: flex;
+						justify-content: center;
+						align-items: center;"
+					>
+						<Icon icon={page.page_type.icon} />
+					</span>
+				{/if}
+			</div>
 		{/if}
 		{#if has_children}
 			<button
@@ -97,37 +117,57 @@
 		{/if}
 	</div>
 	<div class="options">
-		<button
-			class="edit"
-			class:active={editing_page}
-			title="Rename"
-			on:click={() => (editing_page = !editing_page)}
-		>
-			<Icon icon="clarity:edit-solid" />
-		</button>
-		{#if page.url !== 'index'}
-			<button title="Create Subpage" on:click={() => (creating_page = true)}>
-				<Icon icon="akar-icons:plus" />
-			</button>
-			<button title="Delete Page" on:click={() => dispatch('delete', page)}>
-				<Icon icon="fluent:delete-20-filled" />
-			</button>
-		{/if}
+		<MenuPopup
+			icon="carbon:overflow-menu-vertical"
+			options={[
+				...(page.url !== 'index' && !creating_page
+					? [
+							{
+								label: `New Child Page`,
+								icon: 'akar-icons:plus',
+								on_click: () => {
+									creating_page = true
+								}
+							}
+					  ]
+					: []),
+				{
+					label: 'Change Name',
+					icon: 'clarity:edit-solid',
+					on_click: () => {
+						editing_page = !editing_page
+					}
+				},
+				...(page.url !== 'index'
+					? [
+							{
+								label: 'Delete',
+								icon: 'ic:outline-delete',
+								on_click: () => dispatch('delete', page)
+							}
+					  ]
+					: [])
+			]}
+		/>
 	</div>
 </div>
 
 {#if creating_page}
-	<PageForm
-		{page}
-		on:create={({ detail: page }) => {
-			creating_page = false
-			dispatch('create', page)
-		}}
-	/>
+	<div style="border-left: 0.5rem solid #111;">
+		<PageForm
+			{page}
+			parent={page.id}
+			on:create={({ detail: page }) => {
+				creating_page = false
+				showing_children = true
+				dispatch('create', page)
+			}}
+		/>
+	</div>
 {/if}
 
 {#if showing_children && has_children}
-	<ul class="page-list child" transition:slide|local={{ duration: 100 }}>
+	<ul class="page-list child" transition:slide={{ duration: 100 }}>
 		{#each children as subpage}
 			{@const subchildren = $pages.filter((p) => p.parent === subpage.id)}
 			<li>
@@ -150,10 +190,22 @@
 		display: flex;
 		justify-content: space-between;
 		padding: 0.875rem 1.125rem;
+		border-bottom-left-radius: 0.25rem;
 		background: #1a1a1a;
+		border-radius: var(--primo-border-radius);
+		&.expanded {
+			border-bottom-right-radius: 0;
+			border-bottom: 1px solid var(--color-gray-9);
+		}
+		&.contains-child {
+			padding-block: 0.5rem;
+			border-radius: 0;
+		}
 
 		&.active {
 			background: #222;
+			border-bottom-right-radius: 0;
+			/* outline: 1px solid var(--primo-color-brand); */
 		}
 
 		.left {
@@ -163,10 +215,20 @@
 
 			.details {
 				font-weight: 400;
-				font-size: 1.125rem;
 				line-height: 1.5rem;
-				display: flex;
+				display: grid;
+				grid-template-columns: auto auto auto;
 				gap: 1rem;
+				color: var(--color-gray-1);
+
+				a.name {
+					border-bottom: 1px solid transparent;
+					margin-bottom: -1px;
+					transition: 0.1s;
+					&:hover {
+						border-color: white;
+					}
+				}
 
 				.url {
 					display: flex;
@@ -176,6 +238,10 @@
 
 				div.name,
 				div.url {
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					width: 100%;
 					color: var(--primo-color-brand);
 
 					span {
@@ -194,7 +260,7 @@
 				font-size: 1.5rem;
 
 				&:hover {
-					color: var(--color-accent);
+					color: var(--primo-color-brand);
 				}
 
 				&.active {
@@ -205,26 +271,30 @@
 
 		.options {
 			display: flex;
-			gap: 0.5rem;
-
-			.edit.active {
-				color: var(--primo-color-brand);
-			}
+			gap: 0.75rem;
 		}
-	}
-
-	.slot {
-		background: #1c1c1c;
-		margin: 0 1rem;
 	}
 
 	ul.page-list {
 		margin: 0 1rem 1rem 1rem;
-		background: #323334;
+		/* background: #323334; */
 		border-radius: var(--primo-border-radius);
 
 		li:not(:last-child) {
 			/* border-bottom: 1px solid #222; */
+		}
+
+		&.child {
+			font-size: 0.875rem;
+			margin: 0;
+			border-top: 1px solid #222;
+			/* margin-left: 1rem; */
+			border-top-right-radius: 0;
+			border-top-left-radius: 0;
+		}
+
+		&.child:not(.entry) {
+			margin-left: 0.5rem;
 		}
 	}
 </style>

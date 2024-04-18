@@ -10,15 +10,7 @@ import _ from 'lodash-es'
 import { page } from '$app/stores'
 import { site } from '$lib/stores/data/site'
 
-/**
- * @param {{
- * 	repo_name: string,
- * 	provider: 'github' | 'gitlab'
- * }} params
- * @param {boolean} create_new
- * @returns {Promise<import('$lib/deploy.js').DeploymentResponse>}
- */
-export async function push_site({ repo_name, provider }, create_new = false) {
+export async function push_site(repo_name, create_new = false) {
 	const site_bundle = await build_site_bundle({
 		pages: get(pages),
 		symbols: get(symbols)
@@ -33,7 +25,7 @@ export async function push_site({ repo_name, provider }, create_new = false) {
 		size: new Blob([file.content], { type: 'text/plain' }).size / 1024
 	}))
 
-	return await deploy({ files, site_id: get(site).id, repo_name, provider }, create_new)
+	return await deploy({ files, site_id: get(site).id, repo_name }, create_new)
 }
 
 export async function build_site_bundle({ pages, symbols }) {
@@ -85,6 +77,7 @@ export async function build_site_bundle({ pages, symbols }) {
 	}
 
 	async function build_page_tree(page, language) {
+		const { url } = page
 		const sections = await dataChanged({
 			table: 'sections',
 			action: 'select',
@@ -120,25 +113,24 @@ export async function build_site_bundle({ pages, symbols }) {
 		}
 
 		let path
-		let full_url = page.url
-		if (page.url === 'index' || page.url === '404') {
-			path = `${page.url}.html`
+		let full_url = url
+		if (url === 'index' || url === '404') {
+			path = `${url}.html`
 		} else if (parent) {
-			path = `${parent_urls.join('/')}/${page.url}/index.html`
-			full_url = `${parent_urls.join('/')}/${page.url}`
+			path = `${parent_urls.join('/')}/${url}/index.html`
+			full_url = `${parent_urls.join('/')}/${url}`
 		} else {
-			path = `${page.url}/index.html`
+			path = `${url}/index.html`
 		}
 
 		// add language prefix
 		if (language !== 'en') {
 			path = `${language}/${path}`
 			full_url = `${language}/${full_url}`
-		} else {
-			// only add en sections and pages to primo.json
-			all_sections = [...all_sections, ...sections]
-			all_pages = [...all_pages, page]
 		}
+
+		all_sections = [...all_sections, ...sections]
+		all_pages = [...all_pages, page]
 
 		const page_tree = [
 			{
@@ -210,7 +202,7 @@ export async function build_site_bundle({ pages, symbols }) {
             <title>Edit site</title>
           </head>
           <body style="margin:0">
-            <h1 style="font-family:sans-serif;text-align:center;">redirecting to Primo server</h1>
+            <h1 style="font-family:sans-serif;text-align:center;">redirecting to Breezly</h1>
           </body>
         </html>
         `

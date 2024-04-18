@@ -1,17 +1,18 @@
 <script>
 	import _ from 'lodash-es'
-	import { tick } from 'svelte'
+	import { tick, onMount } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import { flip } from 'svelte/animate'
+	import UI from '$lib/ui'
 	import ComponentNode from './Layout/ComponentNode.svelte'
 	import BlockToolbar from './Layout/BlockToolbar.svelte'
 	import LockedOverlay from './Layout/LockedOverlay.svelte'
 	import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME } from 'svelte-dnd-action'
 	import { afterNavigate } from '$app/navigation'
+	import { page as page_store } from '$app/stores'
 	import { isEqual, cloneDeep } from 'lodash-es'
-	import Spinner from '../../ui/misc/Spinner.svelte'
-	import { code as siteCode } from '../../stores/data/site'
-	import { locale, locked_blocks, showingIDE } from '../../stores/app/misc'
+	import { code as siteCode, design as siteDesign } from '../../stores/data/site'
+	import { locale, locked_blocks } from '../../stores/app/misc'
 	import { active_page } from '../../stores/actions'
 	import modal from '../../stores/app/modal'
 	import {
@@ -20,13 +21,16 @@
 		url as pageURL,
 		fields as pageFields,
 		code as pageCode,
-		content as pageContent
+		content as pageContent,
+		page_type
 	} from '../../stores/app/activePage'
 	import sections from '../../stores/data/sections'
 	import symbols from '../../stores/data/symbols'
 	import { processCode, processCSS, wrapInStyleTags } from '../../utils'
 	import { getPageData } from '../../stores/helpers'
-	import { realtimeChanged } from '$lib/database'
+	import { Site_Tokens_CSS } from '$lib/constants'
+	// import { active_users } from '$lib/stores'
+	// import { createUniqueID } from '$lib/utilities'
 
 	export let page
 
@@ -46,18 +50,25 @@
 		$pageFields = page_data.fields
 		$pageCode = page_data.code
 		$pageContent = page_data.content
+		$page_type = page_data.page_type
 	}
 
-	const cached = { pageCode: null, siteCode: null }
+	const cached = { pageCode: null, siteCode: null, siteDesign: null }
 	let latest_run
-	$: set_page_html($pageCode, $siteCode)
-	async function set_page_html(pageCode, siteCode) {
-		if (isEqual(pageCode, cached.pageCode) && isEqual(siteCode, cached.siteCode)) return
+	$: set_page_html($pageCode, $siteCode, $siteDesign)
+	async function set_page_html(pageCode, siteCode, siteDesign) {
+		if (
+			isEqual(pageCode, cached.pageCode) &&
+			isEqual(siteCode, cached.siteCode) &&
+			isEqual(siteDesign, cached.siteDesign)
+		)
+			return
 
 		const this_run = Date.now()
 
 		cached.pageCode = cloneDeep(pageCode)
 		cached.siteCode = cloneDeep(siteCode)
+		cached.siteDesign = cloneDeep(siteDesign)
 		const css = await processCSS(siteCode.css + pageCode.css)
 
 		// workaround to prevent older css from overwriting newer css
@@ -71,6 +82,7 @@
 					html: `<svelte:head>
             ${siteCode.html.head}${pageCode.html.head}
             ${wrapInStyleTags(css)}
+						${Site_Tokens_CSS(siteDesign)}
           </svelte:head>`,
 					css: '',
 					js: '',
@@ -109,19 +121,65 @@
 		sections_mounted = 0
 	})
 
+	// const presence_key = $page_store.data.user.email
+	// const instance_key = createUniqueID()
+	// const channel = $page_store.data.supabase?.channel($page_store.data.site.id, {
+	// 	config: { presence: { key: presence_key } }
+	// })
+
+	// channel
+	// 	?.on('presence', { event: 'sync' }, () => {
+	// 		const newState = channel.presenceState()
+
+	// 		$locked_blocks = Object.entries(newState)
+	// 			.flatMap((item) => {
+	// 				const [email, value] = item
+	// 				const data = value[0]
+	// 				return data
+	// 			})
+	// 			.filter((item) => item.active_block)
+	// 		// $locked_blocks = Object.entries(newState).reduce((previous, current, all) => {
+	// 		// 	// console.log({ previous, current, all })
+	// 		// 	const [email, data] = current
+	// 		// 	const { active_block } = data[0]
+	// 		// 	if (active_block) {
+	// 		// 		console.log({ active_block })
+	// 		// 		return [...previous, { email, id: active_block, instance_key: data.instance_key }]
+	// 		// 	} else return previous
+	// 		// }, [])
+	// 		$active_users = Object.entries(newState).map(([email, value]) => ({ email }))
+	// 	})
+	// 	.on('presence', { event: 'join' }, ({ key, newPresences }) => {
+	// 		// console.log('join', key, newPresences)
+	// 	})
+	// 	.on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+	// 		// console.log('leave', key, leftPresences)
+	// 		$active_users = $active_users.filter((u) => u.email !== key)
+	// 	})
+	// 	.subscribe(async (status) => {
+	// 		// console.log({ status })
+	// 		if (status === 'SUBSCRIBED') {
+	// 			channel.track({
+	// 				active_block: null,
+	// 				email: $page_store.data.user.email,
+	// 				instance_key
+	// 			})
+	// 		}
+	// 	})
+
 	async function lock_block(block_id) {
-		realtimeChanged({
-			active_block: block_id
-		})
+		// channel.track({
+		// 	active_block: block_id,
+		// 	email: $page_store.data.user.email,
+		// 	instance_key
+		// })
 	}
 
 	function unlock_block() {
-		// workaround to prevent issue when unlocking immediately before locking when switching from one block to another
-		setTimeout(() => {
-			realtimeChanged({
-				active_block: null
-			})
-		}, 100)
+		// channel.track({
+		// 	active_block: null,
+		// 	email: $page_store.data.user.email
+		// })
 	}
 
 	let draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
@@ -138,21 +196,16 @@
 			.map((item, index) => ({ ...item, index }))
 			.find((item) => item.isDndShadowItem)
 
-		console.log({ detail, dragged_symbol })
-
 		if (!dragged_symbol) return
 
 		const is_site_symbol = $symbols.some((s) => s.id === dragged_symbol.id)
 		if (is_site_symbol) {
-			console.log('Site symbol')
 			draggable_sections = detail.items
 		} else {
-			console.log('Primo symbol')
 			dragged_symbol.is_primo_block = true
 			draggable_sections = detail.items.map((item) => {
 				if (item[SHADOW_ITEM_MARKER_PROPERTY_NAME]) {
 					// currently dragged item
-					console.log('adding primo symbol', item)
 					return { ...item, primo_symbol: item }
 				} else return item
 			})
@@ -208,25 +261,25 @@
 		showing_block_toolbar = false
 	}
 
-	function edit_component(block, showIDE = false) {
-		lock_block(block.id)
-		$showingIDE = showIDE
+	function edit_component(block_id, showIDE = false) {
+		lock_block(block_id)
+		const block = $sections.find((s) => s.id === block_id) // get updated block (necessary if actively editing on-page)
 		modal.show(
 			'COMPONENT_EDITOR',
 			{
-				tab: $showingIDE ? 'code' : 'content',
 				component: block,
+				tab: showIDE ? 'code' : 'content',
 				header: {
 					title: `Edit Block`,
-					icon: $showingIDE ? 'fas fa-code' : 'fas fa-edit',
+					icon: showIDE ? 'fas fa-code' : 'fas fa-edit',
 					onclose: () => {
-						unlock_block(block.id)
+						unlock_block()
 					},
 					button: {
 						icon: 'fas fa-check',
 						label: 'Save',
 						onclick: async () => {
-							unlock_block(block.id)
+							unlock_block()
 							modal.hide()
 						}
 					}
@@ -268,8 +321,8 @@
 
 <!-- Loading Spinner -->
 {#if !page_mounted && $sections.length > 0}
-	<div class="spinner-container" out:fade={{ duration: 200 }}>
-		<Spinner />
+	<div class="spinner">
+		<UI.Spinner variant="loop" />
 	</div>
 {/if}
 
@@ -287,8 +340,8 @@
 			active_page.duplicate_block(hovered_block.id)
 			refresh_sections()
 		}}
-		on:edit-code={() => edit_component(hovered_block, true)}
-		on:edit-content={() => edit_component(hovered_block)}
+		on:edit-code={() => edit_component(hovered_block.id, true)}
+		on:edit-content={() => edit_component(hovered_block.id)}
 		on:moveUp={async () => {
 			moving = true
 			hide_block_toolbar()
@@ -328,7 +381,9 @@
 	{#each draggable_sections as block (block.id)}
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		<!-- svelte-ignore a11y-mouse-events-have-key-events -->
-		{@const locked = $locked_blocks.includes(block.id)}
+		{@const locked = $locked_blocks.find((b) => b.active_block === block.id)}
+		<!-- {@const in_current_tab = locked?.instance_key === instance_key} -->
+		{@const in_current_tab = false}
 		<div
 			in:fade={{ duration: 100 }}
 			class="section"
@@ -362,13 +417,13 @@
 					/>
 				</div>
 			{:else}
-				{#if locked}
+				{#if locked && !in_current_tab}
 					<LockedOverlay {locked} />
 				{/if}
 				<ComponentNode
 					{block}
 					on:lock={() => lock_block(block.id)}
-					on:unlock={() => unlock_block(block.id)}
+					on:unlock={() => unlock_block()}
 					on:mount={() => sections_mounted++}
 					on:resize={() => {
 						if (showing_block_toolbar) {
@@ -384,11 +439,11 @@
 
 <!-- Empty State -->
 {#if page_is_empty}
-	<div class="empty-state">This is an empty page</div>
+	<div class="empty-state">Looks like your page is empty, friendo.</div>
 {/if}
 
 <style lang="postcss">
-	.spinner-container {
+	.spinner {
 		position: absolute;
 		top: 0;
 		left: 0;
@@ -398,8 +453,7 @@
 		align-items: center;
 		justify-content: center;
 		z-index: 5;
-		pointer-events: none;
-
+		--Spinner-font-size: 3rem;
 		--Spinner-color: var(--primo-color-brand);
 		--Spinner-color-opaque: rgba(248, 68, 73, 0.2);
 	}
