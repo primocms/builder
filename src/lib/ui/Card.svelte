@@ -9,7 +9,6 @@
 
 	/** @param {string | null} pill */
 	export let icon = 'mdi:home'
-	$: console.log({ icon })
 
 	/** @param {string | null} pill */
 	export let pill = null

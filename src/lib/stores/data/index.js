@@ -6,6 +6,8 @@ import page_types from './page_types'
 import sections from './sections'
 import symbols from './symbols'
 
+export { site, pages }
+
 export default {
 	site,
 	pages,

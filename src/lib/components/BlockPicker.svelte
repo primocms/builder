@@ -1,8 +1,8 @@
 <script>
 	import Icon from '@iconify/svelte'
-	import Symbol from '$lib/components/Site_Symbol.svelte'
+	import Symbol from '../components/Site_Symbol.svelte'
 	import { v4 as uuid } from 'uuid'
-	import { Symbol as Create_Symbol } from '$lib/factories'
+	import { Symbol as Create_Symbol } from '../factories'
 
 	export let blocks
 	export let site

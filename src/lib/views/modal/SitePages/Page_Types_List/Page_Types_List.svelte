@@ -1,13 +1,13 @@
 <script>
 	import { goto } from '$app/navigation'
 	import Item from './Item.svelte'
-	import { PrimaryButton } from '$lib/components/buttons'
-	import page_types from '$lib/stores/data/page_types'
-	import { page_types as actions } from '$lib/stores/actions'
-	import { id as activePageID } from '$lib/stores/app/activePage'
-	import { id as site_id } from '$lib/stores/data/site'
+	import { PrimaryButton } from '../../../../components/buttons'
+	import page_types from '../../../../stores/data/page_types'
+	import { page_types as actions } from '../../../../stores/actions'
+	import { id as activePageID } from '../../../../stores/app/activePage'
+	import { id as site_id } from '../../../../stores/data/site'
 	import PageForm from './PageForm.svelte'
-	import modal from '$lib/stores/app/modal'
+	import modal from '../../../../stores/app/modal'
 
 	async function create_page(new_page) {
 		const { id: page_type_id } = await actions.create(new_page)

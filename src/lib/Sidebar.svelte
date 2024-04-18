@@ -11,9 +11,9 @@
 	import { Site_Tokens_CSS } from './constants'
 	import { Symbol } from './factories'
 	import Sidebar_Symbol from './Sidebar_Symbol.svelte'
-	import { symbols as symbol_actions, active_page } from './stores/actions'
+	import { symbols as symbol_actions } from './stores/actions'
 	import { v4 as uuidv4 } from 'uuid'
-	import { validate_symbol } from '$lib/converter'
+	import { validate_symbol } from './converter'
 	import { dndzone } from 'svelte-dnd-action'
 	import { flip } from 'svelte/animate'
 

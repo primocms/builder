@@ -4,14 +4,14 @@
 	import { get, set } from 'idb-keyval'
 	import { createEventDispatcher, getContext } from 'svelte'
 	const dispatch = createEventDispatcher()
-	import pages from '$lib/stores/data/pages'
-	import { id as activePageID } from '$lib/stores/app/activePage'
-	import { id as siteID } from '$lib/stores/data/site'
-	import { pages as actions } from '$lib/stores/actions'
-	import { validate_url } from '$lib/utilities'
+	import pages from '../../../../stores/data/pages'
+	import { id as activePageID } from '../../../../stores/app/activePage'
+	import { id as siteID } from '../../../../stores/data/site'
+	import { pages as actions } from '../../../../stores/actions'
+	import { validate_url } from '../../../../utilities'
 	import PageForm from './PageForm.svelte'
-	import MenuPopup from '$lib/ui/Dropdown.svelte'
-	import modal from '$lib/stores/app/modal'
+	import MenuPopup from '../../../../ui/Dropdown.svelte'
+	import modal from '../../../../stores/app/modal'
 
 	/** @type {import('$lib').Page_Type}*/
 	export let page

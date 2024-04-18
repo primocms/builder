@@ -2,7 +2,7 @@
 	import { onMount, createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 	import autosize from 'autosize'
-	import { convert_markdown_to_html } from '$lib/utils'
+	import { convert_markdown_to_html } from '../utils'
 
 	export let field
 

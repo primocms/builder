@@ -1,8 +1,8 @@
 import { clone as _cloneDeep } from 'lodash-es'
 import PromiseWorker from 'promise-worker'
 import { get } from 'svelte/store'
-import { site } from '$lib/index.js'
-import { locale } from '$lib/index.js'
+import { site } from './index.js'
+import { locale } from '../stores/app/misc'
 import svelteWorker from './workers/worker?worker'
 import postCSSWorker from './workers/postcss.worker?worker'
 

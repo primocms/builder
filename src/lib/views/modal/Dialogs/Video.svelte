@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte'
-	import UI from '$lib/ui'
+	import UI from '../../../ui'
 	import PrimaryButton from '../../../components/buttons/PrimaryButton.svelte'
 
 	const dispatch = createEventDispatcher()

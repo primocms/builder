@@ -4,7 +4,7 @@
 	import { find as _find } from 'lodash-es'
 	import { browser } from '$app/environment'
 	import Icon from '@iconify/svelte'
-	import { clickOutside } from '$lib/utilities'
+	import { clickOutside } from '../../utilities'
 	import ToolbarButton from './ToolbarButton.svelte'
 	import { timeline } from '../../stores/data'
 	import sections from '../../stores/data/sections'
@@ -14,10 +14,9 @@
 	import { userRole } from '../../stores/app'
 	import { id as page_id, name as page_name, page_type } from '../../stores/app/activePage'
 	import modal from '../../stores/app/modal'
-	import { click_to_copy } from '$lib/utilities'
+	import { click_to_copy } from '../../utilities'
 	import { page } from '$app/stores'
-	import Letter from '$lib/ui/Letter.svelte'
-	// import { active_users } from '$lib/stores'
+	// import { active_users } from '../../stores'
 
 	export let buttons
 

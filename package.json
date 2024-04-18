@@ -17,6 +17,12 @@
 		"format": "prettier --plugin-search-dir . --write ."
 	},
 	"exports": {
+		"./ui": "./src/lib/ui/index.js",
+		"./database": "./src/lib/database.js",
+		"./components": "./src/lib/components/index.js",
+		"./stores/app": "./src/lib/stores/app/index.js",
+		"./stores/data": "./src/lib/stores/data/index.js",
+		"./stores/actions": "./src/lib/stores/actions.js",
 		".": {
 			"types": "./dist/index.d.ts",
 			"svelte": "./dist/index.js"

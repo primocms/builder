@@ -2,10 +2,10 @@
 	import { createEventDispatcher } from 'svelte'
 	import { v4 as uuidv4 } from 'uuid'
 	import { fade } from 'svelte/transition'
-	import UI from '$lib/ui'
-	import page_types from '$lib/stores/data/page_types'
+	import UI from '../../../../ui'
+	import page_types from '../../../../stores/data/page_types'
 	import Icon from '@iconify/svelte'
-	import { validate_url } from '$lib/utilities'
+	import { validate_url } from '../../../../utilities'
 
 	/** @type {string | null} */
 	export let parent = null

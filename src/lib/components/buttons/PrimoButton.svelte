@@ -1,6 +1,6 @@
 <script>
 	import { loadingSite } from '../../stores/app/misc'
-	import UI from '$lib/ui'
+	import UI from '../../ui'
 </script>
 
 <a class="primo-button" aria-label="See all sites" href="/" data-sveltekit-reload>

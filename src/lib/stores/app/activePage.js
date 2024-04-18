@@ -1,5 +1,5 @@
 import { writable, get, derived } from 'svelte/store'
-import { Page } from '$lib/factories'
+import { Page } from '../../factories'
 
 export const id = writable('')
 export const name = writable('')

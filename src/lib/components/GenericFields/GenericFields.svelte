@@ -9,14 +9,13 @@
 		get as _get,
 		isRegExp as _isRegExp
 	} from 'lodash-es'
-	import UI from '$lib/ui'
-	import Card from '$lib/ui/Card.svelte'
-	import { createUniqueID } from '$lib/utilities'
+	import Card from '../../ui/Card.svelte'
+	import { createUniqueID } from '../../utilities'
 
-	import { userRole, fieldTypes } from '$lib/stores/app'
-	import { Field } from '$lib/factories'
+	import { userRole, fieldTypes } from '../../stores/app'
+	import { Field } from '../../factories'
 	import FieldItem from './FieldItem.svelte'
-	import { is_regex } from '$lib/utils'
+	import { is_regex } from '../../utils'
 
 	export let fields
 	export let showCode = true

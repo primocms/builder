@@ -4,9 +4,9 @@
 
 	const dispatch = createEventDispatcher()
 	import PrimaryButton from '../../../components/buttons/PrimaryButton.svelte'
-	import UI from '$lib/ui'
-	import { storageChanged } from '$lib/database'
-	import site from '$lib/stores/data/site'
+	import UI from '../../../ui'
+	import { storageChanged } from '../../../database'
+	import site from '../../../stores/data/site'
 
 	const defaultValue = {
 		alt: '',

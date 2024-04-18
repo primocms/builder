@@ -1,14 +1,14 @@
 import { get } from 'svelte/store'
-import pages from '$lib/stores/data/pages'
-import symbols from '$lib/stores/data/symbols'
+import pages from '../../stores/data/pages'
+import symbols from '../../stores/data/symbols'
 // import beautify from 'js-beautify' // remove for now to reduce bundle size, dynamically import later if wanted
-import { dataChanged } from '$lib/database.js'
-import { deploy } from '$lib/deploy'
-import { buildStaticPage } from '$lib/stores/helpers'
-import { processCode } from '$lib/utils'
+import { dataChanged } from '../../database.js'
+import { deploy } from '../../deploy'
+import { buildStaticPage } from '../../stores/helpers'
+import { processCode } from '../../utils'
 import _ from 'lodash-es'
 import { page } from '$app/stores'
-import { site } from '$lib/stores/data/site'
+import { site } from '../../stores/data/site'
 
 export async function push_site(repo_name, create_new = false) {
 	const site_bundle = await build_site_bundle({

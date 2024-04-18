@@ -2,12 +2,12 @@
 	import _, { cloneDeep, chain as _chain } from 'lodash-es'
 	import { getContext } from 'svelte'
 	import autosize from 'autosize'
-	import UI from '$lib/ui'
+	import UI from '../../ui'
 	import Toggle from 'svelte-toggle'
 	import Condition from './Condition.svelte'
-	import fieldTypes from '$lib/stores/app/fieldTypes'
-	import SelectField from '$lib/components/GenericFields/SelectField.svelte'
-	import { getEmptyValue } from '$lib/utils'
+	import fieldTypes from '../../stores/app/fieldTypes'
+	import SelectField from '../../components/GenericFields/SelectField.svelte'
+	import { getEmptyValue } from '../../utils'
 
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()

@@ -2,10 +2,10 @@
 	import Icon from '@iconify/svelte'
 	import { fly } from 'svelte/transition'
 	import { find as _find } from 'lodash-es'
-	import { locale } from '$lib/stores/app/misc'
-	import { add_language, delete_language, set_language } from '$lib/stores/actions'
-	import { languages as available_languages } from '$lib/constants'
-	import { content } from '$lib/stores/data/site'
+	import { locale } from '../../stores/app/misc'
+	import { add_language, delete_language, set_language } from '../../stores/actions'
+	import { languages as available_languages } from '../../constants'
+	import { content } from '../../stores/data/site'
 
 	export let align = 'right'
 

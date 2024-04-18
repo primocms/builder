@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
-	import UI from '$lib/ui'
+	import UI from '../../ui'
 	import { showKeyHint } from '../../stores/app/misc'
 
 	const dispatch = createEventDispatcher()

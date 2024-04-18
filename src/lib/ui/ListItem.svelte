@@ -2,15 +2,8 @@
 	import Icon from '@iconify/svelte'
 	import { slide } from 'svelte/transition'
 	import { get, set } from 'idb-keyval'
-	import { createEventDispatcher, getContext } from 'svelte'
-	const dispatch = createEventDispatcher()
-	import modal from '$lib/stores/app/modal'
-	import pages from '$lib/stores/data/pages'
-	import { id as activePageID } from '$lib/stores/app/activePage'
-	import { pages as actions } from '$lib/stores/actions'
-	import { content_editable, validate_url } from '$lib/utilities'
-	// import PageForm from './PageForm.svelte'
-	import MenuPopup from '$lib/ui/Dropdown.svelte'
+	import { validate_url } from '../utilities'
+	import MenuPopup from '../ui/Dropdown.svelte'
 
 	export let title
 	export let is_child = false

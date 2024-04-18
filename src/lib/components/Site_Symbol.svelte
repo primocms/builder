@@ -2,9 +2,9 @@
 	import { fade } from 'svelte/transition'
 	import _ from 'lodash-es'
 	import Icon from '@iconify/svelte'
-	import { processCode, processCSS } from '$lib/utils'
-	import { locale } from '$lib/stores/app/misc'
-	import IFrame from '$lib/components/IFrame.svelte'
+	import { processCode, processCSS } from '../utils'
+	import { locale } from '../stores/app/misc'
+	import IFrame from '../components/IFrame.svelte'
 
 	export let symbol
 	export let site

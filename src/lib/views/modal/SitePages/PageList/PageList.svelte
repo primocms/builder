@@ -1,9 +1,9 @@
 <script>
 	import Item from './Item.svelte'
-	import { PrimaryButton } from '$lib/components/buttons'
-	import pages from '$lib/stores/data/pages'
-	import { pages as actions } from '$lib/stores/actions'
-	import { id as activePageID } from '$lib/stores/app/activePage'
+	import { PrimaryButton } from '../../../../components/buttons'
+	import pages from '../../../../stores/data/pages'
+	import { pages as actions } from '../../../../stores/actions'
+	import { id as activePageID } from '../../../../stores/app/activePage'
 	import PageForm from './PageForm.svelte'
 
 	async function create_page(new_page) {

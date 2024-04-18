@@ -9,10 +9,10 @@ import stores, { update_timeline } from './data'
 import { update as update_site, content as site_content, site } from './data/site'
 import { timeline } from './data'
 import { buildStaticPage } from './helpers'
-import { dataChanged, storageChanged } from '$lib/database'
-import { swap_array_item_index } from '$lib/utilities'
+import { dataChanged, storageChanged } from '../database'
+import { swap_array_item_index } from '../utilities'
 import { v4 as uuidv4 } from 'uuid'
-import { Page, Page_Type, Symbol, Section } from '$lib/factories'
+import { Page, Page_Type, Symbol, Section } from '../factories'
 import { page } from '$app/stores'
 
 /**

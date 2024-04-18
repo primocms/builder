@@ -1,5 +1,5 @@
 import { writable, derived } from 'svelte/store'
-import { Site } from '$lib/factories'
+import { Site } from '../../factories'
 
 export const id = writable('default')
 export const url = writable('')

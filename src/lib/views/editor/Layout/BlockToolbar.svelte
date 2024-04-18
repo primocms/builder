@@ -3,8 +3,8 @@
 	import { createEventDispatcher, getContext } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import sections from '../../../stores/data/sections.js'
-	import { userRole } from '$lib/stores/app/misc'
-	import { click_to_copy } from '$lib/utilities'
+	import { userRole } from '../../../stores/app/misc'
+	import { click_to_copy } from '../../../utilities'
 	import Icon from '@iconify/svelte'
 	import { page } from '$app/stores'
 

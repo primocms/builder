@@ -1,6 +1,6 @@
 <script>
-	import ModalHeader from '$lib/views/modal/ModalHeader.svelte'
-	import BlockPicker from '$lib/components/BlockPicker.svelte'
+	import ModalHeader from '../../views/modal/ModalHeader.svelte'
+	import BlockPicker from '../../components/BlockPicker.svelte'
 
 	export let blocks, site, append, onsave
 

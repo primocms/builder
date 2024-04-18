@@ -25,7 +25,7 @@
 			prettier: await import('prettier'),
 			prettier_css: (await import('prettier/esm/parser-postcss')).default,
 			prettier_babel: (await import('prettier/esm/parser-babel')).default,
-			prettier_svelte: (await import('$lib/libraries/prettier/prettier-svelte')).default
+			prettier_svelte: (await import('../../../libraries/prettier/prettier-svelte')).default
 		}
 	}
 </script>

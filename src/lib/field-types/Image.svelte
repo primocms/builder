@@ -1,10 +1,10 @@
 <script>
 	import Icon from '@iconify/svelte'
 	import { createEventDispatcher } from 'svelte'
-	import TextInput from '$lib/ui/TextInput.svelte'
-	import Spinner from '$lib/ui/Spinner.svelte'
-	import site from '$lib/stores/data/site'
-	import { storageChanged } from '$lib/database'
+	import TextInput from '../ui/TextInput.svelte'
+	import Spinner from '../ui/Spinner.svelte'
+	import site from '../stores/data/site'
+	import { storageChanged } from '../database'
 
 	const dispatch = createEventDispatcher()
 

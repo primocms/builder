@@ -1,6 +1,6 @@
 <script>
 	import { getIcon, loadIcon, buildIcon } from '@iconify/svelte'
-	import TextInput from '$lib/ui/TextInput.svelte'
+	import TextInput from '../ui/TextInput.svelte'
 	import { createEventDispatcher } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import Icon from '@iconify/svelte'

@@ -1,9 +1,9 @@
 <script>
 	import _ from 'lodash-es'
-	import { tick, onMount } from 'svelte'
+	import { tick } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import { flip } from 'svelte/animate'
-	import UI from '$lib/ui'
+	import UI from '../../ui'
 	import ComponentNode from './Layout/ComponentNode.svelte'
 	import BlockToolbar from './Layout/BlockToolbar.svelte'
 	import LockedOverlay from './Layout/LockedOverlay.svelte'
@@ -28,9 +28,7 @@
 	import symbols from '../../stores/data/symbols'
 	import { processCode, processCSS, wrapInStyleTags } from '../../utils'
 	import { getPageData } from '../../stores/helpers'
-	import { Site_Tokens_CSS } from '$lib/constants'
-	// import { active_users } from '$lib/stores'
-	// import { createUniqueID } from '$lib/utilities'
+	import { Site_Tokens_CSS } from '../../constants'
 
 	export let page
 

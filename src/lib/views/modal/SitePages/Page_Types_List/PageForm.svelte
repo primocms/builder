@@ -1,10 +1,10 @@
 <script>
 	import { createEventDispatcher } from 'svelte'
 	import { fade } from 'svelte/transition'
-	import UI from '$lib/ui'
+	import UI from '../../../../ui'
 	import Icon from '@iconify/svelte'
-	import IconPicker from '$lib/field-types/IconPicker.svelte'
-	import { clickOutside } from '$lib/utilities'
+	import IconPicker from '../../../../field-types/IconPicker.svelte'
+	import { clickOutside } from '../../../../utilities'
 	import { createPopperActions } from 'svelte-popperjs'
 
 	const dispatch = createEventDispatcher()

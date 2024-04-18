@@ -10,12 +10,11 @@
 </script>
 
 <script>
-	import Icon from '@iconify/svelte'
 	import _, { cloneDeep, find, chain as _chain } from 'lodash-es'
 	import HSplitPane from '../PageEditor/HSplitPane.svelte'
 	import { getEmptyValue } from '../../../utils'
 	import ModalHeader from '../ModalHeader.svelte'
-	import Tabs from '$lib/ui/Tabs.svelte'
+	import Tabs from '../../../ui/Tabs.svelte'
 	import FullCodeEditor from '../PageEditor/FullCodeEditor.svelte'
 	import { CodePreview } from '../../../components/misc'
 	import GenericFields from '../../../components/GenericFields/GenericFields.svelte'
@@ -24,7 +23,11 @@
 	import { locale, onMobile, userRole } from '../../../stores/app/misc'
 	import modal from '../../../stores/app/modal'
 	import { active_site } from '../../../stores/actions'
-	import site, { content as site_content, code as site_code, fields as site_fields } from '../../../stores/data/site'
+	import site, {
+		content as site_content,
+		code as site_code,
+		fields as site_fields
+	} from '../../../stores/data/site'
 	import { tick } from 'svelte'
 
 	let local_code = cloneDeep($site_code)
@@ -300,7 +303,13 @@
 		>
 			<div slot="left" lang={$locale}>
 				{#if $activeTab === 'code'}
-					<FullCodeEditor bind:html={rawHTML} bind:css={rawCSS} {data} on:save={saveComponent} on:refresh={refreshPreview} />
+					<FullCodeEditor
+						bind:html={rawHTML}
+						bind:css={rawCSS}
+						{data}
+						on:save={saveComponent}
+						on:refresh={refreshPreview}
+					/>
 				{:else if $activeTab === 'content'}
 					<GenericFields
 						bind:fields
@@ -314,7 +323,13 @@
 				{/if}
 			</div>
 			<div slot="right">
-				<CodePreview bind:orientation={$orientation} view="small" {loading} {preview} error={compilationError} />
+				<CodePreview
+					bind:orientation={$orientation}
+					view="small"
+					{loading}
+					{preview}
+					error={compilationError}
+				/>
 			</div>
 		</HSplitPane>
 	{/if}

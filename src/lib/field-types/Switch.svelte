@@ -1,5 +1,5 @@
 <script>
-	import Switch from '$lib/ui/Switch.svelte'
+	import Switch from '../ui/Switch.svelte'
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 

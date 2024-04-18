@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 
-	import UI from '$lib/ui'
+	import UI from '../../ui'
 
 	export let variants = ''
 	export let type = 'button'

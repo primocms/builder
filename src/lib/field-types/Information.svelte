@@ -1,5 +1,5 @@
 <script>
-	import { convert_markdown_to_html } from '$lib/utils'
+	import { convert_markdown_to_html } from '../utils'
 
 	export let field = {
 		options: {

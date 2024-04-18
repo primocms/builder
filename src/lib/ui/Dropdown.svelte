@@ -2,9 +2,8 @@
 	import { createEventDispatcher } from 'svelte'
 	import _ from 'lodash-es'
 	import { fade } from 'svelte/transition'
-	import UI from '$lib/ui'
 	import Icon from '@iconify/svelte'
-	import { clickOutside } from '$lib/utilities'
+	import { clickOutside } from '../utilities'
 	import { createPopperActions } from 'svelte-popperjs'
 	// import { toast } from '@zerodevx/svelte-toast';
 

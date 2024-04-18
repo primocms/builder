@@ -3,14 +3,11 @@
 	import modal from '../../stores/app/modal'
 	import Image from './Dialogs/Image.svelte'
 	import Video from './Dialogs/Video.svelte'
-	// import Image from '$lib/field-types/Image.svelte'
 	import Feedback from './Dialogs/Feedback.svelte'
 	export let component
 	export let header = null
 	export let props = {}
-	export let options = {
-		disableClose: false
-	}
+
 	export let onSubmit
 
 	let value = ''

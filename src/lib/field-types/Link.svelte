@@ -1,9 +1,8 @@
 <script>
-	import { dataChanged } from '$lib/database'
 	import Icon from '@iconify/svelte'
-	import UI from '$lib/ui'
-	import pages from '$lib/stores/data/pages'
-	import { locale } from '$lib/stores/app/misc'
+	import UI from '../ui'
+	import pages from '../stores/data/pages'
+	import { locale } from '../stores/app'
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 

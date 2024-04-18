@@ -3,7 +3,7 @@
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 
-	import UI from '$lib/ui'
+	import UI from '../../ui'
 
 	export let field
 	export let field_to_compare

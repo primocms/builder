@@ -10,7 +10,7 @@
 	import { locale, highlightedElement } from '../../stores/app/misc'
 	import JSONTree from 'svelte-json-tree'
 	import Icon from '@iconify/svelte'
-	import { content_editable } from '$lib/utilities'
+	import { content_editable } from '../../utilities'
 
 	export let view = 'small'
 	export let orientation = 'horizontal'

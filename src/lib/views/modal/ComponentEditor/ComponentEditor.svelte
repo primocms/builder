@@ -9,25 +9,25 @@
 </script>
 
 <script>
-	import Tabs from '$lib/ui/Tabs.svelte'
+	import Tabs from '../../../ui/Tabs.svelte'
 	import { setContext } from 'svelte'
 	import _, { cloneDeep, find, isEqual, chain as _chain } from 'lodash-es'
 	import HSplitPane from './HSplitPane.svelte'
-	import { getEmptyValue } from '$lib/utils'
+	import { getEmptyValue } from '../../../utils'
 	import ModalHeader from '../ModalHeader.svelte'
 	import FullCodeEditor from './FullCodeEditor.svelte'
-	import { CodePreview } from '$lib/components/misc'
-	import GenericFields from '$lib/components/GenericFields/GenericFields.svelte'
-	import { autoRefresh } from '$lib/components/misc/CodePreview.svelte'
-	import { processCode, processCSS, wrapInStyleTags } from '$lib/utils'
-	import { locale, onMobile, userRole } from '$lib/stores/app/misc'
+	import { CodePreview } from '../../../components/misc'
+	import GenericFields from '../../../components/GenericFields/GenericFields.svelte'
+	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'
+	import { processCode, processCSS, wrapInStyleTags } from '../../../utils'
+	import { locale, onMobile, userRole } from '../../../stores/app/misc'
 
-	import { Site_Tokens_CSS } from '$lib/constants'
-	import symbols from '$lib/stores/data/symbols'
-	import * as actions from '$lib/stores/actions'
-	import { content, design as siteDesign, code as siteCode } from '$lib/stores/data/site'
-	import { code as pageCode } from '$lib/stores/app/activePage'
-	import { getPageData } from '$lib/stores/helpers'
+	import { Site_Tokens_CSS } from '../../../constants'
+	import symbols from '../../../stores/data/symbols'
+	import * as actions from '../../../stores/actions'
+	import { content, design as siteDesign, code as siteCode } from '../../../stores/data/site'
+	import { code as pageCode } from '../../../stores/app/activePage'
+	import { getPageData } from '../../../stores/helpers'
 	import { tick } from 'svelte'
 
 	/** @type {import('$lib').Section} */

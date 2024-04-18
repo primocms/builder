@@ -1,8 +1,8 @@
 <script>
 	import { cloneDeep } from 'lodash-es'
-	import { dataChanged } from '$lib/database'
+	import { dataChanged } from '../database'
 	import { createEventDispatcher } from 'svelte'
-	import { site } from '$lib/stores/data/site'
+	import { site } from '../stores/data/site'
 
 	const dispatch = createEventDispatcher()
 

@@ -4,13 +4,13 @@
 	import { get, set } from 'idb-keyval'
 	import { createEventDispatcher, getContext } from 'svelte'
 	const dispatch = createEventDispatcher()
-	import modal from '$lib/stores/app/modal'
-	import pages from '$lib/stores/data/pages'
-	import { id as activePageID } from '$lib/stores/app/activePage'
-	import { pages as actions } from '$lib/stores/actions'
-	import { content_editable, validate_url } from '$lib/utilities'
+	import modal from '../../../../stores/app/modal'
+	import pages from '../../../../stores/data/pages'
+	import { id as activePageID } from '../../../../stores/app/activePage'
+	import { pages as actions } from '../../../../stores/actions'
+	import { content_editable, validate_url } from '../../../../utilities'
 	import PageForm from './PageForm.svelte'
-	import MenuPopup from '$lib/ui/Dropdown.svelte'
+	import MenuPopup from '../../../../ui/Dropdown.svelte'
 
 	/** @type {import('$lib').Page | null}*/
 	export let parent = null
