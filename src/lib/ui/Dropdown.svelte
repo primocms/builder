@@ -63,39 +63,44 @@
 			{#if !active_submenu}
 				<div class="options">
 					{#each options as option, i}
-						{@const has_submenu_items = option.submenu?.options?.length > 0}
-						<button
-							class:active={label === option.label}
-							class:has_submenu={has_submenu_items}
-							on:click={(e) => {
-								if (option.on_click) {
-									showing_dropdown = false
-									option.on_click(e)
-								} else if (option.submenu?.options?.length > 0) {
-									active_submenu = option.submenu
-								} else {
-									showing_dropdown = false
-									dispatch('input', option.value)
-								}
-							}}
-							type="button"
-						>
-							<Icon icon={option.icon} />
-							<span>{option.label}</span>
+						{@const has_submenu_items = option.suboptions?.length > 0}
+						<div class="item">
+							<button
+								class:active={label === option.label}
+								on:click={(e) => {
+									if (option.on_click) {
+										showing_dropdown = false
+										option.on_click(e)
+									} else {
+										showing_dropdown = false
+										dispatch('input', option.value)
+									}
+								}}
+								type="button"
+							>
+								<Icon icon={option.icon} />
+								<span>{option.label}</span>
+							</button>
 							{#if has_submenu_items}
-								<Icon icon="material-symbols:chevron-right" />
+								<button
+									on:click={() => {
+										active_submenu = { title: option.label, options: option.suboptions }
+									}}
+								>
+									<Icon icon="material-symbols:chevron-right" />
+								</button>
 							{/if}
-						</button>
+						</div>
+
 						{#if dividers.includes(i)}
 							<hr />
 						{/if}
 					{/each}
 				</div>
 			{:else if active_submenu}
-				{@const { title, options } = active_submenu}
 				<div class="submenu" in:fade={{ duration: 100 }}>
 					<header>
-						<span>{title}</span>
+						<span>{active_submenu.title}</span>
 						<button
 							on:click={() => {
 								active_submenu = null
@@ -106,7 +111,7 @@
 							<Icon icon="carbon:close" />
 						</button>
 					</header>
-					<div class="suboptions">
+					<div class="options">
 						<!-- async submenu fetch not being used atm, but keeping as a reference for fetching child pages in PageList later (instead of fetching all pages at once)-->
 						{#if typeof options === 'function'}
 							{#await options()}
@@ -128,21 +133,23 @@
 								{/each}
 							{/await}
 						{:else}
-							{#each options as { label, value, onclick }}
-								<button
-									on:click={() => {
-										showing_dropdown = false
-										active_submenu = null
-										if (onclick) {
-											onclick()
-										} else {
-											dispatch('input', value)
-										}
-									}}
-									type="button"
-								>
-									{label}
-								</button>
+							{#each active_submenu.options as { label, value, onclick }}
+								<div class="item">
+									<button
+										on:click={() => {
+											showing_dropdown = false
+											active_submenu = null
+											if (onclick) {
+												onclick()
+											} else {
+												dispatch('input', value)
+											}
+										}}
+										type="button"
+									>
+										{label}
+									</button>
+								</div>
 							{/each}
 						{/if}
 					</div>
@@ -198,48 +205,52 @@
 			}
 		}
 
-		button {
+		.item {
 			display: flex;
-			align-items: center;
-			/* justify-content: space-between; */
-			gap: 0.375rem;
-			border-radius: 0.25rem;
-			padding: 0.25rem 0.5rem;
-			width: 100%;
-			text-align: left;
-			white-space: nowrap;
-
-			&:hover:not(.active) {
-				background: #292929;
-			}
-
-			&.active {
-				cursor: initial;
-				opacity: 0.5;
-			}
-
-			&.has_submenu {
-				padding-right: 3px;
-			}
+			align-items: stretch;
 		}
 	}
 	.submenu {
 		header {
-			padding-inline: 0.25rem;
+			font-weight: 600;
+			padding: 0.25rem 0.5rem;
+			padding-right: 0;
+
 			white-space: nowrap;
 			display: flex;
 			justify-content: space-between;
-			gap: 1rem;
+			align-items: center;
+			border-bottom: 1px solid var(--color-gray-8);
 			margin-bottom: 0.25rem;
 
 			span {
 				font-weight: 500;
 			}
+		}
+	}
 
-			button {
-				width: initial;
-				padding: 0.25rem;
-			}
+	button {
+		display: flex;
+		align-items: center;
+		/* justify-content: space-between; */
+		gap: 0.375rem;
+		border-radius: 0.25rem;
+		padding: 0.25rem 0.5rem;
+		/* width: 100%; */
+		text-align: left;
+		white-space: nowrap;
+
+		&:first-child {
+			flex: 1;
+		}
+
+		&:hover:not(.active) {
+			background: #292929;
+		}
+
+		&.active {
+			cursor: initial;
+			opacity: 0.5;
 		}
 	}
 </style>

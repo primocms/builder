@@ -46,9 +46,17 @@
 		const item = repeaterFieldValues[indexOfItem]
 		const withoutItem = repeaterFieldValues.filter((_, i) => i !== indexOfItem)
 		if (direction === 'up') {
-			repeaterFieldValues = [...withoutItem.slice(0, indexOfItem - 1), item, ...withoutItem.slice(indexOfItem - 1)]
+			repeaterFieldValues = [
+				...withoutItem.slice(0, indexOfItem - 1),
+				item,
+				...withoutItem.slice(indexOfItem - 1)
+			]
 		} else if (direction === 'down') {
-			repeaterFieldValues = [...withoutItem.slice(0, indexOfItem + 1), item, ...withoutItem.slice(indexOfItem + 1)]
+			repeaterFieldValues = [
+				...withoutItem.slice(0, indexOfItem + 1),
+				item,
+				...withoutItem.slice(indexOfItem + 1)
+			]
 		} else {
 			console.error('Direction must be up or down')
 		}
@@ -64,6 +72,7 @@
 	}
 
 	let repeaterFieldValues = []
+	$: console.log({ repeaterFieldValues, field })
 	getRepeaterFieldValues().then((val) => (repeaterFieldValues = val))
 
 	$: $locale, getRepeaterFieldValues().then((val) => (repeaterFieldValues = val))
@@ -93,7 +102,9 @@
 	}
 
 	function onInput() {
-		field.value = repeaterFieldValues.map((items, i) => _chain(items).keyBy('key').mapValues('value').value())
+		field.value = repeaterFieldValues.map((items, i) =>
+			_chain(items).keyBy('key').mapValues('value').value()
+		)
 
 		dispatch('input', field)
 	}
@@ -105,15 +116,24 @@
 
 	$: singularLabel = $pluralize && $pluralize?.singular(field.label)
 
-	function getImage(repeaterItem) {
+	function get_image(repeaterItem) {
 		const [firstField] = repeaterItem
 		if (firstField && firstField.type === 'image') {
 			return firstField.value.url
 		} else return null
 	}
 
-	function getTitle(repeaterItem) {
-		const firstField = repeaterItem.find((subfield) => ['text', 'link', 'number'].includes(subfield.type))
+	function get_icon(repeaterItem) {
+		const [firstField] = repeaterItem
+		if (firstField && firstField.type === 'icon') {
+			return firstField.value
+		} else return null
+	}
+
+	function get_title(repeaterItem) {
+		const firstField = repeaterItem.find((subfield) =>
+			['text', 'link', 'number'].includes(subfield.type)
+		)
 		if (firstField) {
 			let { value } = repeaterItem[0]
 			if (firstField.type === 'link') return value?.label
@@ -145,15 +165,21 @@
 	<div class="fields">
 		{#each repeaterFieldValues as repeaterItem, i (repeaterItem._key)}
 			{@const subfieldID = `${field.key}-${i}`}
-			{@const itemImage = getImage(repeaterItem, field)}
-			{@const itemTitle = getTitle(repeaterItem, field)}
+			{@const item_image = get_image(repeaterItem, field)}
+			{@const item_icon = get_icon(repeaterItem, field)}
+			{@const item_title = get_title(repeaterItem, field)}
 			<div class="repeater-item" id="repeater-{field.key}-{i}">
 				<div class="item-options">
-					<button class="title" on:click={() => (visibleRepeaters[subfieldID] = !visibleRepeaters[subfieldID])}>
-						{#if itemImage}
-							<img src={itemImage} alt={itemTitle || `Preview for item ${i} in ${field.label}`} />
+					<button
+						class="title"
+						on:click={() => (visibleRepeaters[subfieldID] = !visibleRepeaters[subfieldID])}
+					>
+						{#if item_image}
+							<img src={item_image} alt={item_title || `Preview for item ${i} in ${field.label}`} />
+						{:else if item_icon}
+							<div style="font-size:1.5rem;">{@html item_icon}</div>
 						{:else}
-							<span>{itemTitle}</span>
+							<span>{item_title}</span>
 						{/if}
 						<Icon icon={visibleRepeaters[subfieldID] ? 'ph:caret-up-bold' : 'ph:caret-down-bold'} />
 					</button>
@@ -164,7 +190,10 @@
 							</button>
 						{/if}
 						{#if i !== repeaterFieldValues.length - 1}
-							<button title="Move {singularLabel} down" on:click={() => moveRepeaterItem(i, 'down')}>
+							<button
+								title="Move {singularLabel} down"
+								on:click={() => moveRepeaterItem(i, 'down')}
+							>
 								<Icon icon="mdi:arrow-down" />
 							</button>
 						{/if}
@@ -179,9 +208,20 @@
 							{#if !hidden_keys.includes(subfield.key)}
 								<div class="repeater-item-field" id="repeater-{field.key}-{i}-{subfield.key}">
 									{#if subfield.type === 'repeater'}
-										<svelte:self field={subfield} on:input={onInput} level={level + 1} visible={true} show_label={true} />
+										<svelte:self
+											field={subfield}
+											on:input={onInput}
+											level={level + 1}
+											visible={true}
+											show_label={true}
+										/>
 									{:else}
-										<svelte:component this={getFieldComponent(subfield)} field={subfield} level={level + 1} on:input={onInput} />
+										<svelte:component
+											this={getFieldComponent(subfield)}
+											field={subfield}
+											level={level + 1}
+											on:input={onInput}
+										/>
 									{/if}
 								</div>
 							{/if}

@@ -14,7 +14,7 @@
 	let searched = false
 
 	console.log({ field })
-	if (!getIcon(field.value) && !getIcon(field.options.icon)) {
+	if (!getIcon(field.value) && !field.value.startsWith('<svg')) {
 		// reset value when invalid (i.e. when switching field type)
 		field.value = ''
 	} else if (getIcon(field.value)) {
@@ -46,23 +46,13 @@
 			})
 	}
 
-	// function select_icon(icon) {
-	// 	const icon_data = getIcon(icon)
-	// 	if (icon_data) {
-	// 		console.log({ icon_data })
-	// 		field.value = icon_data.body
-	// 		dispatch('input', icon_data.body)
-	// 	}
-	// }
-
 	async function select_icon(icon) {
 		const icon_data = await loadIcon(icon)
 		if (icon_data) {
 			// TODO: on-page icon picker
 			const { attributes } = buildIcon(icon_data)
-			const svg = `<svg xmlns="http://www.w3.org/2000/svg" data-key="${field.key}" aria-hidden="true" role="img" height="${attributes.height}" width="${attributes.width}" viewBox="${attributes.viewBox}" preserveAspectRatio="${attributes.preserveAspectRatio}">${icon_data.body}</svg>`
+			const svg = `<svg xmlns="http://www.w3.org/2000/svg" data-key="${field.key}" data-icon="${icon}" aria-hidden="true" role="img" height="${attributes.height}" width="${attributes.width}" viewBox="${attributes.viewBox}" preserveAspectRatio="${attributes.preserveAspectRatio}">${icon_data.body}</svg>`
 			field.value = svg
-			field.options.icon = icon
 			dispatch('input', { svg, icon })
 		}
 	}
@@ -73,9 +63,9 @@
 		<p class="label">{field.label}</p>
 	{/if}
 	<div class="container">
-		{#if getIcon(field.options.icon)}
+		{#if field.value.startsWith('<svg')}
 			<div class="icon-preview">
-				<Icon icon={field.options.icon} />
+				{@html field.value}
 			</div>
 		{/if}
 		<form on:submit|preventDefault={search}>

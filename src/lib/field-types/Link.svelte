@@ -126,12 +126,9 @@
 					options={top_level_pages.map((page) => ({
 						label: page.name,
 						value: getPageUrl(page, $locale, $pages),
-						submenu: {
-							title: page.name,
-							options: $pages
-								.filter((p) => p.parent === page.id)
-								.map((p) => ({ value: getPageUrl(p, $locale, $pages), label: p.name }))
-						}
+						suboptions: $pages
+							.filter((p) => p.parent === page.id)
+							.map((p) => ({ value: getPageUrl(p, $locale, $pages), label: p.name }))
 					}))}
 					on:input={({ detail: value }) => {
 						if (!page_name_edited) {
