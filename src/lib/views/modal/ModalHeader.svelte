@@ -1,7 +1,7 @@
 <script>
 	import Icon from '@iconify/svelte'
 	import modal from '../../stores/app/modal'
-	import LocaleSelector from '../../views/editor/LocaleSelector.svelte'
+	// import LocaleSelector from '../../views/editor/LocaleSelector.svelte'
 
 	export let variants = ''
 	export let icon = ''
@@ -86,7 +86,6 @@
 		font-size: var(--font-size-3);
 		font-weight: 600;
 		padding: 0.5rem;
-		padding-bottom: 0;
 
 		.left-container {
 			flex: 1;

@@ -28,7 +28,7 @@
 	import symbols from '../../stores/data/symbols'
 	import { processCode, processCSS, wrapInStyleTags } from '../../utils'
 	import { getPageData } from '../../stores/helpers'
-	import { Site_Tokens_CSS } from '../../constants'
+	import { site_design_css } from '../../code_generators.js'
 
 	export let page
 
@@ -80,7 +80,7 @@
 					html: `<svelte:head>
             ${siteCode.html.head}${pageCode.html.head}
             ${wrapInStyleTags(css)}
-						${Site_Tokens_CSS(siteDesign)}
+						${site_design_css(siteDesign)}
           </svelte:head>`,
 					css: '',
 					js: '',

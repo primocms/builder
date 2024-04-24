@@ -234,11 +234,11 @@
 	{:else}
 		{#each fields as field}
 			{@const is_visible = check_condition(field)}
-			{@const isValid = (field.key || field.type === 'info') && getComponent(field)}
-			{@const hasChildFields = field.fields.length > 0}
-			{#if isValid && is_visible}
+			{@const is_valid = (field.key || field.type === 'info') && getComponent(field)}
+			{@const has_child_fields = field.fields.length > 0}
+			{#if is_valid && is_visible}
 				<Card
-					title={hasChildFields ? field.label : null}
+					title={has_child_fields ? field.label : null}
 					icon={$fieldTypes.find((ft) => ft.id === field.type)?.icon}
 					pill={field.is_static ? 'Static' : null}
 				>

@@ -8,7 +8,7 @@
 	import site from './stores/data/site'
 	import symbols from './stores/data/symbols'
 	import Icon from '@iconify/svelte'
-	import { Site_Tokens_CSS } from './constants'
+	import { site_design_css } from './code_generators'
 	import { Symbol } from './factories'
 	import Sidebar_Symbol from './Sidebar_Symbol.svelte'
 	import { symbols as symbol_actions } from './stores/actions'
@@ -32,7 +32,7 @@
 			{
 				blocks: primo_blocks,
 				site: $site,
-				append: Site_Tokens_CSS($site.design),
+				append: site_design_css($site.design),
 				onsave: async (selected) => {
 					modal.hide()
 					await Promise.all(selected.map(async (symbol) => symbol_actions.create(symbol)))
@@ -178,7 +178,7 @@
 					<div animate:flip={{ duration: flipDurationMs }}>
 						<Sidebar_Symbol
 							{symbol}
-							append={Site_Tokens_CSS($site.design)}
+							append={site_design_css($site.design)}
 							header_hidden={dragging === symbol._drag_id}
 							on:mousedown={() => (dragging = symbol._drag_id)}
 							on:mouseup={() => (dragging = null)}
@@ -228,7 +228,7 @@
 				{#each primo_blocks as symbol, i}
 					<Sidebar_Symbol
 						{symbol}
-						append={Site_Tokens_CSS($site.design)}
+						append={site_design_css($site.design)}
 						controls_enabled={false}
 						header_hidden={dragging === symbol._drag_id}
 					/>

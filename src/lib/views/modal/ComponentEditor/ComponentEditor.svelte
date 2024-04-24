@@ -22,7 +22,7 @@
 	import { processCode, processCSS, wrapInStyleTags } from '../../../utils'
 	import { locale, onMobile, userRole } from '../../../stores/app/misc'
 
-	import { Site_Tokens_CSS } from '../../../constants'
+	import { site_design_css } from '../../../code_generators.js'
 	import symbols from '../../../stores/data/symbols'
 	import * as actions from '../../../stores/actions'
 	import { content, design as siteDesign, code as siteCode } from '../../../stores/data/site'
@@ -222,7 +222,7 @@
         ${$siteCode.html.head}
         ${$pageCode.html.head}
         ${wrapInStyleTags(parentCSS, 'parent-styles')}
-				${Site_Tokens_CSS($siteDesign)}
+				${site_design_css($siteDesign)}
       </svelte:head>
       ${$pageCode.html.below}
       ${$siteCode.html.below}

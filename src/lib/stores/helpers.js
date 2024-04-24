@@ -9,7 +9,7 @@ import { page } from '$app/stores'
 import activePage from './app/activePage.js'
 import { locale } from './app/misc.js'
 import { processCSS, getEmptyValue } from '../utils.js'
-import { Site_Tokens_CSS } from '../constants'
+import { site_design_css } from '../code_generators.js'
 
 export async function get_symbol_usage_info(symbol_id) {
 	const { data, error } = await get(page)
@@ -119,7 +119,7 @@ export async function buildStaticPage({
 						<meta name="twitter:description" content="${metadata.page_description}">
 						${metadata.page_image ? `<meta name="twitter:image" content="${metadata.page_image}">` : ``}
             <style>${css}</style>
-						${Site_Tokens_CSS(site.design)}
+						${site_design_css(site.design)}
           </svelte:head>`,
 				css: ``,
 				js: ``,

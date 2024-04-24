@@ -16,9 +16,17 @@
 </script>
 
 {#if visible}
-	<div id="primo-modal" class="primo-modal modal mousetrap primo-reset" transition:fade={{ duration: 100 }}>
+	<div
+		id="primo-modal"
+		class="primo-modal modal mousetrap primo-reset"
+		transition:fade={{ duration: 100 }}
+	>
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
-		<div class="modal-background" class:hovered={!$modal.disabledBgClose} on:click={$modal.disabledBgClose ? () => {} : () => modal.hide()} />
+		<div
+			class="modal-background"
+			class:hovered={!$modal.disabledBgClose}
+			on:click={$modal.disabledBgClose ? () => {} : () => modal.hide()}
+		/>
 		<div class="modal-card" style:max-width={$modal.maxWidth}>
 			<div class="modal-card-body">
 				<slot />

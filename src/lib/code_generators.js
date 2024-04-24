@@ -8,6 +8,7 @@ import symbols from './stores/data/symbols.js'
 import activePage from './stores/app/activePage.js'
 import { processCSS } from './utils.js'
 import { get_content_with_static, getPageData } from './stores/helpers.js'
+import { design_tokens } from './constants.js'
 
 /**
  * @param {{
