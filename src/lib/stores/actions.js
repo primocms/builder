@@ -450,8 +450,6 @@ export const active_page = {
 	},
 	update: async ({ obj, is_page_type = false }) => {
 		const current_page = _.cloneDeep(get(activePage.default))
-
-		console.log({ obj, current_page })
 		await update_timeline({
 			doing: async () => {
 				activePage.set(obj)
@@ -721,7 +719,6 @@ export async function update_page_preview(page = get(activePage.default)) {
 
 // extract symbol/instance content from updated section content
 export async function update_section_content(section, updated_content) {
-	console.log({ section })
 	const symbol = get(stores.symbols).find((symbol) => symbol.id === section.symbol)
 
 	const original_symbol_content = _.cloneDeep(symbol.content)
@@ -730,37 +727,41 @@ export async function update_section_content(section, updated_content) {
 	await update_timeline({
 		doing: async () => {
 			const updated_symbol_content = cloneDeep(symbol.content)
-			const updated_instance_content = {}
+			const updated_section_content = {}
 
 			Object.entries(updated_content).forEach(([language_key, language_content]) => {
 				Object.entries(language_content).forEach(([field_key, field_value]) => {
 					const matching_field = symbol.fields.find((field) => field.key === field_key)
-					if (matching_field.is_static) {
+					if (matching_field?.is_static) {
 						updated_symbol_content[language_key] = {
 							...updated_symbol_content[language_key],
 							[field_key]: field_value
 						}
-					} else {
-						updated_instance_content[language_key] = {
-							...updated_instance_content[language_key],
+					} else if (matching_field) {
+						updated_section_content[language_key] = {
+							...updated_section_content[language_key],
 							[field_key]: field_value
 						}
+					} else {
+						// field has changed keys, discard
 					}
 				})
 			})
+
+			console.log({ original_section_content, updated_section_content })
 
 			stores.symbols.update((store) =>
 				store.map((s) => (s.id === symbol.id ? { ...s, content: updated_symbol_content } : s))
 			)
 			stores.sections.update((store) =>
-				store.map((s) => (s.id === section.id ? { ...s, content: updated_instance_content } : s))
+				store.map((s) => (s.id === section.id ? { ...s, content: updated_section_content } : s))
 			)
 			await Promise.all([
 				dataChanged({
 					table: 'sections',
 					action: 'update',
 					id: section.id,
-					data: { content: updated_instance_content }
+					data: { content: updated_section_content }
 				}),
 				dataChanged({
 					table: 'symbols',
