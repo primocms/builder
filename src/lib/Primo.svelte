@@ -2,12 +2,13 @@
 	import '@fontsource/fira-code/index.css'
 	import { loadIcons, enableCache } from '@iconify/svelte'
 	import { browser } from '$app/environment'
-	import IconButton from './components/IconButton.svelte'
+	import IconButton from './ui/IconButton.svelte'
 	import Toolbar from './views/editor/Toolbar.svelte'
 	import Modal from './views/modal/ModalContainer.svelte'
 	import modal from './stores/app/modal'
 	import * as modals from './views/modal'
-	import { onMobile } from './stores/app/misc'
+	import * as Mousetrap from 'mousetrap'
+	import { onMobile, showKeyHint } from './stores/app/misc'
 	import HSplitPane from './ui/HSplitPane.svelte'
 	import Sidebar from './Sidebar.svelte'
 	import { overrideItemIdKeyNameBeforeInitialisingDndZones } from 'svelte-dnd-action'
@@ -51,7 +52,11 @@
 	let showing_sidebar = true
 
 	let leftPaneSize = browser ? (showing_sidebar ? window.innerWidth / 5 + `px` : '0px') : '200px'
-	let rightPaneSize = browser ? (showing_sidebar ? (window.innerWidth / 5) * 5 + 'px' : 'auto') : 'auto'
+	let rightPaneSize = browser
+		? showing_sidebar
+			? (window.innerWidth / 5) * 5 + 'px'
+			: 'auto'
+		: 'auto'
 
 	$: if (parseInt(leftPaneSize) < 100) {
 		leftPaneSize = '20px'
@@ -98,6 +103,11 @@
 		'fluent:form-multiple-24-regular'
 	])
 	enableCache('local')
+
+	if (browser) {
+		Mousetrap.bind('mod', () => ($showKeyHint = true), 'keydown')
+		Mousetrap.bind('mod', () => ($showKeyHint = false), 'keyup')
+	}
 </script>
 
 {#if data.page.page_type}
@@ -122,7 +132,7 @@
 			{/if}
 		</div>
 		<div slot="right">
-			<Toolbar {buttons}>
+			<Toolbar {buttons} on:publish>
 				<div slot="toolbar-left">
 					<slot name="toolbar-left" />
 				</div>
@@ -139,7 +149,7 @@
 
 <svelte:window on:resize={reset} />
 
-<svelte:head>
+<!-- <svelte:head>
 	<link
 		rel="stylesheet"
 		href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
@@ -147,7 +157,7 @@
 		crossorigin="anonymous"
 		referrerpolicy="no-referrer"
 	/>
-</svelte:head>
+</svelte:head> -->
 
 <style lang="postcss">
 	[slot='right'] {
@@ -207,9 +217,11 @@
 		--button-hover-color: #7d8082;
 
 		box-shadow: 0 0 #0000 0 0 #0000, 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-		--box-shadow-xl: 0 0 #0000, 0 0 #0000, 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+		--box-shadow-xl: 0 0 #0000, 0 0 #0000, 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+			0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
-		--transition-colors: background-color 0.1s, border-color 0.1s, color 0.1s, fill 0.1s, stroke 0.1s;
+		--transition-colors: background-color 0.1s, border-color 0.1s, color 0.1s, fill 0.1s,
+			stroke 0.1s;
 
 		--padding-container: 15px;
 		--max-width-container: 1900px;

@@ -111,7 +111,7 @@
 {/if}
 
 {#if showing_children && has_children}
-	<ul class="page-list child" transition:slide={{ duration: 100 }}>
+	<ul class="page-list child">
 		{#each children as subpage}
 			{@const subchildren = $pages.filter((p) => p.parent === subpage.id)}
 			<li>

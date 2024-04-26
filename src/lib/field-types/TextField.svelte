@@ -14,8 +14,10 @@
 		if (field.default === field.value) target.select()
 	}
 
-	function handleSave({ metaKey, key }) {
+	function handleSave(e) {
+		const { metaKey, key } = e
 		if (metaKey && key === 's') {
+			e.preventDefault()
 			dispatch('save')
 		}
 	}

@@ -1,6 +1,8 @@
 <script>
+	import { onDestroy } from 'svelte'
 	import Icon from '@iconify/svelte'
 	import modal from '../../stores/app/modal'
+	import { showKeyHint } from '../../stores/app/misc.js'
 	// import LocaleSelector from '../../views/editor/LocaleSelector.svelte'
 
 	export let variants = ''
@@ -13,12 +15,25 @@
 	export let warn = () => true
 	export let onclose = () => {}
 
+	if (!import.meta.env.SSR) {
+		Mousetrap.bind('escape', (e) => {
+			closeModal()
+		})
+		Mousetrap.bind('mod+s', (e) => {
+			e.preventDefault()
+			button.onclick()
+		})
+	}
+
 	function closeModal() {
+		console.log('yeah')
 		if (warn()) {
 			onclose()
 			modal.hide()
 		}
 	}
+
+	onDestroy(() => Mousetrap.unbind(['escape', 'mod+s']))
 </script>
 
 <header class={variants}>
@@ -51,13 +66,19 @@
 		{#if button && button.onclick}
 			<button
 				class="primo-button primary"
+				class:showing_key_hint={$showKeyHint}
 				disabled={button.loading || button.disabled}
 				on:click={button.onclick}
 			>
-				{#if button.icon}
-					<Icon icon={button.loading ? 'gg:spinner' : button.icon} />
+				{#if $showKeyHint}
+					<span class="key-hint">&#8984; S</span>
 				{/if}
-				<span>{button.label}</span>
+				<span class="label">
+					{#if button.icon}
+						<Icon icon={button.loading ? 'gg:spinner' : button.icon} />
+					{/if}
+					<span>{button.label}</span>
+				</span>
 			</button>
 		{:else if button && button.href}
 			<a
@@ -146,6 +167,7 @@
 	.primo-button {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		padding: 0.5rem 0.75rem;
 		font-size: var(--font-size-2);
 		border-radius: var(--primo-border-radius);
@@ -156,9 +178,18 @@
 			color: var(--primo-color-white);
 			margin-left: 0.5rem;
 
+			.key-hint {
+				position: absolute;
+			}
+
+			.label {
+				display: flex;
+				align-items: center;
+				gap: 0.25rem;
+			}
+
 			span {
 				display: none;
-				margin-left: 0.25rem;
 
 				@media (min-width: 900px) {
 					display: inline-block;
@@ -172,6 +203,10 @@
 			&:active {
 				color: var(--primo-color-black);
 				background: var(--primo-color-brand);
+			}
+
+			&.showing_key_hint .label {
+				visibility: hidden;
 			}
 		}
 

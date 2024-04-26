@@ -1,9 +1,9 @@
 <script>
 	import { browser } from '$app/environment'
-	import { createEventDispatcher, getContext } from 'svelte'
+	import { onDestroy, createEventDispatcher, getContext } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import sections from '../../../stores/data/sections.js'
-	import { userRole } from '../../../stores/app/misc'
+	import { userRole, showKeyHint } from '../../../stores/app/misc'
 	import { click_to_copy } from '../../../utilities'
 	import Icon from '@iconify/svelte'
 	import { page } from '$app/stores'
@@ -19,6 +19,19 @@
 
 	let DEBUGGING
 	if (browser) DEBUGGING = getContext('DEBUGGING')
+
+	if (!import.meta.env.SSR) {
+		Mousetrap.bind(['mod+1'], (e) => {
+			e.preventDefault()
+			dispatch('edit-code')
+		})
+		Mousetrap.bind(['mod+2'], (e) => {
+			e.preventDefault()
+			dispatch('edit-content')
+		})
+	}
+
+	onDestroy(() => Mousetrap.unbind(['mod+1', 'mod+2']))
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -27,12 +40,30 @@
 	<div class="top">
 		<div class="component-button">
 			{#if $userRole === 'DEV'}
-				<button on:click={() => dispatch('edit-code')}>
-					<Icon icon="ph:code-bold" />
+				<button
+					class:showing_key_hint={$showKeyHint}
+					on:click={() => dispatch('edit-code')}
+					aria-label="Edit Block Code"
+				>
+					{#if $showKeyHint}
+						<span class="key-hint">&#8984; 1</span>
+					{/if}
+					<span class="icon">
+						<Icon icon="ph:code-bold" />
+					</span>
 				</button>
 			{/if}
-			<button on:click={() => dispatch('edit-content')}>
-				<Icon icon="material-symbols:edit-square-outline-rounded" />
+			<button
+				class:showing_key_hint={$showKeyHint}
+				on:click={() => dispatch('edit-content')}
+				aria-label="Edit Block Content"
+			>
+				{#if $showKeyHint}
+					<span class="key-hint">&#8984; 2</span>
+				{/if}
+				<span class="icon">
+					<Icon icon="material-symbols:edit-square-outline-rounded" />
+				</span>
 			</button>
 			{#if DEBUGGING}
 				<button class="block-id" use:click_to_copy>
@@ -116,13 +147,22 @@
 		/* color: var(--primo-color-white); */
 		/* background-color: var(--primo-color-black-opaque); */
 		background: #1f1f1f;
-		color: #cecece;
+		color: white;
 
 		/* font-size: var(--font-size-2); */
 		font-weight: 500;
 		transition: background-color 0.1s, color 0.1s;
 		box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
 			0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+		&.showing_key_hint .icon {
+			visibility: hidden;
+		}
+
+		.key-hint {
+			font-size: 0.75rem;
+			position: absolute;
+		}
 
 		&:hover {
 			z-index: 1; /* show full shadow */

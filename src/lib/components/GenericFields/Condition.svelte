@@ -15,8 +15,6 @@
 		{ icon: 'ph:equals-bold', label: 'Equals', value: '=' },
 		{ icon: 'ph:not-equals-bold', label: `Doesn't equal`, value: '!=' }
 	]
-
-	$: console.log({ comparable_fields, field })
 </script>
 
 <div class="Condition">

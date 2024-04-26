@@ -30,7 +30,11 @@
 	import { standardKeymap, indentWithTab } from '@codemirror/commands'
 	import { EditorState, Compartment } from '@codemirror/state'
 	import { oneDarkTheme, ThemeHighlighting } from './theme'
-	import { svelteCompletions, cssCompletions, extract_css_variables } from './extensions/autocomplete'
+	import {
+		svelteCompletions,
+		cssCompletions,
+		extract_css_variables
+	} from './extensions/autocomplete'
 	import { getLanguage } from './extensions'
 	import highlight_active_line from './extensions/inspector'
 
@@ -45,6 +49,23 @@
 	const dispatch = createEventDispatcher()
 
 	let Editor
+
+	const detectModKey = EditorView.domEventHandlers({
+		keydown(event, view) {
+			if (event.metaKey) {
+				dispatch('modkeydown')
+				return true // This prevents the event from further processing in the editor
+			}
+			return false // Allows the event to be handled normally by the editor
+		},
+		keyup(event, view) {
+			if (!event.metaKey) {
+				dispatch('modkeyup')
+				return true
+			}
+			return false
+		}
+	})
 
 	$: if (Editor && value !== Editor.state.doc.toString()) {
 		const old_value = Editor.state.doc.toString()
@@ -80,6 +101,13 @@
 			keymap.of([
 				standardKeymap,
 				indentWithTab,
+				{
+					key: 'Escape',
+					run: () => {
+						Editor.contentDOM.blur()
+						return true
+					}
+				},
 				{
 					key: 'mod-1',
 					run: () => {
@@ -142,6 +170,7 @@
 					}
 				}
 			]),
+			detectModKey,
 			EditorView.updateListener.of((view) => {
 				if (view.docChanged) {
 					const newValue = view.state.doc.toString()
@@ -222,7 +251,7 @@
 />
 
 <div bind:this={element} class="codemirror-container {mode}" {style}>
-	<div in:fade={{ duration: 200 }} bind:this={editorNode} />
+	<div bind:this={editorNode} />
 </div>
 
 <style lang="postcss">
@@ -259,7 +288,10 @@
 		transition: 0.1s background;
 	}
 
-	:global(.ͼo .cm-tooltip-autocomplete > ul > li[aria-selected='true'], .ͼo .cm-tooltip-autocomplete > ul > li:hover) {
+	:global(
+			.ͼo .cm-tooltip-autocomplete > ul > li[aria-selected='true'],
+			.ͼo .cm-tooltip-autocomplete > ul > li:hover
+		) {
 		color: white;
 		background: var(--color-gray-7);
 		transition: 0.1s background, 0.1s color;

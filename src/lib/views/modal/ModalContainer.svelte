@@ -2,17 +2,8 @@
 	import { onMount } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import modal from '../../stores/app/modal'
-	import * as Mousetrap from 'mousetrap'
 
 	export let visible
-
-	onMount(() => {
-		Mousetrap.bind(['esc'], () => {
-			if (!$modal.disabledBgClose) {
-				modal.hide()
-			}
-		})
-	})
 </script>
 
 {#if visible}

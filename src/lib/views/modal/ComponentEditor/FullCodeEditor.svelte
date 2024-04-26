@@ -48,12 +48,6 @@
 	export let css = ''
 	export let js = ''
 
-	if (!import.meta.env.SSR) {
-		Mousetrap.bind(['mod+1'], () => toggleTab(0))
-		Mousetrap.bind(['mod+2'], () => toggleTab(1))
-		Mousetrap.bind(['mod+3'], () => toggleTab(2))
-	}
-
 	let activeTab = 0
 
 	let selections = {
@@ -109,6 +103,8 @@
 		}
 		return formatted
 	}
+
+	let showing_local_key_hint = false
 </script>
 
 {#if $onMobile}
@@ -195,7 +191,7 @@
 	>
 		<div slot="left" class="tabs">
 			<button class:tab-hidden={$leftPaneSize <= '0'} on:click={() => toggleTab(0)}>
-				{#if $showKeyHint}
+				{#if showing_local_key_hint}
 					<span>&#8984; 1</span>
 				{:else}
 					<span>HTML</span>
@@ -209,9 +205,10 @@
 					{data}
 					bind:value={html}
 					bind:selection={selections['html']}
+					on:modkeydown={() => (showing_local_key_hint = true)}
+					on:modkeyup={() => (showing_local_key_hint = false)}
 					on:tab-switch={({ detail }) => toggleTab(detail)}
 					on:change={() => {
-						// showing_format_button = true
 						dispatch('htmlChange')
 					}}
 					on:format={() => (showing_format_button = false)}
@@ -222,7 +219,7 @@
 		</div>
 		<div slot="center" class="tabs">
 			<button class:tab-hidden={$centerPaneSize <= '0'} on:click={() => toggleTab(1)}>
-				{#if $showKeyHint}
+				{#if showing_local_key_hint}
 					<span>&#8984; 2</span>
 				{:else}
 					<span>CSS</span>
@@ -231,6 +228,8 @@
 			{#if $CodeMirror}
 				<svelte:component
 					this={$CodeMirror}
+					on:modkeydown={() => (showing_local_key_hint = true)}
+					on:modkeyup={() => (showing_local_key_hint = false)}
 					on:tab-switch={({ detail }) => toggleTab(detail)}
 					bind:selection={selections['css']}
 					bind:value={css}
@@ -248,7 +247,7 @@
 		</div>
 		<div slot="right" class="tabs">
 			<button class:tab-hidden={$rightPaneSize <= '0'} on:click={() => toggleTab(2)}>
-				{#if $showKeyHint}
+				{#if showing_local_key_hint}
 					<span>&#8984; 3</span>
 				{:else}
 					<span>JS</span>
@@ -257,6 +256,8 @@
 			{#if $CodeMirror}
 				<svelte:component
 					this={$CodeMirror}
+					on:modkeydown={() => (showing_local_key_hint = true)}
+					on:modkeyup={() => (showing_local_key_hint = false)}
 					on:tab-switch={({ detail }) => toggleTab(detail)}
 					bind:selection={selections['js']}
 					bind:value={js}
@@ -277,7 +278,7 @@
 
 <footer>
 	{#if showing_format_button}
-		<button on:click={() => format_all_code()} transition:fade={{ duration: 100 }}>
+		<button on:click={() => format_all_code()} transition:fade|local={{ duration: 100 }}>
 			<Icon icon="carbon:clean" />
 			<span>Format</span>
 		</button>
