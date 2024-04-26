@@ -132,7 +132,7 @@
 
 	function get_title(repeaterItem) {
 		const firstField = repeaterItem.find((subfield) =>
-			['text', 'link', 'number'].includes(subfield.type)
+			['text', 'markdown', 'link', 'number'].includes(subfield.type)
 		)
 		if (firstField) {
 			let { value } = repeaterItem[0]
@@ -179,7 +179,9 @@
 						{:else if item_icon}
 							<div style="font-size:1.5rem;">{@html item_icon}</div>
 						{:else}
-							<span>{item_title}</span>
+							<span style="white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">
+								{item_title}
+							</span>
 						{/if}
 						<Icon icon={visibleRepeaters[subfieldID] ? 'ph:caret-up-bold' : 'ph:caret-down-bold'} />
 					</button>
@@ -320,7 +322,8 @@
 
 			button.title {
 				padding: 0.5rem 0;
-				display: flex;
+				display: grid;
+				grid-template-columns: auto 1fr;
 				gap: 1rem;
 				align-items: center;
 				text-align: left;

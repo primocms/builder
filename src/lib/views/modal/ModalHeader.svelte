@@ -26,7 +26,6 @@
 	}
 
 	function closeModal() {
-		console.log('yeah')
 		if (warn()) {
 			onclose()
 			modal.hide()

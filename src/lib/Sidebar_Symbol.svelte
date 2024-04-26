@@ -164,6 +164,11 @@
 									}
 							  ]
 							: []),
+						{
+							label: 'Edit Symbol',
+							icon: 'material-symbols:code',
+							on_click: () => edit_symbol(symbol)
+						},
 						...($userRole === 'DEV'
 							? [
 									{
@@ -173,11 +178,6 @@
 									}
 							  ]
 							: []),
-						{
-							label: 'Edit Symbol',
-							icon: 'material-symbols:code',
-							on_click: () => edit_symbol(symbol)
-						},
 						{
 							label: 'Rename',
 							icon: 'ic:baseline-edit',

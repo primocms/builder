@@ -53,15 +53,17 @@
 	const detectModKey = EditorView.domEventHandlers({
 		keydown(event, view) {
 			if (event.metaKey) {
+				// event.preventDefault()
 				dispatch('modkeydown')
-				return true // This prevents the event from further processing in the editor
+				return false // This prevents the event from further processing in the editor
 			}
 			return false // Allows the event to be handled normally by the editor
 		},
 		keyup(event, view) {
 			if (!event.metaKey) {
+				// event.preventDefault()
 				dispatch('modkeyup')
-				return true
+				return false
 			}
 			return false
 		}

@@ -24,9 +24,7 @@
 
 	let element
 
-	onMount(() => {
-		autosize(element)
-	})
+	onMount(() => autosize(element))
 	// easily delete default content
 	function selectAll({ target }) {
 		if (field.default === field.value.markdown) target.select()
@@ -38,8 +36,10 @@
 		dispatch('input')
 	}
 
-	function handleSave({ metaKey, key }) {
+	function handleSave(event) {
+		const { metaKey, key } = event
 		if (metaKey && key === 's') {
+			event.preventDefault()
 			dispatch('save')
 		}
 	}

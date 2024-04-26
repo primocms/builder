@@ -257,7 +257,9 @@
 				{/if}
 			</div>
 			<button class="switch-view" on:click={changeView}>
-				<i class="fas {view === 'small' ? 'fa-compress-arrows-alt' : 'fa-expand-arrows-alt'}" />
+				<Icon
+					icon={view === 'small' ? 'fa-solid:compress-arrows-alt' : 'fa-solid:expand-arrows-alt'}
+				/>
 				{#if view === 'large'}
 					<span>static width</span>
 				{:else}
@@ -377,6 +379,10 @@
 
 		.switch-view {
 			flex: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 0.5rem;
 		}
 
 		.preview-orientation {

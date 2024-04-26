@@ -35,18 +35,16 @@
 	<div class="menu-container">
 		<div class="left">
 			<PrimoButton on:signOut />
-			<div class="icon-button">
-				<ToolbarButton
-					label="Pages"
-					icon="fluent:document-one-page-multiple-20-filled"
-					on:click={() =>
-						modal.show(
-							'SITE_PAGES',
-							{},
-							{ hideLocaleSelector: true, maxWidth: '600px', showSwitch: false }
-						)}
-				/>
-			</div>
+			<ToolbarButton
+				label="Pages"
+				icon="fluent:document-one-page-multiple-20-filled"
+				on:click={() =>
+					modal.show(
+						'SITE_PAGES',
+						{},
+						{ hideLocaleSelector: true, maxWidth: '600px', showSwitch: false }
+					)}
+			/>
 			{#if $userRole === 'DEV'}
 				<div class="button-group">
 					<ToolbarButton
