@@ -17,9 +17,17 @@
 		const item = options[indexOfItem]
 		const withoutItem = options.filter((_, i) => i !== indexOfItem)
 		if (direction === 'up') {
-			field.options.options = [...withoutItem.slice(0, indexOfItem - 1), item, ...withoutItem.slice(indexOfItem - 1)]
+			field.options.options = [
+				...withoutItem.slice(0, indexOfItem - 1),
+				item,
+				...withoutItem.slice(indexOfItem - 1)
+			]
 		} else if (direction === 'down') {
-			field.options.options = [...withoutItem.slice(0, indexOfItem + 1), item, ...withoutItem.slice(indexOfItem + 1)]
+			field.options.options = [
+				...withoutItem.slice(0, indexOfItem + 1),
+				item,
+				...withoutItem.slice(indexOfItem + 1)
+			]
 		} else {
 			console.error('Direction must be up or down')
 		}
@@ -112,7 +120,7 @@
 			dispatch('input')
 		}}
 	>
-		<i class="fas fa-plus" />
+		<Icon icon="ic:baseline-plus" />
 		Add Option
 	</button>
 </div>
@@ -136,6 +144,8 @@
 		}
 	}
 	.field-button {
+		display: flex;
+		gap: 0.5rem;
 		width: 100%;
 		background: var(--color-gray-7);
 		color: var(--color-gray-3);
@@ -143,10 +153,6 @@
 		border-bottom-right-radius: var(--border-radius);
 		border-bottom-left-radius: var(--border-radius);
 		transition: var(--transition-colors);
-
-		i {
-			margin-right: 0.5rem;
-		}
 	}
 	.field-button:hover {
 		background: var(--color-gray-9);

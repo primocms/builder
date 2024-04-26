@@ -22,12 +22,12 @@
 
 	const dispatch = createEventDispatcher()
 
-	function addField() {
-		fields = [...fields, Field()]
-		dispatch('input')
+	function add_field() {
+		const updated_fields = cloneDeep([...fields, Field()])
+		dispatch('input', updated_fields)
 	}
 
-	function createSubfield(field) {
+	function add_subfield(field) {
 		const idPath = getFieldPath(fields, field.id)
 		let updatedFields = cloneDeep(fields)
 		handleSubfieldCreation(fields)
@@ -43,45 +43,33 @@
 				fieldsToModify.forEach((field) => handleSubfieldCreation(field.fields))
 			}
 		}
-		fields = updatedFields
-		dispatch('input')
+		dispatch('input', updatedFields)
 	}
 
 	function delete_field(field) {
 		const idPath = getFieldPath(fields, field.id)
-		let updatedFields = cloneDeep(fields)
+		let updated_fields = cloneDeep(fields)
 
-		let parentField = _get(updatedFields, idPath.slice(0, -2))
+		let parentField = _get(updated_fields, idPath.slice(0, -2))
 		if (parentField) {
 			handleDeleteSubfield(fields)
 		} else {
-			fields = fields.filter((f) => f.id !== field.id)
+			updated_fields = fields.filter((f) => f.id !== field.id)
 		}
-		dispatch('delete')
+		dispatch('input', updated_fields)
 
 		function handleDeleteSubfield(fieldsToModify) {
 			if (find(fieldsToModify, ['id', parentField.id])) {
 				const newField = cloneDeep(parentField)
 				newField.fields = newField.fields.filter((f) => f.id != field.id)
-				_set(updatedFields, idPath.slice(0, -2), newField)
+				_set(updated_fields, idPath.slice(0, -2), newField)
 			} else {
 				fieldsToModify.forEach((field) => handleDeleteSubfield(field.fields))
 			}
-			fields = updatedFields
 		}
 	}
 
 	let disabled = false
-
-	function getComponent(field) {
-		const fieldType = find($fieldTypes, ['id', field.type])
-		if (fieldType) {
-			return fieldType.component
-		} else {
-			console.warn(`Field type '${field.type}' no longer exists, removing '${field.label}' field`)
-			return null
-		}
-	}
 
 	function duplicate_field(field) {
 		const idPath = getFieldPath(fields, field.id)
@@ -116,7 +104,8 @@
 				fieldsToModify.forEach((field) => handle_field_duplicate(field.fields))
 			}
 		}
-		fields = updatedFields
+
+		dispatch('input', updatedFields)
 	}
 
 	function move_field({ field, direction }) {
@@ -155,7 +144,14 @@
 				fieldsToModify.forEach((field) => handleFieldMove(field.fields))
 			}
 		}
-		fields = updatedFields
+		dispatch('input', updatedFields)
+	}
+
+	function update_field(updated_field) {
+		const updated_fields = cloneDeep(
+			fields.map((field) => (field.id === updated_field.id ? updated_field : field))
+		)
+		dispatch('input', updated_fields)
 	}
 
 	function getFieldPath(fields, id) {
@@ -168,6 +164,37 @@
 				return [i]
 			}
 		}
+	}
+
+	function getComponent(field) {
+		const fieldType = find($fieldTypes, ['id', field.type])
+		if (fieldType) {
+			return fieldType.component
+		} else {
+			console.warn(`Field type '${field.type}' no longer exists, removing '${field.label}' field`)
+			return null
+		}
+	}
+
+	function add_condition(field) {
+		const updated_fields = cloneDeep(
+			fields.map((f) =>
+				f.id === field.id
+					? {
+							...field,
+							options: {
+								...field.options,
+								condition: {
+									field: null,
+									comparison: '=',
+									value: ''
+								}
+							}
+					  }
+					: f
+			)
+		)
+		dispatch('input', updated_fields)
 	}
 
 	function check_condition(field) {
@@ -204,28 +231,11 @@
 				on:duplicate={({ detail: field }) => duplicate_field(field)}
 				on:delete={({ detail: field }) => delete_field(field)}
 				on:move={({ detail }) => move_field(detail)}
-				on:createsubfield={({ detail: field }) => createSubfield(field)}
-				on:addcondition={({ detail: field }) => {
-					field = {
-						...field,
-						options: {
-							...field.options,
-							condition: {
-								field: null,
-								comparison: '=',
-								value: ''
-							}
-						}
-					}
-					dispatch('input')
-				}}
-				on:input={({ detail }) => {
-					field = detail
-					dispatch('input')
-				}}
+				on:createsubfield={({ detail: field }) => add_subfield(field)}
+				on:input={({ detail: field }) => update_field(field)}
 			/>
 		{/each}
-		<button class="field-button" on:click={addField} {disabled}>
+		<button class="field-button" on:click={add_field} {disabled}>
 			<div class="icon">
 				<Icon icon="fa-solid:plus" />
 			</div>

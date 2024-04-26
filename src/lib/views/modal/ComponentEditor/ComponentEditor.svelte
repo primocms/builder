@@ -20,7 +20,7 @@
 	import GenericFields from '../../../components/GenericFields/GenericFields.svelte'
 	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'
 	import { processCode, processCSS, wrapInStyleTags } from '../../../utils'
-	import { locale, onMobile, userRole } from '../../../stores/app/misc'
+	import { locale, onMobile, userRole, showKeyHint } from '../../../stores/app/misc'
 
 	import { site_design_css } from '../../../code_generators.js'
 	import symbols from '../../../stores/data/symbols'
@@ -28,7 +28,6 @@
 	import { content, design as siteDesign, code as siteCode } from '../../../stores/data/site'
 	import { code as pageCode } from '../../../stores/app/activePage'
 	import { getPageData } from '../../../stores/helpers'
-	import { tick } from 'svelte'
 
 	/** @type {import('$lib').Section} */
 	export let component
@@ -363,15 +362,11 @@
 <main class:showing-fields={tab === 'fields'} lang={$locale}>
 	{#if tab === 'fields'}
 		<GenericFields
-			bind:fields
-			on:input={() => {
-				refresh_preview()
+			{fields}
+			on:input={async ({ detail: updated_fields }) => {
+				fields = updated_fields
+				// await tick()
 				save_local_content()
-			}}
-			on:delete={async () => {
-				await tick() // wait for fields to update
-				save_local_content()
-				refresh_preview()
 			}}
 			showCode={true}
 		/>

@@ -230,7 +230,14 @@
 								{
 									label: 'Add Condition',
 									icon: 'mdi:show',
-									on_click: () => dispatch('addcondition', field)
+									on_click: () => {
+										field.options.condition = {
+											field: null,
+											comparison: '=',
+											value: ''
+										}
+										dispatchUpdate()
+									}
 								}
 						  ]),
 					{
