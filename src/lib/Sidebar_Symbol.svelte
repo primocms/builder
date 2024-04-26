@@ -6,9 +6,9 @@
 	import modal from './stores/app/modal'
 	import { userRole } from './stores/app/misc'
 	import MenuPopup from './ui/Dropdown.svelte'
-	import IconButton from './components/IconButton.svelte'
+	import IconButton from './ui/IconButton.svelte'
 	import { get_symbol_usage_info } from './stores/helpers'
-	import { code as siteCode, design as siteDesign } from './stores/data/site'
+	import { code as siteCode } from './stores/data/site'
 	import { code as pageCode } from './stores/app/activePage'
 	import { locale } from './stores/app/misc'
 	import { click_to_copy } from './utilities'
@@ -21,32 +21,7 @@
 	export let header_hidden = false
 	export let append = ''
 
-	function edit_symbol_content(symbol) {
-		modal.show(
-			'SYMBOL_EDITOR',
-			{
-				symbol,
-				header: {
-					title: `Edit ${symbol.name || 'Block'}`,
-					icon: 'fas fa-check',
-					button: {
-						label: `Save Block`,
-						icon: 'fas fa-check',
-						onclick: () => {
-							modal.hide()
-						}
-					}
-				},
-				tab: 'content'
-			},
-			{
-				showSwitch: true,
-				disabledBgClose: true
-			}
-		)
-	}
-
-	function edit_symbol_code(symbol) {
+	function edit_symbol(symbol) {
 		modal.show(
 			'SYMBOL_EDITOR',
 			{
@@ -177,13 +152,6 @@
 		{/if}
 		{#if controls_enabled}
 			<div class="symbol-options">
-				{#if $userRole === 'DEV'}
-					<IconButton icon="material-symbols:code" on:click={() => edit_symbol_code(symbol)} />
-				{/if}
-				<IconButton
-					icon="material-symbols:edit-square-outline-rounded"
-					on:click={() => edit_symbol_content(symbol)}
-				/>
 				<MenuPopup
 					icon="carbon:overflow-menu-vertical"
 					options={[
@@ -196,10 +164,19 @@
 									}
 							  ]
 							: []),
+						...($userRole === 'DEV'
+							? [
+									{
+										label: 'Duplicate',
+										icon: 'bxs:duplicate',
+										on_click: () => dispatch('duplicate')
+									}
+							  ]
+							: []),
 						{
-							label: 'Duplicate',
-							icon: 'bxs:duplicate',
-							on_click: () => dispatch('duplicate')
+							label: 'Edit Symbol',
+							icon: 'material-symbols:code',
+							on_click: () => edit_symbol(symbol)
 						},
 						{
 							label: 'Rename',
@@ -252,11 +229,18 @@
 			transition: opacity 0.2s;
 
 			.name {
+				overflow: hidden;
 				display: flex;
 				align-items: center;
 				gap: 0.25rem;
 				font-size: 13px;
 				line-height: 16px;
+
+				h3 {
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
 			}
 
 			.symbol-options {

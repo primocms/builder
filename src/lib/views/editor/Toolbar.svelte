@@ -1,5 +1,5 @@
 <script>
-	import { getContext } from 'svelte'
+	import { getContext, createEventDispatcher } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import { find as _find } from 'lodash-es'
 	import { browser } from '$app/environment'
@@ -17,6 +17,8 @@
 	import { click_to_copy } from '../../utilities'
 	import { page } from '$app/stores'
 	// import { active_users } from '../../stores'
+
+	const dispatch = createEventDispatcher()
 
 	export let buttons
 
@@ -136,7 +138,7 @@
 				type="primo"
 				label="Publish"
 				active={false}
-				on:click={() => modal.show('DEPLOY', {}, { maxWidth: '800px', hideLocaleSelector: true })}
+				on:click={() => dispatch('publish')}
 				disabled={pageEmpty}
 			/>
 		</div>
