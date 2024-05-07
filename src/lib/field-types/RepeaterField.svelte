@@ -72,7 +72,6 @@
 	}
 
 	let repeaterFieldValues = []
-	$: console.log({ repeaterFieldValues, field })
 	getRepeaterFieldValues().then((val) => (repeaterFieldValues = val))
 
 	$: $locale, getRepeaterFieldValues().then((val) => (repeaterFieldValues = val))

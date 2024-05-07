@@ -26,8 +26,8 @@
 
 	const site_url = window.location.pathname.split('/')[1]
 	const full_url = parent
-		? `/${site_url}/${parent_urls.join('/')}/${page.url}`
-		: `/${site_url}/${page.url}`
+		? `/${site_url}/${parent_urls.join('/')}/${page.slug}`
+		: `/${site_url}/${page.slug}`
 
 	let showing_children = false
 	$: has_children = children.length > 0
@@ -68,7 +68,7 @@
 				>
 					{page.name}
 				</div>
-				{#if page.url !== 'index'}
+				{#if page.slug !== 'index'}
 					<div class="url">
 						<span>/</span>
 						<div
@@ -80,13 +80,13 @@
 								on_submit: () => (editing_page = false)
 							}}
 						>
-							{page.url}
+							{page.slug}
 						</div>
 					</div>
 				{/if}
 			</div>
 		{:else}
-			{@const url = page.url !== 'index' ? page.url : ''}
+			{@const url = page.slug !== 'index' ? page.slug : ''}
 			<div class="details">
 				<a class:active href={full_url} on:click={() => modal.hide()} class="name">{page.name}</a>
 				<span class="url">/{url}</span>
@@ -120,7 +120,7 @@
 		<MenuPopup
 			icon="carbon:overflow-menu-vertical"
 			options={[
-				...(page.url !== 'index' && !creating_page
+				...(page.slug !== 'index' && !creating_page
 					? [
 							{
 								label: `New Child Page`,
@@ -138,7 +138,7 @@
 						editing_page = !editing_page
 					}
 				},
-				...(page.url !== 'index'
+				...(page.slug !== 'index'
 					? [
 							{
 								label: 'Delete',
@@ -174,7 +174,7 @@
 				<svelte:self
 					parent={page}
 					page={subpage}
-					parent_urls={[...parent_urls, page.url]}
+					parent_urls={[...parent_urls, page.slug]}
 					children={subchildren}
 					active={$activePageID === subpage.id}
 					on:delete
@@ -217,11 +217,14 @@
 				font-weight: 400;
 				line-height: 1.5rem;
 				display: grid;
-				grid-template-columns: auto auto auto;
+				grid-template-columns: auto auto 1fr;
 				gap: 1rem;
 				color: var(--color-gray-1);
 
 				a.name {
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
 					border-bottom: 1px solid transparent;
 					margin-bottom: -1px;
 					transition: 0.1s;
@@ -231,7 +234,9 @@
 				}
 
 				.url {
-					display: flex;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
 					font-weight: 400;
 					color: var(--color-gray-5);
 				}

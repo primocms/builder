@@ -31,6 +31,7 @@
 	import { site_design_css } from '../../code_generators.js'
 
 	export let page
+	$: console.log({ page })
 
 	let html_head = ''
 	let html_below = ''
@@ -67,7 +68,7 @@
 		cached.pageCode = cloneDeep(pageCode)
 		cached.siteCode = cloneDeep(siteCode)
 		cached.siteDesign = cloneDeep(siteDesign)
-		const css = await processCSS(siteCode.css + pageCode.css)
+		// const css = await processCSS(siteCode.css + pageCode.css)
 
 		// workaround to prevent older css from overwriting newer css
 		if (latest_run > this_run) return
@@ -77,11 +78,11 @@
 		const [head, below] = await Promise.all([
 			processCode({
 				component: {
-					html: `<svelte:head>
-            ${siteCode.html.head}${pageCode.html.head}
-            ${wrapInStyleTags(css)}
+					html: `<svelte:head>\
+                        ${siteCode.head}\
+                        ${pageCode.head}\
 						${site_design_css(siteDesign)}
-          </svelte:head>`,
+                        </svelte:head>`,
 					css: '',
 					js: '',
 					data
@@ -89,7 +90,7 @@
 			}),
 			processCode({
 				component: {
-					html: siteCode.html.below + pageCode.html.below,
+					html: siteCode.foot + pageCode.foot,
 					css: '',
 					js: '',
 					data
@@ -315,6 +316,8 @@
 			}
 		})
 	}
+
+	let page_css = ''
 </script>
 
 <!-- Loading Spinner -->
@@ -385,7 +388,7 @@
 		<div
 			in:fade={{ duration: 100 }}
 			class="section"
-			id="section-{block.id.split('-')[0]}"
+			id="section-{block.id}"
 			class:locked
 			data-block={block.symbol}
 			on:mousemove={() => {

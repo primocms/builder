@@ -96,7 +96,7 @@ export async function buildStaticPage({
 
 						${
 							site.metadata.favicon
-								? `<link rel="icon" href="${site.metadata.favicon}" type="image/x-icon">\			
+								? `<link rel="icon" href="${site.metadata.favicon}" type="image/x-icon">\
 									 <link rel="shortcut icon" href="${site.metadata.favicon}" type="image/x-icon">`
 								: ``
 						}
@@ -108,7 +108,7 @@ export async function buildStaticPage({
 						<meta property="og:title" content="${metadata.page_title}">
 						<meta property="og:description" content="${metadata.page_description}">
 						${page.metadata?.image ? `<meta property="og:image" content="${page.metadata?.image}">` : ``}
-						
+
 						<!-- Twitter Meta Tags -->
 						<meta name="twitter:card" content="summary_large_image">
 						<meta property="twitter:domain" content="${site.custom_domain || site.id + '.breezly.site'}">
@@ -143,7 +143,7 @@ export async function buildStaticPage({
 				return {
 					html: `
           <div class="section" id="section-${section_id}" data-symbol="${symbol.id}">
-            ${html} 
+            ${html}
           </div>`,
 					js,
 					css,
@@ -250,6 +250,7 @@ export function get_content_with_static({ component, symbol, loc = get(locale) }
 }
 
 export function getPageData({ page = get(activePage), site = get(activeSite), loc = get(locale) }) {
+  console.log({page, site})
 	const page_content = page.content[loc]
 	const site_content = site.content[loc]
 	return {

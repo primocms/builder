@@ -56,7 +56,7 @@ export const Site_Tokens_CSS = (values) => {
 	`
 }
 
-export const languages = [
+export const locales = [
 	{
 		key: 'af',
 		name: 'Afrikaans'

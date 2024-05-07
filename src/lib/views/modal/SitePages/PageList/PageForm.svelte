@@ -75,7 +75,7 @@
 		--TextInput-label-font-size: 0.75rem;
 
 		&.has-page-types {
-			grid-template-columns: repeat(4, auto);
+			grid-template-columns: 1fr 1fr 1fr auto;
 		}
 
 		button {

@@ -9,6 +9,7 @@
 	import * as modals from './views/modal'
 	import * as Mousetrap from 'mousetrap'
 	import { onMobile, showKeyHint } from './stores/app/misc'
+	import built_in_symbols from './stores/data/primo_symbols'
 	import HSplitPane from './ui/HSplitPane.svelte'
 	import Sidebar from './Sidebar.svelte'
 	import { overrideItemIdKeyNameBeforeInitialisingDndZones } from 'svelte-dnd-action'
@@ -29,7 +30,12 @@
 
 	export let role = 'DEV'
 
-	export let buttons = []
+	export let primary_buttons = []
+	export let dropdown = []
+	export let secondary_buttons = []
+
+	export let primo_symbols = []
+	$: $built_in_symbols = primo_symbols
 
 	$: $userRole = role
 
@@ -112,12 +118,7 @@
 
 {#if data.page.page_type}
 	<div style="margin-top:54px">
-		<Toolbar {buttons}>
-			<div slot="toolbar-left">
-				<slot name="toolbar-left" />
-			</div>
-			<slot name="toolbar"><!-- optional fallback --></slot>
-		</Toolbar>
+		<Toolbar {primary_buttons} {dropdown} {secondary_buttons} on:publish/>
 		<slot />
 	</div>
 {:else}
@@ -132,7 +133,7 @@
 			{/if}
 		</div>
 		<div slot="right">
-			<Toolbar {buttons} on:publish>
+			<Toolbar {primary_buttons} {dropdown} {secondary_buttons} on:publish>
 				<div slot="toolbar-left">
 					<slot name="toolbar-left" />
 				</div>
@@ -148,16 +149,6 @@
 </Modal>
 
 <svelte:window on:resize={reset} />
-
-<!-- <svelte:head>
-	<link
-		rel="stylesheet"
-		href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
-		integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
-		crossorigin="anonymous"
-		referrerpolicy="no-referrer"
-	/>
-</svelte:head> -->
 
 <style lang="postcss">
 	[slot='right'] {

@@ -81,6 +81,9 @@ export const symbols = {
 		)
 		const original_sections = _.cloneDeep(get(stores.sections))
 
+		// TODO: get updated content rows
+		// separate fields into rows (no parent)
+
 		await update_timeline({
 			doing: async () => {
 				stores.symbols.update((store) =>

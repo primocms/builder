@@ -258,7 +258,10 @@
 							{field}
 							fields={fields.filter((f) => f.id !== field.id)}
 							on:save
-							on:input
+							on:input={({detail}) => {
+							// TODO: don't modify field object directly from child, dispatch updated
+								dispatch('input', fields)
+							}}
 						/>
 					</div>
 				</Card>

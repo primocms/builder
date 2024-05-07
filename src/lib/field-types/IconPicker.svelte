@@ -13,7 +13,7 @@
 
 	let searched = false
 
-	console.log({ field })
+	$: console.log({ field })
 	if (!getIcon(field.value) && !field.value.startsWith('<svg')) {
 		// reset value when invalid (i.e. when switching field type)
 		field.value = ''

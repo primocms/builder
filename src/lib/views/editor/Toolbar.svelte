@@ -20,7 +20,9 @@
 
 	const dispatch = createEventDispatcher()
 
-	export let buttons
+	export let primary_buttons
+	export let secondary_buttons
+	export let dropdown
 
 	$: pageEmpty =
 		$sections && $sections.length <= 1 && $sections.length > 0 && $sections[0]['type'] === 'options'
@@ -34,31 +36,44 @@
 <nav aria-label="toolbar" id="primo-toolbar" class="primo-reset">
 	<div class="menu-container">
 		<div class="left">
-			<PrimoButton on:signOut />
-			<ToolbarButton
-				label="Pages"
-				icon="fluent:document-one-page-multiple-20-filled"
-				on:click={() =>
-					modal.show(
-						'SITE_PAGES',
-						{},
-						{ hideLocaleSelector: true, maxWidth: '600px', showSwitch: false }
-					)}
-			/>
+			<PrimoButton />
+			<div class="button-group">
+				<ToolbarButton
+					label="Pages"
+					icon="fluent:document-one-page-multiple-20-filled"
+					on:click={() =>
+						modal.show(
+							'SITE_PAGES',
+							{},
+							{ hideLocaleSelector: true, maxWidth: '1200px', showSwitch: false }
+						)}
+				/>
+			</div>
+
 			{#if $userRole === 'DEV'}
 				<div class="button-group">
-					<ToolbarButton
+					<!-- <ToolbarButton
 						label="Page"
 						on:click={() =>
 							modal.show('PAGE_EDITOR', {}, { showSwitch: true, disabledBgClose: true })}
-					/>
+					/> -->
 					<ToolbarButton
-						label="Site"
+						icon="gg:website"
 						on:click={() =>
 							modal.show('SITE_EDITOR', {}, { showSwitch: true, disabledBgClose: true })}
 					/>
+					{#each primary_buttons as button}
+						<ToolbarButton icon={button.icon} on:click={button.onclick} />
+					{/each}
 				</div>
 			{/if}
+
+			<!-- <div class="button-group">
+				{#each primary_buttons as button}
+					<ToolbarButton icon={button.icon} on:click={button.onclick} />
+				{/each}
+			</div> -->
+
 			<div
 				class="dropdown"
 				class:active={showing_dropdown}
@@ -74,7 +89,7 @@
 				</button>
 				{#if showing_dropdown}
 					<div class="list" in:fade={{ duration: 100 }}>
-						{#each buttons as button}
+						{#each dropdown as button}
 							<button
 								on:click={() => {
 									showing_dropdown = false
@@ -124,6 +139,11 @@
 					{/each}
 				</div>
 			{/if} -->
+			<div class="button-group">
+				{#each secondary_buttons as button}
+					<ToolbarButton icon={button.icon} on:click={button.onclick} />
+				{/each}
+			</div>
 			{#if !$timeline.first}
 				<ToolbarButton id="undo" title="Undo" icon="material-symbols:undo" on:click={undo_change} />
 			{/if}
@@ -199,12 +219,16 @@
 			box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.2);
 
 			button {
-				padding: 0.25rem 0.5rem;
+				padding: 0.25rem 0.75rem;
 				color: white;
 				display: flex;
 				align-items: center;
-				gap: 0.25rem;
+				gap: 0.5rem;
 				transition: 0.1s;
+
+				span {
+					white-space: nowrap;
+				}
 
 				&:hover {
 					background: var(--color-gray-8);
@@ -223,6 +247,8 @@
 		display: flex;
 		align-items: center;
 		gap: 0.25rem;
+		place-content: center;
+
 		.site {
 			color: #b6b6b6;
 		}
@@ -257,12 +283,10 @@
 	}
 
 	.menu-container {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
 		margin: 0 auto;
 		padding: 0.5rem 1rem;
-		/* overflow: auto; */
 	}
 
 	.menu-container:after {
@@ -281,6 +305,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		place-content: flex-end;
 	}
 
 	.button-group {

@@ -93,7 +93,6 @@
 				dev_mode: false
 			})
 			.catch((e) => console.error(e))
-
 		if (res?.data?.error) {
 			component_error = res.data.error
 		} else if (res?.data) {

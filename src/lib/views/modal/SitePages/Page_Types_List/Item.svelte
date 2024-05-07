@@ -134,8 +134,8 @@
 		padding: 0.875rem 1.125rem;
 		background: #1a1a1a;
 		border-radius: var(--primo-border-radius);
-		border-top-left-radius: 0;
-		border-bottom-left-radius: 0;
+		/* border-top-left-radius: 0;
+		border-bottom-left-radius: 0; */
 
 		&.expanded {
 			border-bottom-right-radius: 0;

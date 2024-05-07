@@ -51,7 +51,7 @@
 		</button>
 	{/if}
 	{#if !hidden}
-		<div class="group-entries" transition:slide={{ duration: 100 }}>
+		<div class="group-entries" transition:slide|local={{ duration: 100 }}>
 			{#each subfieldsWithValues as subfield}
 				{#if subfield.options.hidden === '__show' || subfield.options.hidden === selectedOption || !subfield.options.hidden}
 					<div class="group-item">

@@ -7,6 +7,7 @@
 	import modal from './stores/app/modal'
 	import site from './stores/data/site'
 	import symbols from './stores/data/symbols'
+	import UI from './ui'
 	import Icon from '@iconify/svelte'
 	import { site_design_css } from './code_generators'
 	import { Symbol } from './factories'
@@ -140,102 +141,120 @@
 		<button on:click={() => (active_tab = 'site')} class:active={active_tab === 'site'}>Site Blocks</button>
 		<button on:click={() => (active_tab = 'primo')} class:active={active_tab === 'primo'}>Primo Blocks</button>
 	</div> -->
-	{#if active_tab === 'site'}
-		{#if $symbols.length > 0}
-			<div class="primo-buttons">
-				<button class="primo-button" on:click={show_block_picker}>
-					<Icon icon="mdi:plus" />
-					<span>Add</span>
-				</button>
-				{#if $userRole === 'DEV'}
+	<UI.Tabs
+		variant="secondary"
+		tabs={[
+			{
+				id: 'BLOCKS',
+				icon: 'lucide:blocks',
+				label: 'Article Blocks'
+			},
+			{
+				id: 'PAGE_OPTIONS',
+				icon: 'material-symbols:article-outline',
+				label: 'Article Options'
+			}
+		]}
+		disable_hotkeys={true}
+	/>
+	<div class="container">
+		{#if active_tab === 'site'}
+			{#if $symbols.length > 0}
+				<div class="primo-buttons">
+					<button class="primo-button" on:click={show_block_picker}>
+						<Icon icon="mdi:plus" />
+						<span>Add</span>
+					</button>
+					{#if $userRole === 'DEV'}
+						<button class="primo-button" on:click={create_symbol}>
+							<Icon icon="mdi:code" />
+							<span>Create</span>
+						</button>
+					{/if}
+					<label class="primo-button">
+						<input on:change={upload_symbol} type="file" accept=".json" />
+						<Icon icon="mdi:upload" />
+						<span>Upload</span>
+					</label>
+				</div>
+				<!-- svelte-ignore missing-declaration -->
+				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<div
+					class="symbols"
+					use:dndzone={{
+						items: draggable_symbols,
+						flipDurationMs,
+						dropTargetStyle: '',
+						centreDraggedOnCursor: true,
+						morphDisabled: true,
+						dragDisabled: !dragging
+					}}
+					on:consider={consider_dnd}
+					on:finalize={finalize_dnd}
+				>
+					{#each draggable_symbols as symbol, i (symbol._drag_id)}
+						<div animate:flip={{ duration: flipDurationMs }}>
+							<Sidebar_Symbol
+								{symbol}
+								append={site_design_css($site.design)}
+								header_hidden={dragging === symbol._drag_id}
+								on:mousedown={() => (dragging = symbol._drag_id)}
+								on:mouseup={() => (dragging = null)}
+								on:rename={({ detail: name }) => rename_symbol(symbol.id, name)}
+								on:download={() => download_symbol(symbol.id)}
+								on:delete={() => delete_symbol(symbol.id)}
+								on:duplicate={() => duplicate_symbol(symbol.id, i + 1)}
+							/>
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<div class="empty">
+					<p>You don't have any Blocks in your site yet</p>
+					<p>Create a Block from scratch, upload an existing Block, or use the Primo Blocks.</p>
+				</div>
+				<div class="primo-buttons">
+					<button class="primo-button" on:click={show_block_picker}>
+						<Icon icon="mdi:plus" />
+						<span>Add</span>
+					</button>
 					<button class="primo-button" on:click={create_symbol}>
 						<Icon icon="mdi:code" />
 						<span>Create</span>
 					</button>
-				{/if}
-				<label class="primo-button">
-					<input on:change={upload_symbol} type="file" accept=".json" />
-					<Icon icon="mdi:upload" />
-					<span>Upload</span>
-				</label>
-			</div>
-			<!-- svelte-ignore missing-declaration -->
-			<!-- svelte-ignore a11y-no-static-element-interactions -->
-			<div
-				class="symbols"
-				use:dndzone={{
-					items: draggable_symbols,
-					flipDurationMs,
-					dropTargetStyle: '',
-					centreDraggedOnCursor: true,
-					morphDisabled: true,
-					dragDisabled: !dragging
-				}}
-				on:consider={consider_dnd}
-				on:finalize={finalize_dnd}
-			>
-				{#each draggable_symbols as symbol, i (symbol._drag_id)}
-					<div animate:flip={{ duration: flipDurationMs }}>
+					<label class="primo-button">
+						<input on:change={upload_symbol} type="file" accept=".json" />
+						<Icon icon="mdi:upload" />
+						<span>Upload</span>
+					</label>
+				</div>
+			{/if}
+		{:else}
+			{#await get_primo_blocks() then primo_blocks}
+				<div
+					class="symbols"
+					use:dndzone={{
+						items: primo_blocks,
+						flipDurationMs,
+						dropTargetStyle: '',
+						centreDraggedOnCursor: true,
+						morphDisabled: true
+					}}
+					on:consider={consider_dnd}
+					on:finalize={finalize_dnd}
+				>
+					{#each primo_blocks as symbol, i}
 						<Sidebar_Symbol
 							{symbol}
 							append={site_design_css($site.design)}
+							controls_enabled={false}
 							header_hidden={dragging === symbol._drag_id}
-							on:mousedown={() => (dragging = symbol._drag_id)}
-							on:mouseup={() => (dragging = null)}
-							on:rename={({ detail: name }) => rename_symbol(symbol.id, name)}
-							on:download={() => download_symbol(symbol.id)}
-							on:delete={() => delete_symbol(symbol.id)}
-							on:duplicate={() => duplicate_symbol(symbol.id, i + 1)}
 						/>
-					</div>
-				{/each}
-			</div>
-		{:else}
-			<div class="empty">
-				<p>You don't have any Blocks in your site yet</p>
-				<p>Create a Block from scratch, upload an existing Block, or use the Primo Blocks.</p>
-			</div>
-			<div class="primo-buttons">
-				<button class="primo-button" on:click={show_block_picker}>
-					<Icon icon="mdi:plus" />
-					<span>Add</span>
-				</button>
-				<button class="primo-button" on:click={create_symbol}>
-					<Icon icon="mdi:code" />
-					<span>Create</span>
-				</button>
-				<label class="primo-button">
-					<input on:change={upload_symbol} type="file" accept=".json" />
-					<Icon icon="mdi:upload" />
-					<span>Upload</span>
-				</label>
-			</div>
+					{/each}
+				</div>
+			{/await}
 		{/if}
-	{:else}
-		{#await get_primo_blocks() then primo_blocks}
-			<div
-				class="symbols"
-				use:dndzone={{
-					items: primo_blocks,
-					flipDurationMs,
-					dropTargetStyle: '',
-					centreDraggedOnCursor: true,
-					morphDisabled: true
-				}}
-				on:consider={consider_dnd}
-				on:finalize={finalize_dnd}
-			>
-				{#each primo_blocks as symbol, i}
-					<Sidebar_Symbol
-						{symbol}
-						append={site_design_css($site.design)}
-						controls_enabled={false}
-						header_hidden={dragging === symbol._drag_id}
-					/>
-				{/each}
-			</div>
-		{/await}
-	{/if}
+	</div>
 </div>
 
 <style lang="postcss">
@@ -246,11 +265,11 @@
 		display: flex;
 		flex-direction: column;
 		height: calc(100vh - 54px);
-		gap: 0.5rem;
+		/* gap: 0.5rem; */
 		z-index: 9;
 		position: relative;
 		overflow: hidden;
-		padding-top: 1.5rem;
+		padding-top: 0.5rem;
 	}
 
 	.empty {
@@ -268,7 +287,6 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
-		padding-inline: 1.5rem;
 
 		.primo-button {
 			padding: 0.25rem 0.5rem;
@@ -287,13 +305,17 @@
 		}
 	}
 
+	.container {
+		display: flex;
+		flex-direction: column;
+		overflow-y: auto;
+		padding: 1rem;
+	}
+
 	.symbols {
-		padding-inline: 1.5rem;
 		gap: 1rem;
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		padding-bottom: 1.5rem;
-		overflow-y: scroll;
 	}
 </style>

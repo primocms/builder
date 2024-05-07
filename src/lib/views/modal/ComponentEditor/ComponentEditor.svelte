@@ -107,7 +107,9 @@
 	// swap content out of on-screen fields when locale changes
 	$: setupComponent($locale)
 	function setupComponent(loc) {
+	console.log(_.cloneDeep(fields))
 		fields = getFieldValues(fields, loc)
+		console.log(_.cloneDeep(fields))
 
 		// hydrate fields with content
 		function getFieldValues(fields, loc) {
@@ -212,20 +214,15 @@
 		}, 200)
 
 		async function compile() {
-			const parentCSS = await processCSS($siteCode.css + $pageCode.css)
+			// const parentCSS = await processCSS($siteCode.css + $pageCode.css)
 			const res = await processCode({
 				component: {
-					html: `
-			${html}
-      <svelte:head>
-        ${$siteCode.html.head}
-        ${$pageCode.html.head}
-        ${wrapInStyleTags(parentCSS, 'parent-styles')}
-				${site_design_css($siteDesign)}
-      </svelte:head>
-      ${$pageCode.html.below}
-      ${$siteCode.html.below}
-      `,
+					html: html + $pageCode.foot + $pageCode.foot + `
+					 <svelte:head>
+						 ${$siteCode.head}
+						 ${$pageCode.foot}
+						 ${site_design_css($siteDesign)}
+					 </svelte:head>`,
 					css,
 					js,
 					data
@@ -295,6 +292,9 @@
 			header.button.onclick()
 		}
 	}
+
+	console.log({fields})
+	$: console.log({fields})
 </script>
 
 {#if $userRole === 'DEV'}
@@ -362,8 +362,9 @@
 <main class:showing-fields={tab === 'fields'} lang={$locale}>
 	{#if tab === 'fields'}
 		<GenericFields
-			{fields}
+			bind:fields
 			on:input={async ({ detail: updated_fields }) => {
+			console.log('fields', {updated_fields})
 				fields = updated_fields
 				// await tick()
 				save_local_content()
@@ -382,10 +383,12 @@
 			<div slot="left" style="display: flex; flex-direction: column">
 				{#if tab === 'content'}
 					<GenericFields
-						bind:fields
+						{fields}
 						on:save={save_component}
-						on:input={() => {
-							fields = fields.filter(Boolean) // to trigger setting `data`
+						on:input={({detail:updated_fields}) => {
+						console.log({updated_fields})
+  						    console.log('content', {updated_fields})
+							fields = updated_fields
 							save_local_content()
 						}}
 						showCode={false}

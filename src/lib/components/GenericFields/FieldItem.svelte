@@ -393,7 +393,7 @@
 
 	.field-container {
 		display: grid;
-		grid-template-columns: 127px 1fr 1fr auto;
+		grid-template-columns: 1fr 3fr 3fr auto;
 		gap: 0.5rem;
 		place-items: start normal;
 

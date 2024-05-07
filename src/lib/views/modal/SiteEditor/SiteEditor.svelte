@@ -19,7 +19,7 @@
 	import { CodePreview } from '../../../components/misc'
 	import GenericFields from '../../../components/GenericFields/GenericFields.svelte'
 	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'
-	import { buildStaticPage } from '../../../stores/helpers'
+	import { page_html } from '../../../code_generators'
 	import { locale, onMobile, userRole } from '../../../stores/app/misc'
 	import modal from '../../../stores/app/modal'
 	import { active_site } from '../../../stores/actions'
@@ -139,14 +139,14 @@
 	let loading = false
 
 	// bind raw code to code editor
-	let rawHTML = local_code.html.head
-	let rawCSS = local_code.css
+	let rawHTML = local_code.head
+	let rawCSS = ''
 
 	// changing code triggers compilation
 	$: $autoRefresh &&
 		compileComponentCode({
-			html: rawHTML,
-			css: rawCSS
+			head: rawHTML,
+			foot: rawCSS
 		})
 
 	// on-screen fields
@@ -157,12 +157,12 @@
 	let compilationError // holds compilation error
 
 	let disableSave = false
-	async function compileComponentCode({ html, css }) {
+	async function compileComponentCode({ head, foot }) {
 		disableSave = true
 		loading = true
 
-		saveLocalValue('html', html)
-		saveLocalValue('css', css)
+		saveLocalValue('html', head)
+		// saveLocalValue('css', css)
 
 		await compile()
 		disableSave = compilationError
@@ -172,15 +172,13 @@
 
 		async function compile() {
 			preview = (
-				await buildStaticPage({
+				await page_html({
 					site: {
 						...$site,
 						code: {
 							...local_code,
-							html: {
-								head: html,
-								below: '' // TODO
-							}
+							head: head,
+							foot: '' // TODO
 						},
 						content: local_content
 					}
@@ -206,13 +204,7 @@
 		}
 
 		const Final = {
-			code: {
-				...local_code,
-				html: {
-					head: local_code.html,
-					below: ''
-				}
-			},
+			code: local_code,
 			content: local_content,
 			fields: _.cloneDeep(fields).map((field) => {
 				delete field.value
@@ -280,15 +272,11 @@
 <main>
 	{#if $activeTab === 'fields'}
 		<GenericFields
-			bind:fields
-			on:input={() => {
+			{fields}
+			on:input={async ({ detail: updated_fields }) => {
+				fields = updated_fields
 				refreshPreview()
 				saveLocalContent()
-			}}
-			on:delete={async () => {
-				await tick() // wait for fields to update
-				saveLocalContent()
-				refreshPreview()
 			}}
 			showCode={true}
 		/>

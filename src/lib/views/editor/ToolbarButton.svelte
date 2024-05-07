@@ -107,7 +107,6 @@
 	}
 
 	.primo-button {
-		height: 100%;
 		color: var(--primo-color-white);
 		font-weight: 400;
 		font-size: 13px;
@@ -121,10 +120,10 @@
 		gap: 0.5rem;
 
 		&.has-icon-button {
-			padding: 8px;
+			padding: 10px;
 
 			:global(svg) {
-				width: 25px;
+				width: 1rem;
 				height: auto;
 			}
 		}

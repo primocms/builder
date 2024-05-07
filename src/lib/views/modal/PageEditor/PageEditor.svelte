@@ -292,15 +292,11 @@
 	<main>
 		{#if $activeTab === 'fields'}
 			<GenericFields
-				bind:fields
-				on:input={() => {
+				{fields}
+				on:input={async ({ detail: updated_fields }) => {
+					fields = updated_fields
 					refreshPreview()
 					saveLocalContent()
-				}}
-				on:delete={async () => {
-					await tick() // wait for fields to update
-					saveLocalContent()
-					refreshPreview()
 				}}
 				showCode={true}
 			/>

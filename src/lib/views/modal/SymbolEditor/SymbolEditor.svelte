@@ -192,14 +192,14 @@
 				component: {
 					html: `
       <svelte:head>
-        ${$siteCode.html.head}
-        ${$pageCode.html.head}
+        ${$siteCode.head}
+        ${$pageCode.head}
         ${wrapInStyleTags(parentCSS, 'parent-styles')}
 				${Site_Tokens_CSS($siteDesign)}
       </svelte:head>
       ${html}
-      ${$pageCode.html.below}
-      ${$siteCode.html.below}
+      ${$pageCode.foot}
+      ${$siteCode.foot}
       `,
 					css,
 					js,

@@ -48,7 +48,12 @@
 			</span>
 		</button>
 	{:else}
-		<button use:popperRef on:click={() => (showing_dropdown = !showing_dropdown)} type="button">
+		<button
+			class="vertical-menu"
+			use:popperRef
+			on:click={() => (showing_dropdown = !showing_dropdown)}
+			type="button"
+		>
 			<Icon icon="carbon:overflow-menu-vertical" />
 		</button>
 	{/if}
@@ -176,7 +181,14 @@
 		width: 100%;
 		border-radius: var(--primo-border-radius);
 		font-size: 0.875rem;
-		white-space: nowrap;
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+
+		p {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 
 		.dropdown-icon {
 			margin-left: auto;

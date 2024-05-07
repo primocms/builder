@@ -4,6 +4,7 @@
 </script>
 
 <a class="primo-button" aria-label="See all sites" href="/" data-sveltekit-reload>
+	<!-- <a class="primo-button" aria-label="See all sites" href="/"> -->
 	{#if $loadingSite}
 		<UI.Spinner />
 	{:else}

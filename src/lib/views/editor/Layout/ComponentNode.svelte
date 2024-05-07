@@ -163,12 +163,17 @@
 				const url = URL.createObjectURL(blob)
 
 				const { default: App } = await import(/* @vite-ignore */ url)
-				component = new App({
-					target: node,
-					props: component_data
-				})
+				try {
+    				component = new App({
+     					target: node,
+     					props: component_data
+    				})
 
-				make_content_editable()
+    				make_content_editable()
+				} catch(e) {
+				  error = e
+				  console.log('ERROR', {e, component_data})
+				}
 			}
 		}
 	}

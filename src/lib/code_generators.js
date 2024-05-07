@@ -32,65 +32,15 @@ export async function page_html({
 	const hydratable_symbols_on_page = page_symbols.filter(
 		(s) => s.code.js && page_sections.some((section) => section.symbol === s.id)
 	)
-
+	console.log('yeah', { page, site })
 	const component = await Promise.all([
 		(async () => {
-			const css = await processCSS(site.code.css + page.code.css)
 			const data = getPageData({ page, site, loc: locale })
-			const metadata = {
-				site_title: site.metadata.title,
-				page_title:
-					(page.page_type ? page.page_type.metadata.title : page.metadata.title) ||
-					site.metadata?.title,
-				page_description: page.page_type
-					? page.page_type.metadata.description
-					: page.metadata.description || site.metadata.title,
-				page_image: page.page_type ? page.page_type.metadata.image : page.metadata.description
-			}
 			return {
 				html: `
          <svelte:head>
-           ${site.code.html.head}
-           ${page.code.html.head}
-
-           <title>${metadata.page_title}</title>\n
-           <meta name="description" content="${metadata.page_description}">
-
-           ${
-							site.metadata.favicon
-								? `<link rel="icon" href="${site.metadata.favicon}" type="image/x-icon">\			
-                  <link rel="shortcut icon" href="${site.metadata.favicon}" type="image/x-icon">`
-								: ``
-						}
-           <!-- Facebook Meta Tags -->
-           <meta property="og:url" content="https://${
-							site.custom_domain || site.id + '.breezly.site'
-						}/${page.url === 'index' ? '' : page.url}">
-           <meta property="og:type" content="website">
-           <meta property="og:title" content="${metadata.page_title}">
-           <meta property="og:description" content="${metadata.page_description}">
-           ${
-							page.metadata?.image
-								? `<meta property="og:image" content="${page.metadata?.image}">`
-								: ``
-						}
-           
-           <!-- Twitter Meta Tags -->
-           <meta name="twitter:card" content="summary_large_image">
-           <meta property="twitter:domain" content="${
-							site.custom_domain || site.id + '.breezly.site'
-						}">
-           <meta property="twitter:url" content="https://${
-							site.custom_domain || site.id + '.breezly.site'
-						}/${page.url === 'index' ? '' : page.url}">
-           <meta name="twitter:title" content="${metadata.page_title}">
-           <meta name="twitter:description" content="${metadata.page_description}">
-           ${
-							metadata.page_image
-								? `<meta name="twitter:image" content="${metadata.page_image}">`
-								: ``
-						}
-           <style>${css}</style>
+           ${site.code.head}
+           ${page.code.head}
            ${site_design_css(site.design)}
          </svelte:head>`,
 				css: ``,
@@ -111,11 +61,10 @@ export async function page_html({
 					loc: locale
 				})
 				const { css, error } = await processors.css(postcss || '')
-				const section_id = section.id.split('-')[0]
 				return {
 					html: `
-         <div class="section" id="section-${section_id}" data-symbol="${symbol.id}">
-           ${html} 
+         <div class="section" id="section-${section.id}" data-symbol="${symbol.id}">
+           ${html}
          </div>`,
 					js,
 					css,
@@ -126,7 +75,7 @@ export async function page_html({
 		(async () => {
 			const data = getPageData({ page, site, loc: locale })
 			return {
-				html: site.code.html.below + page.code.html.below,
+				html: site.code.foot + page.code.foot,
 				css: ``,
 				js: ``,
 				data
@@ -138,6 +87,8 @@ export async function page_html({
 		component,
 		locale
 	})
+
+	console.log({res})
 
 	const final = `\
  <!DOCTYPE html>
@@ -169,11 +120,10 @@ export async function page_html({
        ${page_sections
 					.filter((section) => section.symbol === symbol.id)
 					.map((section) => {
-						const section_id = section.id.split('-')[0]
 						const instance_content = get_content_with_static({ component: section, symbol, locale })
 						return `
            new App({
-             target: document.querySelector('#section-${section_id}'),
+             target: document.querySelector('#section-${section.id}'),
              hydrate: true,
              props: ${JSON.stringify(instance_content)}
            })

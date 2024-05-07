@@ -4,7 +4,7 @@
 	import { find as _find } from 'lodash-es'
 	import { locale } from '../../stores/app/misc'
 	import { add_language, delete_language, set_language } from '../../stores/actions'
-	import { languages as available_languages } from '../../constants'
+	import { locales as available_languages } from '../../constants'
 	import { content } from '../../stores/data/site'
 
 	export let align = 'right'

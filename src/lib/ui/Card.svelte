@@ -1,6 +1,5 @@
 <script>
 	import { onDestroy } from 'svelte'
-	import { slide } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
 	import { get, set } from 'idb-keyval'
 

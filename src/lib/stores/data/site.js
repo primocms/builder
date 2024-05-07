@@ -9,12 +9,6 @@ export const code = writable(Site().code)
 export const content = writable(Site().content)
 
 export const design = writable([])
-export const metadata = writable({
-	favicon: '',
-	title: '',
-	description: '',
-	image: ''
-})
 export const subscriptions = writable([])
 export const distribution_domain_name = writable('')
 export const validation_record = writable(null)
@@ -44,10 +38,6 @@ export function update(props) {
 	if (props.design) {
 		design.set(props.design)
 	}
-	if (props.metadata) {
-		metadata.set(props.metadata)
-	}
-
 	if (props.subscriptions) {
 		subscriptions.set(props.subscriptions)
 	}
@@ -79,7 +69,6 @@ export const site = derived(
 		fields,
 		content,
 		design,
-		metadata,
 		subscriptions,
 		distribution_domain_name,
 		validation_record,
@@ -95,7 +84,6 @@ export const site = derived(
 		fields,
 		content,
 		design,
-		metadata,
 		subscriptions,
 		distribution_domain_name,
 		validation_record,
@@ -111,7 +99,6 @@ export const site = derived(
 			fields,
 			content,
 			design,
-			metadata,
 			subscriptions,
 			distribution_domain_name,
 			validation_record,
