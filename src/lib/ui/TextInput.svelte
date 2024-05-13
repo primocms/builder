@@ -32,7 +32,11 @@
 	{#if label}<span class="label">{label}</span>{/if}
 	<div style="display: flex;width: 100%;gap: 0.5rem;">
 		{#if options.length > 0}
-			<select class="options" on:change={(e) => dispatch('select', { value: e?.target?.value })} bind:value={selection}>
+			<select
+				class="options"
+				on:change={(e) => dispatch('select', { value: e?.target?.value })}
+				bind:value={selection}
+			>
 				{#each options as option}
 					<option value={option.value}>
 						{option.label}
@@ -51,13 +55,17 @@
 				{type}
 				{placeholder}
 				{autofocus}
+				on:focus
 				on:input={({ target }) => {
 					value = target.value
 					dispatch('input', value)
 				}}
+				on:keydown
 			/>
 			{#if button}
-				<button on:click={button.onclick} type={button.type} disabled={button.disabled}>{button.label}</button>
+				<button on:click={button.onclick} type={button.type} disabled={button.disabled}>
+					{button.label}
+				</button>
 			{/if}
 		</div>
 	</div>

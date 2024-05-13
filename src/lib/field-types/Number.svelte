@@ -2,10 +2,11 @@
 	import UI from '../ui'
 
 	export let field
+	export let value
 </script>
 
 <div>
-	<UI.TextInput {...field} on:input bind:value={field.value} type="number" />
+	<UI.TextInput {...field} {value} on:input type="number" />
 </div>
 
 <style lang="postcss">

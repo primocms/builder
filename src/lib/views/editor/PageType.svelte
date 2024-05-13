@@ -3,7 +3,7 @@
 	import { tick } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import { flip } from 'svelte/animate'
-	import UI from '../../ui'
+	import UI from '../../ui/index.js'
 	import ComponentNode from './Layout/ComponentNode.svelte'
 	import BlockToolbar from './Layout/BlockToolbar.svelte'
 	import SymbolPalette from './Layout/SymbolPalette.svelte'
@@ -11,12 +11,11 @@
 	import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME } from 'svelte-dnd-action'
 	import { afterNavigate } from '$app/navigation'
 	import { isEqual, cloneDeep } from 'lodash-es'
-	import { code as siteCode, design as siteDesign } from '../../stores/data/site'
-	import { locale, locked_blocks } from '../../stores/app/misc'
-	import { active_page } from '../../stores/actions'
-	import modal from '../../stores/app/modal'
+	import { code as siteCode, design as siteDesign } from '../../stores/data/site.js'
+	import { locale, locked_blocks } from '../../stores/app/misc.js'
+	import { active_page } from '../../stores/actions.js'
+	import modal from '../../stores/app/modal.js'
 	import {
-		hydrated,
 		id as pageID,
 		name as pageName,
 		url as pageURL,
@@ -24,39 +23,40 @@
 		code as pageCode,
 		content as pageContent,
 		page_type
-	} from '../../stores/app/activePage'
-	import sections from '../../stores/data/sections'
-	import symbols from '../../stores/data/symbols'
-	import { processCode } from '../../utils'
-	import { getPageData } from '../../stores/helpers'
+	} from '../../stores/app/activePage.js'
+	import sections from '../../stores/data/sections.js'
+	import symbols from '../../stores/data/symbols.js'
+	import { processCode } from '../../utils.js'
+	import { getPageData } from '../../stores/helpers.js'
 	import { site_design_css } from '../../code_generators.js'
 
 	export let page
-	// $: console.log({ page })
+	$: console.log({ page })
 
 	let html_head = ''
 	let html_below = ''
 
-	$: hydrate_active_page(page)
-	hydrate_active_page(page)
-	async function hydrate_active_page(page_data) {
-		console.log('hydrating', page_data)
+	$: set_page_content(page)
+	set_page_content(page)
+	async function set_page_content(page_data) {
+		// if (!page_data) return
+		// await tick()
+		console.log({ page_data })
 		$sections = page_data.sections
+
 		$pageID = page_data.id
 		$pageName = page_data.name
 		$pageURL = page_data.url
-		// $pageFields = page_data.fields
-		// $pageCode = page_data.code
+		$pageFields = page_data.fields
+		$pageCode = page_data.code
 		$pageContent = page_data.content
 		$page_type = page_data.page_type
-		await tick()
-		$hydrated = true
 	}
 
 	const cached = { pageCode: null, siteCode: null, siteDesign: null }
 	let latest_run
-	$: set_doc_html($page_type.code, $siteCode, $siteDesign)
-	async function set_doc_html(pageCode, siteCode, siteDesign) {
+	$: set_page_html($pageCode, $siteCode, $siteDesign)
+	async function set_page_html(pageCode, siteCode, siteDesign) {
 		if (
 			isEqual(pageCode, cached.pageCode) &&
 			isEqual(siteCode, cached.siteCode) &&
@@ -69,6 +69,7 @@
 		cached.pageCode = cloneDeep(pageCode)
 		cached.siteCode = cloneDeep(siteCode)
 		cached.siteDesign = cloneDeep(siteDesign)
+		// const css = await processCSS(siteCode.css + pageCode.css)
 
 		// workaround to prevent older css from overwriting newer css
 		if (latest_run > this_run) return
@@ -79,9 +80,9 @@
 			processCode({
 				component: {
 					html: `<svelte:head>\
-                  ${siteCode.head}\
-                  ${pageCode.head}\
-									${site_design_css(siteDesign)}\
+                        ${siteCode.head}\
+                        ${pageCode.head}\
+												${site_design_css(siteDesign)}\
                  </svelte:head>`,
 					css: '',
 					js: '',
@@ -114,6 +115,7 @@
 	$: if (sections_mounted === $sections.length && sections_mounted !== 0) {
 		page_mounted = true
 	}
+	$: console.log({ page_mounted, sections_mounted })
 
 	// afterNavigate(() => {
 	// 	console.log('nav')
@@ -182,8 +184,7 @@
 		// })
 	}
 
-	// let draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
-	let draggable_sections = []
+	let draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
 	$: refresh_sections($sections)
 	async function refresh_sections(_) {
 		draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
@@ -418,12 +419,13 @@
 					/>
 				</div>
 			{:else if block.is_symbol_palette}
-				<SymbolPalette
+				<!-- <SymbolPalette
 					{block}
 					on:mount={() => {
+						console.log('yeah')
 						sections_mounted++
 					}}
-				/>
+				/> -->
 			{:else}
 				{#if locked && !in_current_tab}
 					<LockedOverlay {locked} />

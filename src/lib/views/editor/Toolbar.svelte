@@ -24,8 +24,8 @@
 	export let secondary_buttons
 	export let dropdown
 
-	$: pageEmpty =
-		$sections && $sections.length <= 1 && $sections.length > 0 && $sections[0]['type'] === 'options'
+	// $: pageEmpty =
+	// 	$sections && $sections.length <= 1 && $sections.length > 0 && $sections[0]['type'] === 'options'
 
 	let DEBUGGING
 	if (browser) DEBUGGING = getContext('DEBUGGING')
@@ -157,7 +157,7 @@
 				label="Publish"
 				active={false}
 				on:click={() => dispatch('publish')}
-				disabled={pageEmpty}
+				disabled={false}
 			/>
 		</div>
 	</div>

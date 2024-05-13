@@ -12,6 +12,7 @@ import * as factories from './factories'
 import PrimoFieldTypes from './field-types/index'
 import { validate_site_structure_v2 } from './converter'
 import PrimoPage from './views/editor/Page.svelte'
+import PageType from './views/editor/PageType.svelte'
 import { database_subscribe, storage_subscribe, realtime_subscribe } from './database'
 import { deploy, deploy_subscribe } from './deploy'
 import UI from './ui'
@@ -57,6 +58,7 @@ export {
 	processCSS,
 	buildStaticPage,
 	validate_site_structure_v2,
-	PrimoPage
+	PrimoPage,
+	PageType
 }
 export default Primo

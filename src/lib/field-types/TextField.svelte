@@ -2,10 +2,12 @@
 	import autosize from 'autosize'
 	import { onMount } from 'svelte'
 	import { createEventDispatcher } from 'svelte'
+	import TextInput from '../ui/TextInput.svelte'
 
 	const dispatch = createEventDispatcher()
 
 	export let field
+	export let value
 	export let disabled = false
 	export let title = null
 	export let variants = ''
@@ -26,9 +28,23 @@
 	onMount(() => {
 		autosize(element)
 	})
+
+	console.log({ value })
+
+	$: console.log({ field })
 </script>
 
-<label class={variants}>
+<TextInput
+	{...field}
+	{value}
+	on:focus={selectAll}
+	on:keydown={handleSave}
+	on:input={({ detail }) => {
+		dispatch('input', detail)
+	}}
+/>
+
+<!-- <label class={variants}>
 	<div>
 		<span>{field.label}</span>
 		{#if field.is_static}
@@ -50,7 +66,7 @@
 		value={field.value}
 		bind:this={element}
 	/>
-</label>
+</label> -->
 
 <style lang="postcss">
 	label {

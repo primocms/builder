@@ -1,0 +1,167 @@
+import _ from 'lodash-es'
+import * as factories from './factories.js'
+
+export function transform_fields({ fields }) {
+	if (!fields) return []
+
+	let transformed_fields = []
+	let count = 0
+	let done = new Set() // track transformed field IDs for reference
+
+	while (done.size < fields.length && count < 99999) {
+		for (const field of fields) {
+			// already done, skip
+			if (done.has(field.id)) continue
+
+			// root level, add
+			if (!field.parent) {
+				// add root property/object for nested content
+				transformed_fields.push({ ...factories.Field(field), id: field.id })
+				done.add(field.id)
+				continue
+			}
+
+			// parent exists, add to parent
+			if (done.has(field.parent)) {
+				const parent_field = deep_find(transformed_fields, 'fields', ['id', field.parent])
+				parent_field.fields.push({ ...factories.Field(field), id: field.id })
+				done.add(field.id)
+				continue
+			}
+		}
+	}
+
+	return transformed_fields
+}
+
+export function transform_content({ fields, content }) {
+	if (!content) return { en: {} }
+
+	// initialize and set locales
+	const structured_content = {}
+	content.forEach((row) => {
+		if (row.locale) {
+			structured_content[row.locale] = {}
+		}
+	})
+
+	function get_parent_node(parent_content_id, append_path = '') {
+		// item is at root level
+		if (!parent_content_id) {
+			return _.get(structured_content, `['en']`)
+		}
+
+		const parent_content = content.find((i) => i.id === parent_content_id)
+		const parent_field = fields.find((f) => f.id === parent_content.field)
+
+		// parent is at root level
+		if (!parent_content.parent) {
+			return _.get(structured_content, `['en']['${parent_field.key}']${append_path}`)
+		}
+
+		// parent is repeater or group container
+		if (parent_field) {
+			return get_parent_node(parent_content.parent, `['${parent_field.key}']` + append_path)
+		}
+
+		// parent is repeater item
+		if (parent_content.index !== null) {
+			return get_parent_node(parent_content.parent, `[${parent_content.index}]` + append_path)
+		}
+	}
+
+	try {
+		let count = 0
+		let done = new Set() // track transformed content row IDs for reference
+
+		// then, set all content values
+		while (done.size < content.length && count < 999) {
+			for (const row of content) {
+				// skip if item already added
+				if (done.has(row.id)) continue
+
+				// skip if has parent and parent hasn't been added yet
+				if (row.parent && !done.has(row.parent)) {
+					continue
+				}
+
+				// get matching field to use key
+				const field = fields.find((f) => f.id === row.field)
+
+				// if root-level content, add to root
+				if (!row.parent && field) {
+					if (field.type === 'repeater') {
+						// TODO: add to every locale
+						structured_content['en'][field.key] = []
+					} else if (field.type === 'group') {
+						structured_content['en'][field.key] = {}
+					} else {
+						structured_content[row.locale][field.key] = row.value
+					}
+					done.add(row.id)
+					continue
+				}
+
+				const parent_node = get_parent_node(row.parent)
+				const parent_content = content.find((i) => i.id === row.parent)
+
+				// initialize repeater item
+				if (!field) {
+					parent_node[row.index] = {}
+					done.add(row.id)
+					continue
+				}
+
+				// parent is a repeater item
+				if (parent_content.index !== null) {
+					// repeater container
+
+					if (field.type === 'repeater') {
+						parent_node[field.key] = []
+						done.add(row.id)
+						continue
+					}
+
+					if (field.type === 'group') {
+						parent_node[field.key] = {}
+						done.add(row.id)
+						continue
+					}
+
+					// value content
+					parent_node[field.key] = row.value
+					done.add(row.id)
+					continue
+				}
+
+				// parent is a group container
+				if (!parent_content.index) {
+					parent_node[field.key] = row.value
+					done.add(row.id)
+					continue
+				}
+			}
+
+			count++
+		}
+	} catch (e) {
+		console.error(e)
+	}
+
+	return structured_content
+}
+
+function deep_find(array, child_key, [key, value]) {
+	let found = null
+	for (const obj of array) {
+		if (obj[key] === value) {
+			found = obj
+			break
+		}
+		const child = deep_find(obj[child_key], child_key, [key, value])
+		if (child) {
+			found = child
+		}
+	}
+	return found
+}

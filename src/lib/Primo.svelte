@@ -11,13 +11,14 @@
 	import { onMobile, showKeyHint } from './stores/app/misc'
 	import built_in_symbols from './stores/data/primo_symbols'
 	import HSplitPane from './ui/HSplitPane.svelte'
-	import Sidebar from './Sidebar.svelte'
+	import Page_Sidebar from './components/Sidebar/Page_Sidebar.svelte'
+	import PageType_Sidebar from './components/Sidebar/PageType_Sidebar.svelte'
 	import { overrideItemIdKeyNameBeforeInitialisingDndZones } from 'svelte-dnd-action'
 	overrideItemIdKeyNameBeforeInitialisingDndZones('_drag_id')
 
-	import { userRole } from './stores/app'
+	import { userRole } from './stores/app/index.js'
 
-	import { hydrate_active_data } from './stores/actions'
+	import { hydrate_active_data } from './stores/actions.js'
 
 	/** @type {{
    * page: import('$lib').Page
@@ -27,6 +28,7 @@
    * symbols: Array<import('$lib').Symbol>
   }} */
 	export let data
+	$: console.log({ data })
 
 	export let role = 'DEV'
 
@@ -116,33 +118,27 @@
 	}
 </script>
 
-{#if data.page.page_type}
-	<div style="margin-top:54px">
-		<Toolbar {primary_buttons} {dropdown} {secondary_buttons} on:publish/>
+<HSplitPane bind:leftPaneSize bind:rightPaneSize style="margin-top:54px">
+	<div slot="left">
+		{#if showing_sidebar}
+			{#if data.page_type}
+				<PageType_Sidebar page_type={data.page_type} />
+			{:else}
+				<Page_Sidebar page={data.page} />
+			{/if}
+		{:else if !$onMobile}
+			<div class="expand primo-reset">
+				<IconButton on:click={reset} icon="tabler:layout-sidebar-left-expand" />
+			</div>
+		{/if}
+	</div>
+	<div slot="right">
+		<Toolbar {primary_buttons} {dropdown} {secondary_buttons} on:publish>
+			<slot name="toolbar"><!-- optional fallback --></slot>
+		</Toolbar>
 		<slot />
 	</div>
-{:else}
-	<HSplitPane bind:leftPaneSize bind:rightPaneSize style="margin-top:54px">
-		<div slot="left">
-			{#if showing_sidebar}
-				<Sidebar />
-			{:else if !$onMobile}
-				<div class="expand primo-reset">
-					<IconButton on:click={reset} icon="tabler:layout-sidebar-left-expand" />
-				</div>
-			{/if}
-		</div>
-		<div slot="right">
-			<Toolbar {primary_buttons} {dropdown} {secondary_buttons} on:publish>
-				<div slot="toolbar-left">
-					<slot name="toolbar-left" />
-				</div>
-				<slot name="toolbar"><!-- optional fallback --></slot>
-			</Toolbar>
-			<slot />
-		</div>
-	</HSplitPane>
-{/if}
+</HSplitPane>
 
 <Modal visible={!!activeModal}>
 	<svelte:component this={activeModal} {...$modal.componentProps} />

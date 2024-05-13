@@ -5,35 +5,32 @@
 	import { convert_markdown_to_html } from '../utils'
 
 	export let field
+	export let value
 
 	// ensure value is correct shape
-	if (typeof field.value === 'string') {
-		field.value = {
-			markdown: field.value,
-			html: field.value
+	if (typeof value === 'string') {
+		value = {
+			markdown: value,
+			html: value
 		}
-	} else if (typeof field.value !== 'object' || !field.value?.hasOwnProperty('markdown')) {
-		field.value = {
+	} else if (typeof value !== 'object' || !value?.hasOwnProperty('markdown')) {
+		value = {
 			markdown: '',
 			html: ''
 		}
 	}
-
-	$: value = field.value.markdown
-	$: parseContent(value)
 
 	let element
 
 	onMount(() => autosize(element))
 	// easily delete default content
 	function selectAll({ target }) {
-		if (field.default === field.value.markdown) target.select()
+		// if (field.default === value.markdown) target.select() // TODO?: restore, using symbol content as default value
 	}
 
 	async function parseContent(markdown) {
-		field.value.html = await convert_markdown_to_html(markdown)
-		field.value.markdown = markdown
-		dispatch('input')
+		const html = await convert_markdown_to_html(markdown)
+		dispatch('input', { html, markdown })
 	}
 
 	function handleSave(event) {
@@ -54,7 +51,7 @@
 		on:focus={selectAll}
 		on:keydown={handleSave}
 		on:input={({ target }) => parseContent(target.value)}
-		{value}
+		value={value.markdown}
 	/>
 </label>
 

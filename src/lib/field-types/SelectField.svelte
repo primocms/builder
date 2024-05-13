@@ -3,6 +3,7 @@
 	const dispatch = createEventDispatcher()
 
 	export let field
+	export let value
 
 	if (!field?.options?.options) {
 		field.options = {
@@ -16,10 +17,9 @@
 		<span>{field.label}</span>
 		{#if field.options.options.length > 0}
 			<select
-				value={field.value || field?.options?.selected}
-				on:change={(e) => {
-					field.value = e.target.value
-					dispatch('input')
+				value={value || field?.options?.selected}
+				on:change={({ target }) => {
+					dispatch('input', target.value)
 				}}
 			>
 				{#each field.options.options as option}

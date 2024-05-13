@@ -176,27 +176,6 @@
 		}
 	}
 
-	function add_condition(field) {
-		const updated_fields = cloneDeep(
-			fields.map((f) =>
-				f.id === field.id
-					? {
-							...field,
-							options: {
-								...field.options,
-								condition: {
-									field: null,
-									comparison: '=',
-									value: ''
-								}
-							}
-					  }
-					: f
-			)
-		)
-		dispatch('input', updated_fields)
-	}
-
 	function check_condition(field) {
 		if (!field.options.condition) return true // has no condition
 		const field_to_compare = fields.find((f) => f.id === field.options.condition?.field)
@@ -253,13 +232,14 @@
 					pill={field.is_static ? 'Static' : null}
 				>
 					<div class="field-item" id="field-{field.key}" class:repeater={field.key === 'repeater'}>
+						{field.id}
 						<svelte:component
 							this={getComponent(field)}
 							{field}
 							fields={fields.filter((f) => f.id !== field.id)}
 							on:save
-							on:input={({detail}) => {
-							// TODO: don't modify field object directly from child, dispatch updated
+							on:input={({ detail }) => {
+								// TODO: don't modify field object directly from child, dispatch updated
 								dispatch('input', fields)
 							}}
 						/>
@@ -288,7 +268,7 @@
 		padding-bottom: 1rem;
 		color: var(--color-gray-2);
 		background: var(--primo-color-black);
-		min-width: 23rem;
+		/* min-width: 23rem; */
 		height: 100%;
 		overflow-y: auto;
 		place-content: flex-start;

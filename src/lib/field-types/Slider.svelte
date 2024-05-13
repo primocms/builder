@@ -1,12 +1,21 @@
 <script>
+	import { createEventDispatcher } from 'svelte'
+	const dispatch = createEventDispatcher()
+
 	export let field
+	export let value
 </script>
 
 <div>
 	<p class="label">{field.label}</p>
 	<div class="container">
-		<p class="value">{field.value}</p>
-		<input on:input class="input" bind:value={field.value} type="range" />
+		<p class="value">{value}</p>
+		<input
+			on:input={({ target }) => dispatch('input', target.value)}
+			class="input"
+			{value}
+			type="range"
+		/>
 	</div>
 </div>
 

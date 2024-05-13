@@ -9,17 +9,18 @@
 	const dispatch = createEventDispatcher()
 
 	export let field
+	export let value
 	export let search_query = ''
 
 	let searched = false
 
 	$: console.log({ field })
-	if (!getIcon(field.value) && !field.value.startsWith('<svg')) {
+	if (!getIcon(value) && !value.startsWith('<svg')) {
 		// reset value when invalid (i.e. when switching field type)
-		field.value = ''
-	} else if (getIcon(field.value)) {
+		value = ''
+	} else if (getIcon(value)) {
 		// convert icon-id to icon-svg
-		select_icon(field.value)
+		select_icon(value)
 	}
 
 	// search immediately when passed a query
@@ -52,7 +53,7 @@
 			// TODO: on-page icon picker
 			const { attributes } = buildIcon(icon_data)
 			const svg = `<svg xmlns="http://www.w3.org/2000/svg" data-key="${field.key}" data-icon="${icon}" aria-hidden="true" role="img" height="${attributes.height}" width="${attributes.width}" viewBox="${attributes.viewBox}" preserveAspectRatio="${attributes.preserveAspectRatio}">${icon_data.body}</svg>`
-			field.value = svg
+			// value = svg
 			dispatch('input', { svg, icon })
 		}
 	}
@@ -63,9 +64,9 @@
 		<p class="label">{field.label}</p>
 	{/if}
 	<div class="container">
-		{#if field.value.startsWith('<svg')}
+		{#if value.startsWith('<svg')}
 			<div class="icon-preview">
-				{@html field.value}
+				{@html value}
 			</div>
 		{/if}
 		<form on:submit|preventDefault={search}>
@@ -92,7 +93,7 @@
 			{#each icons as icon}
 				<button
 					class="icon"
-					class:active={field.value === icon}
+					class:active={value === icon}
 					on:click={() => select_icon(icon)}
 					type="button"
 				>

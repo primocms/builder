@@ -1,4 +1,5 @@
 <script>
+	import _ from 'lodash-es'
 	import Icon from '@iconify/svelte'
 	import UI from '../ui'
 	import pages from '../stores/data/pages'
@@ -6,35 +7,20 @@
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 
-	const link = {
+	const default_value = {
 		label: '',
 		url: '',
 		active: false
 	}
 
-	export let field = {
-		value: link
+	export let field
+	export let value
+
+	if (!value || typeof value === 'string' || !value.label) {
+		value = _.cloneDeep(default_value)
 	}
 
-	if (!field.value || !field.value.label) {
-		field.value = link
-	}
-
-	$: if (typeof field.value === 'string' || !field.value) {
-		field.value = {
-			label: '',
-			url: '',
-			active: false
-		}
-	} else if (field.value.title && !field.value.label) {
-		// Fix old values using `title` instead of `label`
-		field.value = {
-			...field.value,
-			label: field.value.title
-		}
-	}
-
-	let selected = urlMatchesPage(field.value.url)
+	let selected = urlMatchesPage(value.url)
 
 	function urlMatchesPage(url) {
 		if (url && url.startsWith('/')) {
@@ -69,7 +55,7 @@
 		}
 	}
 
-	$: selected_page_name = get_page_name(field.value.url)
+	$: selected_page_name = get_page_name(value.url)
 	function get_page_name(url) {
 		if (url === '/') {
 			return $pages.find((p) => p.url === 'index')?.name
@@ -80,41 +66,33 @@
 			return $pages.find((p) => p.url === page_url)?.name
 		}
 	}
-	$: console.log({ selected_page_name })
 
-	let page_name_edited = !!field.value.label
+	let page_name_edited = !!value.label
 </script>
 
 <div class="Link">
 	<span class="label">{field.label}</span>
 	<div class="inputs">
 		<UI.TextInput
-			on:input={() => {
+			on:input={({ detail }) => {
 				page_name_edited = true
-				dispatch('input', field)
+				dispatch('input', {
+					url: value.url,
+					label: detail
+				})
 			}}
-			bind:value={field.value.label}
+			value={value.label}
 			id="page-label"
 			label="Label"
 			placeholder="About Us"
 		/>
 		<div class="url-select">
 			<div class="toggle">
-				<button
-					class:active={selected === 'page'}
-					on:click={() => {
-						selected = 'page'
-					}}
-				>
+				<button class:active={selected === 'page'} on:click={() => (selected = 'page')}>
 					<Icon icon="fluent:document-one-page-multiple-20-filled" />
 					<span>Page</span>
 				</button>
-				<button
-					class:active={selected === 'url'}
-					on:click={() => {
-						selected = 'url'
-					}}
-				>
+				<button class:active={selected === 'url'} on:click={() => (selected = 'url')}>
 					<Icon icon="akar-icons:link-chain" />
 					<span>URL</span>
 				</button>
@@ -130,18 +108,22 @@
 							.filter((p) => p.parent === page.id)
 							.map((p) => ({ value: getPageUrl(p, $locale, $pages), label: p.name }))
 					}))}
-					on:input={({ detail: value }) => {
-						if (!page_name_edited) {
-							field.value.label = get_page_name(value)
-						}
-						field.value.url = value
-						dispatch('input')
+					on:input={({ detail }) => {
+						dispatch('input', {
+							url: detail,
+							label: page_name_edited ? value.label : get_page_name(detail)
+						})
 					}}
 				/>
 			{:else}
 				<UI.TextInput
-					on:input={() => dispatch('input', field)}
-					bind:value={field.value.url}
+					on:input={({ detail }) => {
+						dispatch('input', {
+							label: value.label,
+							url: detail
+						})
+					}}
+					value={value.url}
 					type="url"
 					placeholder="https://primocms.org"
 				/>

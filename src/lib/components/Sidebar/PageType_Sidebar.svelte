@@ -3,22 +3,26 @@
 	import _ from 'lodash-es'
 	import fileSaver from 'file-saver'
 	import axios from 'axios'
-	import { userRole } from './stores/app/misc'
-	import modal from './stores/app/modal'
-	import site from './stores/data/site'
-	import symbols from './stores/data/symbols'
-	import UI from './ui'
+	import { userRole } from '../../stores/app/misc.js'
+	import modal from '../../stores/app/modal.js'
+	import site from '../../stores/data/site.js'
+	import symbols from '../../stores/data/symbols.js'
+	import UI from '../../ui/index.js'
 	import Icon from '@iconify/svelte'
-	import { site_design_css } from './code_generators'
-	import { Symbol } from './factories'
+	import { site_design_css } from '../../code_generators.js'
+	import { Symbol } from '../../factories.js'
 	import Sidebar_Symbol from './Sidebar_Symbol.svelte'
-	import { symbols as symbol_actions } from './stores/actions'
+	import GenericFields from '../GenericFields/GenericFields.svelte'
+	import { symbols as symbol_actions } from '../../stores/actions.js'
 	import { v4 as uuidv4 } from 'uuid'
-	import { validate_symbol } from './converter'
+	import { validate_symbol } from '../../converter.js'
 	import { dndzone } from 'svelte-dnd-action'
 	import { flip } from 'svelte/animate'
 
-	let active_tab = 'site'
+	export let page_type
+	let active_tab = 'BLOCKS'
+
+	$: console.log({ page_type })
 
 	async function create_symbol() {
 		const symbol = Symbol({ site: $site.id })
@@ -137,28 +141,25 @@
 </script>
 
 <div class="sidebar primo-reset">
-	<!-- <div class="tabs">
-		<button on:click={() => (active_tab = 'site')} class:active={active_tab === 'site'}>Site Blocks</button>
-		<button on:click={() => (active_tab = 'primo')} class:active={active_tab === 'primo'}>Primo Blocks</button>
-	</div> -->
 	<UI.Tabs
 		variant="secondary"
 		tabs={[
 			{
 				id: 'BLOCKS',
 				icon: 'lucide:blocks',
-				label: 'Article Blocks'
+				label: `${page_type.name} Blocks`
 			},
 			{
 				id: 'PAGE_OPTIONS',
 				icon: 'material-symbols:article-outline',
-				label: 'Article Options'
+				label: `${page_type.name} Options`
 			}
 		]}
+		bind:active_tab_id={active_tab}
 		disable_hotkeys={true}
 	/>
 	<div class="container">
-		{#if active_tab === 'site'}
+		{#if active_tab === 'BLOCKS'}
 			{#if $symbols.length > 0}
 				<div class="primo-buttons">
 					<button class="primo-button" on:click={show_block_picker}>
@@ -230,29 +231,17 @@
 				</div>
 			{/if}
 		{:else}
-			{#await get_primo_blocks() then primo_blocks}
-				<div
-					class="symbols"
-					use:dndzone={{
-						items: primo_blocks,
-						flipDurationMs,
-						dropTargetStyle: '',
-						centreDraggedOnCursor: true,
-						morphDisabled: true
+			<div class="page-type-fields">
+				<GenericFields
+					fields={page_type.fields}
+					on:input={async ({ detail: updated_fields }) => {
+						console.log('fields', { updated_fields })
+						// fields = updated_fields
+						// save_local_content()
 					}}
-					on:consider={consider_dnd}
-					on:finalize={finalize_dnd}
-				>
-					{#each primo_blocks as symbol, i}
-						<Sidebar_Symbol
-							{symbol}
-							append={site_design_css($site.design)}
-							controls_enabled={false}
-							header_hidden={dragging === symbol._drag_id}
-						/>
-					{/each}
-				</div>
-			{/await}
+					showCode={true}
+				/>
+			</div>
 		{/if}
 	</div>
 </div>

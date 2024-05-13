@@ -58,10 +58,7 @@
 
 	async function save_edited_value(key, value) {
 		_.set(local_component_data, key, value)
-		await update_section_content(block, {
-			...block.content,
-			[$locale]: local_component_data
-		})
+		await update_section_content(block, { key, value, locale: $locale })
 	}
 
 	let floatingMenu, bubbleMenu
@@ -164,15 +161,15 @@
 
 				const { default: App } = await import(/* @vite-ignore */ url)
 				try {
-    				component = new App({
-     					target: node,
-     					props: component_data
-    				})
+					component = new App({
+						target: node,
+						props: component_data
+					})
 
-    				make_content_editable()
-				} catch(e) {
-				  error = e
-				  console.log('ERROR', {e, component_data})
+					make_content_editable()
+				} catch (e) {
+					error = e
+					console.log('ERROR', { e, component_data })
 				}
 			}
 		}

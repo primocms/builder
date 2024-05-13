@@ -3,43 +3,18 @@
 	import { slide } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
 	import { fieldTypes } from '../stores/app'
-	import { createEventDispatcher } from 'svelte'
-	const dispatch = createEventDispatcher()
 
 	export let field
+	export let subfields
+	export let fields
+	export let content
 	export let level = 0
 
-	$: subfieldsWithValues = field.fields.map((subfield) => ({
-		...subfield,
-		value: field.value ? field.value[subfield.key] : null
-	}))
-
-	function setFieldValue() {
-		field.value = _chain(subfieldsWithValues).keyBy('key').mapValues('value').value()
-	}
-
-	function setSubfieldOptions() {
-		field.fields = subfieldsWithValues.map((subfield) => subfield) // pass everything (i.e. options)
-	}
-
-	function onInput() {
-		setSelectedOption()
-		setFieldValue()
-		setSubfieldOptions()
-		dispatch('input')
-	}
+	let hidden = false
 
 	function getFieldComponent(subfield) {
 		const field = _find($fieldTypes, ['id', subfield.type])
 		return field ? field.component : null
-	}
-
-	let hidden = false
-
-	let selectedOption = null
-	$: subfieldsWithValues, setSelectedOption()
-	function setSelectedOption() {
-		selectedOption = subfieldsWithValues.filter((f) => f.type === 'select')[0]?.value || null
 	}
 </script>
 
@@ -52,17 +27,17 @@
 	{/if}
 	{#if !hidden}
 		<div class="group-entries" transition:slide|local={{ duration: 100 }}>
-			{#each subfieldsWithValues as subfield}
-				{#if subfield.options.hidden === '__show' || subfield.options.hidden === selectedOption || !subfield.options.hidden}
-					<div class="group-item">
-						<svelte:component
-							this={getFieldComponent(subfield)}
-							field={subfield}
-							level={level + 1}
-							on:input={onInput}
-						/>
-					</div>
-				{/if}
+			{#each subfields as subfield}
+				<div class="group-item">
+					<svelte:component
+						this={getFieldComponent(subfield)}
+						field={subfield}
+						level={level + 1}
+						{fields}
+						{content}
+						on:input
+					/>
+				</div>
 			{/each}
 		</div>
 	{/if}

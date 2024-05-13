@@ -2,20 +2,21 @@
 	import _, { cloneDeep, chain as _chain } from 'lodash-es'
 	import { getContext } from 'svelte'
 	import autosize from 'autosize'
-	import UI from '../../ui'
+	import UI from '../../../ui'
 	import Toggle from 'svelte-toggle'
 	import Condition from './Condition.svelte'
 	import SyncField from './SyncField.svelte'
-	import fieldTypes from '../../stores/app/fieldTypes'
-	import SelectField from '../../components/GenericFields/SelectField.svelte'
-	import { getEmptyValue } from '../../utils'
+	import SelectField from './SelectField.svelte'
+	import fieldTypes from '../../../stores/app/fieldTypes'
+	import { getEmptyValue } from '../../../utils'
 
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 
-	export let fields
-	export let level = 0
 	export let field
+	export let fields
+	export let child_fields = []
+	export let level = 0
 	export let top_level = true
 
 	function validateFieldKey(key) {
@@ -26,92 +27,92 @@
 	function dispatchUpdate() {
 		// prevent fields from being saved with invalid values
 		const updated_field = cloneDeep(field)
-		updated_field.value = fix_field_values(updated_field)
+		// updated_field.value = fix_field_values(updated_field)
 		dispatch('input', updated_field)
 	}
 
-	function fix_group_value(field) {
-		const valid_value = valid_field_value(field.type, field.value)
-		if (!valid_value) return getEmptyValue(field)
+	// function fix_group_value(field) {
+	// 	const valid_value = valid_field_value(field.type, field.value)
+	// 	if (!valid_value) return getEmptyValue(field)
 
-		const updated_field_value = _.cloneDeep(field.value)
-		for (let subfield of field.fields) {
-			if (subfield.type === 'repeater') {
-				updated_field_value[subfield.key] = fix_repeater_value(subfield)
-			} else if (subfield.type === 'group') {
-				updated_field_value[subfield.key] = fix_group_value(subfield)
-			} else {
-				const subfield_value = updated_field_value[subfield.key]
-				const valid_value = valid_field_value(subfield.type, subfield_value)
-				if (!valid_value) {
-					updated_field_value[subfield.key] = getEmptyValue(subfield)
-				}
-			}
-		}
-		return updated_field_value
-	}
+	// 	const updated_field_value = _.cloneDeep(field.value)
+	// 	for (let subfield of field.fields) {
+	// 		if (subfield.type === 'repeater') {
+	// 			updated_field_value[subfield.key] = fix_repeater_value(subfield)
+	// 		} else if (subfield.type === 'group') {
+	// 			updated_field_value[subfield.key] = fix_group_value(subfield)
+	// 		} else {
+	// 			const subfield_value = updated_field_value[subfield.key]
+	// 			const valid_value = valid_field_value(subfield.type, subfield_value)
+	// 			if (!valid_value) {
+	// 				updated_field_value[subfield.key] = getEmptyValue(subfield)
+	// 			}
+	// 		}
+	// 	}
+	// 	return updated_field_value
+	// }
 
-	function fix_repeater_value(field) {
-		if (!valid_field_value(field.type, field.value)) return getEmptyValue(field)
+	// function fix_repeater_value(field) {
+	// 	if (!valid_field_value(field.type, field.value)) return getEmptyValue(field)
 
-		const updated_field_value = _.cloneDeep(field.value).map((item) => {
-			for (let subfield of field.fields) {
-				if (subfield.type === 'repeater') {
-					item[subfield.key] = fix_repeater_value(subfield)
-				} else if (subfield.type === 'group') {
-					item[subfield.key] = fix_group_value(subfield)
-				} else {
-					const subfield_value = item[subfield.key]
-					const valid_value = valid_field_value(subfield.type, subfield_value)
-					if (!valid_value) {
-						item[subfield.key] = getEmptyValue(subfield)
-					}
-				}
-			}
-			return item
-		})
+	// 	const updated_field_value = _.cloneDeep(field.value).map((item) => {
+	// 		for (let subfield of field.fields) {
+	// 			if (subfield.type === 'repeater') {
+	// 				item[subfield.key] = fix_repeater_value(subfield)
+	// 			} else if (subfield.type === 'group') {
+	// 				item[subfield.key] = fix_group_value(subfield)
+	// 			} else {
+	// 				const subfield_value = item[subfield.key]
+	// 				const valid_value = valid_field_value(subfield.type, subfield_value)
+	// 				if (!valid_value) {
+	// 					item[subfield.key] = getEmptyValue(subfield)
+	// 				}
+	// 			}
+	// 		}
+	// 		return item
+	// 	})
 
-		return updated_field_value
-	}
+	// 	return updated_field_value
+	// }
 
-	function fix_field_values(field) {
-		if (field.type === 'repeater') {
-			return fix_repeater_value(field)
-		} else if (field.type === 'group') {
-			return fix_group_value(field)
-		} else {
-			const valid_value = valid_field_value(field.type, field.value)
-			if (!valid_value) {
-				return getEmptyValue(field)
-			} else return field.value
-		}
-	}
+	// function fix_field_values(field) {
+	// 	if (field.type === 'repeater') {
+	// 		return fix_repeater_value(field)
+	// 	} else if (field.type === 'group') {
+	// 		return fix_group_value(field)
+	// 	} else {
+	// 		const valid_value = valid_field_value(field.type, field.value)
+	// 		if (!valid_value) {
+	// 			return getEmptyValue(field)
+	// 		} else return field.value
+	// 	}
+	// }
 
-	function valid_field_value(type, field_value) {
-		if (field_value === undefined) return false
-		if (type === 'repeater') {
-			return Array.isArray(field_value)
-		} else if (type === 'group') {
-			return typeof field_value === 'object' && !Array.isArray(field_value)
-		} else if (type === 'image') {
-			return typeof field_value === 'object' && 'url' in field_value && 'alt' in field_value
-		} else if (type === 'link') {
-			return typeof field_value === 'object' && 'url' in field_value && 'label' in field_value
-		} else if (type === 'markdown') {
-			return typeof field_value === 'object' && 'markdown' in field_value && 'html' in field_value
-		} else if (type === 'text') {
-			return typeof field_value === 'string'
-		} else if (type === 'url') {
-			return typeof field_value === 'string'
-		} else if (type === 'number') {
-			return typeof field_value === 'number'
-		} else if (type === 'switch') {
-			return typeof field_value === 'boolean'
-		} else {
-			console.warn('Unhandled field type', type, field_value)
-			return true
-		}
-	}
+	// function valid_field_value(type, field_value) {
+	// 	if (field_value === undefined) return false
+	// 	if (type === 'repeater') {
+	// 		return Array.isArray(field_value)
+	// 	} else if (type === 'group') {
+	// 		return typeof field_value === 'object' && !Array.isArray(field_value)
+	// 	} else if (type === 'image') {
+	// 		return typeof field_value === 'object' && 'url' in field_value && 'alt' in field_value
+	// 	} else if (type === 'link') {
+	// 		return typeof field_value === 'object' && 'url' in field_value && 'label' in field_value
+	// 	} else if (type === 'markdown') {
+	// 		return typeof field_value === 'object' && 'markdown' in field_value && 'html' in field_value
+	// 	} else if (type === 'text') {
+	// 		return typeof field_value === 'string'
+	// 	} else if (type === 'url') {
+	// 		return typeof field_value === 'string'
+	// 	} else if (type === 'number') {
+	// 		return typeof field_value === 'number'
+	// 	} else if (type === 'switch') {
+	// 		return typeof field_value === 'boolean'
+	// 	} else {
+	// 		console.warn('Unhandled field type', type, field_value)
+	// 		return true
+	// 	}
+	// }
 
 	// Auto-fill key when setting label
 	let key_edited = false
@@ -128,7 +129,7 @@
 	$: has_subfields = field.type === 'group' || field.type === 'repeater'
 	$: has_condition = field.options.condition
 
-	console.log({ field })
+	console.log({ field, fields })
 </script>
 
 <div class="top-container" class:top_level>
@@ -212,11 +213,6 @@
 			<UI.Dropdown
 				icon="carbon:overflow-menu-vertical"
 				options={[
-					// {
-					//   label: 'Download',
-					//   icon: 'ic:baseline-download',
-					//   on_click: () => dispatch('download'),
-					// },
 					{
 						label: 'Move up',
 						icon: 'material-symbols:arrow-circle-up-outline',
@@ -269,22 +265,16 @@
 	</div>
 	{#if has_subfields}
 		<div class="children-container" style:padding-left="{level + 1}rem">
-			{#each field.fields as subfield, i (subfield.id)}
+			{#each child_fields.sort((a, b) => a.index - b.index) as subfield, i (subfield.id)}
 				<svelte:self
 					field={cloneDeep(subfield)}
-					isFirst={i === 0}
-					isLast={i === field.fields.length - 1}
 					top_level={false}
 					level={level + 1}
+					on:duplicate
 					on:delete
 					on:move
 					on:createsubfield
-					on:input={({ detail: updatedSubfield }) => {
-						field.fields = field.fields.map((subfield) =>
-							subfield.id === updatedSubfield.id ? updatedSubfield : subfield
-						)
-						dispatchUpdate()
-					}}
+					on:input
 				/>
 			{/each}
 			{#if field.type === 'repeater' || field.type === 'group'}
@@ -324,20 +314,6 @@
 		{/if}
 	</div>
 </div>
-
-<!-- <EditField
-	{level}
-	{top_level}
-	has_subfields={field.type === 'group' || field.type === 'repeater'}
-	has_condition={field.options.condition}
-	minimal={field.type === 'info'}
-	on:addcondition={() => dispatch('addcondition', field)}
-	on:duplicate={() => dispatch('duplicate', field)}
-	on:delete={() => dispatch('delete', field)}
-	on:move={({ detail: direction }) => dispatch('move', { field, direction })}
->
-
-</EditField> -->
 
 <style lang="postcss">
 	.hidden {

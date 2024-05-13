@@ -9,50 +9,49 @@
 	import Icon from '@iconify/svelte'
 	import { createEventDispatcher, onDestroy, tick } from 'svelte'
 
-	// idb crashes chrome (try primo, server)
 	import * as idb from 'idb-keyval'
 	const dispatch = createEventDispatcher()
 
-	import { locale } from '../stores/app/misc'
 	import { getEmptyValue } from '../utils'
 	import { createUniqueID } from '../utilities'
 	import { fieldTypes } from '../stores/app'
 
+	export let id
 	export let field
+	export let subfields
+	export let fields
+	export let content
 	export let level = 0
 	export let show_label = false
 	export let hidden_keys = []
 
-	// ensure value is an array
-	if (!Array.isArray(field.value)) {
-		field.value = []
-	}
+	console.log({ field, subfields, content })
 
 	function add_repeater_item() {
 		dispatch('add')
 		const subfield = createSubfield()
-		visibleRepeaters[`${field.key}-${repeaterFieldValues.length}`] = true
-		repeaterFieldValues = [...repeaterFieldValues, subfield]
+		visibleRepeaters[`${field.key}-${repeater_container.length}`] = true
+		repeater_container = [...repeater_container, subfield]
 		onInput()
 	}
 
 	function removeRepeaterItem(itemIndex) {
 		dispatch('remove')
-		repeaterFieldValues = repeaterFieldValues.filter((_, i) => i !== itemIndex)
+		repeater_container = repeater_container.filter((_, i) => i !== itemIndex)
 		onInput()
 	}
 
 	function moveRepeaterItem(indexOfItem, direction) {
-		const item = repeaterFieldValues[indexOfItem]
-		const withoutItem = repeaterFieldValues.filter((_, i) => i !== indexOfItem)
+		const item = repeater_container[indexOfItem]
+		const withoutItem = repeater_container.filter((_, i) => i !== indexOfItem)
 		if (direction === 'up') {
-			repeaterFieldValues = [
+			repeater_container = [
 				...withoutItem.slice(0, indexOfItem - 1),
 				item,
 				...withoutItem.slice(indexOfItem - 1)
 			]
 		} else if (direction === 'down') {
-			repeaterFieldValues = [
+			repeater_container = [
 				...withoutItem.slice(0, indexOfItem + 1),
 				item,
 				...withoutItem.slice(indexOfItem + 1)
@@ -71,41 +70,34 @@
 		}))
 	}
 
-	let repeaterFieldValues = []
-	getRepeaterFieldValues().then((val) => (repeaterFieldValues = val))
+	let repeater_container = []
+	getRepeaterFieldValues()
 
-	$: $locale, getRepeaterFieldValues().then((val) => (repeaterFieldValues = val))
-	$: setTemplateKeys(repeaterFieldValues)
+	// $: $locale, getRepeaterFieldValues().then((val) => (repeater_container = val))
+	$: setTemplateKeys(repeater_container)
 
 	async function getRepeaterFieldValues() {
-		await tick() // need to wait for $locale to change parent content
-		return field.value.map((value) =>
-			field.fields.map((subfield) => ({
-				...subfield,
-				fields: _cloneDeep(
-					subfield.fields.map((sub) => ({
-						...sub,
-						value: value[subfield.key]?.[sub.key]
-					}))
-				),
-				value: value[subfield.key]
-			}))
-		)
+		const child_content_rows = content.filter((r) => r.parent === id)
+		console.log({ child_content_rows })
+		repeater_container = child_content_rows.map((child) => ({
+			subfields,
+			...child
+		}))
+		console.log({ repeater_container })
 	}
 
 	function setTemplateKeys(val) {
-		repeaterFieldValues = val.map((f) => {
+		repeater_container = val.map((f) => {
 			f._key = f._key || createUniqueID()
 			return f
 		})
 	}
 
 	function onInput() {
-		field.value = repeaterFieldValues.map((items, i) =>
-			_chain(items).keyBy('key').mapValues('value').value()
-		)
-
-		dispatch('input', field)
+		// field.value = repeater_container.map((items, i) =>
+		// 	_chain(items).keyBy('key').mapValues('value').value()
+		// )
+		// dispatch('input', field)
 	}
 
 	function getFieldComponent(subfield) {
@@ -115,29 +107,39 @@
 
 	$: singularLabel = $pluralize && $pluralize?.singular(field.label)
 
-	function get_image(repeaterItem) {
-		const [firstField] = repeaterItem
-		if (firstField && firstField.type === 'image') {
-			return firstField.value.url
+	function get_image(repeater_item) {
+		const [first_subfield] = repeater_item.subfields
+		if (first_subfield && first_subfield.type === 'image') {
+			const matching_content_row = content.find(
+				(r) => r.field === first_subfield.id && r.parent === repeater_item.id
+			)
+			return matching_content_row?.value?.url
 		} else return null
 	}
 
-	function get_icon(repeaterItem) {
-		const [firstField] = repeaterItem
-		if (firstField && firstField.type === 'icon') {
-			return firstField.value
+	function get_icon(repeater_item) {
+		const [first_subfield] = repeater_item.subfields
+		if (first_subfield && first_subfield.type === 'icon') {
+			const matching_content_row = content.find(
+				(r) => r.field === first_subfield.id && r.parent === repeater_item.id
+			)
+			return matching_content_row?.value
 		} else return null
 	}
 
-	function get_title(repeaterItem) {
-		const firstField = repeaterItem.find((subfield) =>
+	function get_title(repeater_item) {
+		const first_subfield = repeater_item.subfields.find((subfield) =>
 			['text', 'markdown', 'link', 'number'].includes(subfield.type)
 		)
-		if (firstField) {
-			let { value } = repeaterItem[0]
-			if (firstField.type === 'link') return value?.label
-			else if (firstField.type === 'markdown') return value?.markdown
-			else return value
+		if (first_subfield) {
+			// let { value } = repeater_item.subfields[0]
+			const matching_content_row = content.find(
+				(r) => r.field === first_subfield.id && r.parent === repeater_item.id
+			)
+			console.log({ matching_content_row })
+			if (first_subfield.type === 'link') return matching_content_row?.value?.label
+			else if (first_subfield.type === 'markdown') return matching_content_row?.value?.markdown
+			else return matching_content_row?.value
 		} else {
 			return singularLabel
 		}
@@ -162,11 +164,11 @@
 		<p class="label">{field.label}</p>
 	{/if}
 	<div class="fields">
-		{#each repeaterFieldValues as repeaterItem, i (repeaterItem._key)}
+		{#each repeater_container as repeater_item, i (repeater_item._key)}
 			{@const subfieldID = `${field.key}-${i}`}
-			{@const item_image = get_image(repeaterItem, field)}
-			{@const item_icon = get_icon(repeaterItem, field)}
-			{@const item_title = get_title(repeaterItem, field)}
+			{@const item_image = get_image(repeater_item, field)}
+			{@const item_icon = get_icon(repeater_item, field)}
+			{@const item_title = get_title(repeater_item, field)}
 			<div class="repeater-item" id="repeater-{field.key}-{i}">
 				<div class="item-options">
 					<button
@@ -190,7 +192,7 @@
 								<Icon icon="mdi:arrow-up" />
 							</button>
 						{/if}
-						{#if i !== repeaterFieldValues.length - 1}
+						{#if i !== repeater_container.length - 1}
 							<button
 								title="Move {singularLabel} down"
 								on:click={() => moveRepeaterItem(i, 'down')}
@@ -205,12 +207,19 @@
 				</div>
 				{#if visibleRepeaters[subfieldID]}
 					<div class="field-values">
-						{#each repeaterItem as subfield (repeaterItem._key + subfield.key)}
+						{#each repeater_item.subfields as subfield (repeater_item._key + subfield.key)}
 							{#if !hidden_keys.includes(subfield.key)}
+								{@const matching_content_row = content.find(
+									(r) => r.field === subfield.id && r.parent === repeater_item.id
+								)}
 								<div class="repeater-item-field" id="repeater-{field.key}-{i}-{subfield.key}">
 									{#if subfield.type === 'repeater'}
 										<svelte:self
 											field={subfield}
+											id={matching_content_row.id}
+											{content}
+											{fields}
+											subfields={fields.filter((f) => f.parent === subfield.id)}
 											on:input={onInput}
 											level={level + 1}
 											visible={true}
@@ -220,6 +229,7 @@
 										<svelte:component
 											this={getFieldComponent(subfield)}
 											field={subfield}
+											value={matching_content_row.value}
 											level={level + 1}
 											on:input={onInput}
 										/>
@@ -330,6 +340,8 @@
 				img {
 					width: 3rem;
 					border-radius: 2px;
+					aspect-ratio: 1;
+					object-fit: cover;
 				}
 			}
 

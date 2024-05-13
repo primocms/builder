@@ -60,40 +60,42 @@
 		class:expanded={showing_children}
 	>
 		<div class="left">
-			<span class="icon" style="padding: 7px; background: {page.color};border-radius: 1rem;">
-				{#if page.icon}
+			{#if page.icon}
+				<span class="icon" style="padding: 7px; background: {page.color};border-radius: 1rem;">
 					<Icon icon={page.icon} />
-				{/if}
-			</span>
+				</span>
+			{/if}
 			<a class="name" href={full_url} on:click={() => modal.hide()}>
 				{page.name}
 			</a>
 		</div>
 		<div class="options">
-			<MenuPopup
-				icon="carbon:overflow-menu-vertical"
-				options={[
-					{
-						label: 'Change Name',
-						icon: 'clarity:edit-solid',
-						on_click: () => {
-							editing_page = !editing_page
-						}
-					},
-					{
-						label: 'Delete Page Type',
-						icon: 'fluent:delete-20-filled',
-						on_click: () => {
-							const confirm = window.confirm(
-								`This will delete ALL pages of this page type. Continue?`
-							)
-							if (confirm) {
-								dispatch('delete', page)
+			{#if page.name !== 'Default'}
+				<MenuPopup
+					icon="carbon:overflow-menu-vertical"
+					options={[
+						{
+							label: 'Change Name',
+							icon: 'clarity:edit-solid',
+							on_click: () => {
+								editing_page = !editing_page
+							}
+						},
+						{
+							label: 'Delete Page Type',
+							icon: 'fluent:delete-20-filled',
+							on_click: () => {
+								const confirm = window.confirm(
+									`This will delete ALL pages of this page type. Continue?`
+								)
+								if (confirm) {
+									dispatch('delete', page)
+								}
 							}
 						}
-					}
-				]}
-			/>
+					]}
+				/>
+			{/if}
 		</div>
 	</div>
 {/if}

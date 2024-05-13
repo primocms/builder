@@ -1,6 +1,7 @@
 import { writable, get, derived } from 'svelte/store'
-import { Page } from '../../factories'
+import { Page, Page_Type } from '../../factories'
 
+export const hydrated = writable(false)
 export const id = writable('')
 export const name = writable('')
 export const url = writable('index')
@@ -10,6 +11,7 @@ export const fields = writable(Page().fields)
 export const parent = writable(Page().parent)
 export const metadata = writable(Page().metadata)
 export const page_type = writable(Page().page_type)
+// export const page_type = writable(Page_Type())
 
 export function set(val) {
 	if (val.id) {

@@ -3,22 +3,21 @@
 	import _ from 'lodash-es'
 	import axios from 'axios'
 	import Icon from '@iconify/svelte'
-	import modal from './stores/app/modal'
-	import { userRole } from './stores/app/misc'
-	import MenuPopup from './ui/Dropdown.svelte'
-	import IconButton from './ui/IconButton.svelte'
-	import { get_symbol_usage_info } from './stores/helpers'
-	import { code as siteCode } from './stores/data/site'
-	import { code as pageCode } from './stores/app/activePage'
-	import { locale } from './stores/app/misc'
-	import { click_to_copy } from './utilities'
+	import modal from '../../stores/app/modal'
+	import { userRole } from '../../stores/app/misc'
+	import MenuPopup from '../../ui/Dropdown.svelte'
+	import { get_symbol_usage_info } from '../../stores/helpers'
+	import { locale } from '../../stores/app/misc'
+	import { click_to_copy } from '../../utilities'
+	import { transform_content } from '../../transform_data.js'
 	import { browser } from '$app/environment'
-	import IFrame from './components/IFrame.svelte'
+	import IFrame from '../../components/IFrame.svelte'
 	const dispatch = createEventDispatcher()
 
 	export let symbol
 	export let controls_enabled = true
 	export let header_hidden = false
+	export let head = ''
 	export let append = ''
 
 	function edit_symbol(symbol) {
@@ -85,15 +84,16 @@
 			.post(`/api/render`, {
 				id: symbol.id,
 				code: {
-					html: symbol.code.html,
-					css: $siteCode.css + $pageCode.css + symbol.code.css,
+					html: `<svelte:head>${head}</svelte:head>` + symbol.code.html,
+					css: symbol.code.css,
 					js: symbol.code.js
 				},
-				content: symbol.content,
+				content: transform_content(symbol),
 				dev_mode: false
 			})
 			.catch((e) => console.error(e))
 		if (res?.data?.error) {
+			console.log({ res })
 			component_error = res.data.error
 		} else if (res?.data) {
 			const updated_componentCode = res.data

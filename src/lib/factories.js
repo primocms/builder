@@ -1,6 +1,25 @@
 import { v4 as uuidv4 } from 'uuid'
 import { createUniqueID } from './utilities.js'
 
+export const Content_Row = (row = {}) => ({
+	id: uuidv4(),
+	value: row.value || null,
+	locale: row.locale || 'en',
+	field: row.field
+})
+
+export const Field_Row = (field = {}) => ({
+	// id: field.id || createUniqueID(), // necessary to maintain id? removing to address corrupt data where IDs the same
+	id: uuidv4(),
+	key: field.key || '',
+	label: field.label || '',
+	type: field.type || 'text',
+	options: field.options || {},
+	is_static: field.is_static || false,
+	index: field.index || 0,
+	parent: field.parent || null
+})
+
 /**
  * Creates a new field object with default values.
  * @param field - The field properties to be applied to the new field
@@ -15,7 +34,8 @@ export const Field = (field = {}) => ({
 	fields: field.fields || [],
 	options: field.options || {},
 	is_static: field.is_static || false,
-	index: field.index || 0
+	index: field.index || 0,
+	links: field.links || []
 })
 
 /**
@@ -24,9 +44,9 @@ export const Field = (field = {}) => ({
  */
 export const Section = (section) => ({
 	id: uuidv4(),
-	content: section.content || {
-		en: {}
-	},
+	// content: section.content || {
+	// 	en: {}
+	// },
 	index: section.index || 0,
 	symbol: section.symbol,
 	page: section.page,
@@ -48,10 +68,10 @@ export const Symbol = (symbol) => ({
 		html: '',
 		js: ''
 	},
-	fields: symbol.fields || [],
-	content: symbol.content || {
-		en: {}
-	},
+	// fields: symbol.fields || [],
+	// content: symbol.content || {
+	// 	en: {}
+	// },
 	site: symbol.site || null,
 	index: symbol.index || 0
 })
@@ -131,7 +151,7 @@ export const Site = (site = {}) => ({
 	slug: '',
 	name: '',
 	code: {
-	 head: '',
+		head: '',
 		foot: ''
 	},
 	fields: [],

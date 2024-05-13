@@ -10,6 +10,7 @@ import activePage from './app/activePage.js'
 import { locale } from './app/misc.js'
 import { processCSS, getEmptyValue } from '../utils.js'
 import { site_design_css } from '../code_generators.js'
+import { transform_content, transform_fields } from '../transform_data.js'
 
 export async function get_symbol_usage_info(symbol_id) {
 	const { data, error } = await get(page)
@@ -219,12 +220,17 @@ export async function buildStaticPage({
 // Include static content alongside the component's content
 export function get_content_with_static({ component, symbol, loc = get(locale) }) {
 	if (!symbol) return { en: {} }
-	const content = _chain(symbol.fields)
+
+	const symbol_fields = transform_fields(symbol)
+	const symbol_content = transform_content(symbol)
+	const component_content = transform_content({ ...component, fields: symbol.fields })
+
+	const content = _chain(symbol_fields)
 		.map((field) => {
-			const field_value = component.content?.[loc]?.[field.key]
+			const field_value = component_content?.[loc]?.[field.key]
 			// if field is static, use value from symbol content
 			if (field.is_static) {
-				const symbol_value = symbol.content?.[loc]?.[field.key]
+				const symbol_value = symbol_content?.[loc]?.[field.key]
 				return {
 					key: field.key,
 					value: symbol_value
@@ -235,7 +241,7 @@ export function get_content_with_static({ component, symbol, loc = get(locale) }
 					value: field_value
 				}
 			} else {
-				const default_content = symbol.content?.[loc]?.[field.key]
+				const default_content = symbol_content?.[loc]?.[field.key]
 				return {
 					key: field.key,
 					value: default_content || getEmptyValue(field)
@@ -250,7 +256,6 @@ export function get_content_with_static({ component, symbol, loc = get(locale) }
 }
 
 export function getPageData({ page = get(activePage), site = get(activeSite), loc = get(locale) }) {
-  console.log({page, site})
 	const page_content = page.content[loc]
 	const site_content = site.content[loc]
 	return {

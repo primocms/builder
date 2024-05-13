@@ -18,6 +18,8 @@
 	import FullCodeEditor from './FullCodeEditor.svelte'
 	import { CodePreview } from '../../../components/misc'
 	import GenericFields from '../../../components/GenericFields/GenericFields.svelte'
+	import Fields from './Fields.svelte'
+	import Content from './Content.svelte'
 	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'
 	import { processCode, processCSS, wrapInStyleTags } from '../../../utils'
 	import { locale, onMobile, userRole, showKeyHint } from '../../../stores/app/misc'
@@ -28,6 +30,8 @@
 	import { content, design as siteDesign, code as siteCode } from '../../../stores/data/site'
 	import { code as pageCode } from '../../../stores/app/activePage'
 	import { getPageData } from '../../../stores/helpers'
+	import { Content_Row } from '../../../factories'
+	import { transform_content } from '../../../transform_data.js'
 
 	/** @type {import('$lib').Section} */
 	export let component
@@ -45,149 +49,26 @@
 		}
 	}
 
+	const local_component = _.cloneDeep(component)
+	const symbol = _.cloneDeep($symbols.find((s) => s.id === component.symbol))
+	console.log({ symbol, local_component })
+
+	let local_fields = _.cloneDeep(symbol.fields)
+	let local_content = _.cloneDeep(local_component.content)
+
 	// Show Static Field toggle within Field Item
 	setContext('show_static_field', true)
-
-	const placeholders = new Map()
-	function getCachedPlaceholder(field) {
-		const key = JSON.stringify(field)
-		if (placeholders.has(key)) {
-			return placeholders.get(key)
-		} else {
-			const val = getEmptyValue(field)
-			placeholders.set(key, val)
-			return val
-		}
-	}
-
-	const symbol = cloneDeep($symbols.find((s) => s.id === component.symbol))
-
-	let local_code = cloneDeep(symbol.code)
-
-	// on-screen fields w/ values included
-	let fields = symbol.fields
-
-	// local copy of component content to modify & save
-	let local_content = get_local_content()
-	function get_local_content() {
-		let combined_content = symbol.content
-		symbol.fields.forEach((field) => {
-			if (field.is_static) {
-				const value = symbol.content[$locale][field.key]
-				combined_content = {
-					...combined_content,
-					[$locale]: {
-						...combined_content[$locale],
-						[field.key]: value !== undefined ? value : getCachedPlaceholder(field)
-					}
-				}
-			} else {
-				const value = component.content[$locale][field.key]
-				combined_content = {
-					...combined_content,
-					[$locale]: {
-						...combined_content[$locale],
-						[field.key]: value !== undefined ? value : getCachedPlaceholder(field)
-					}
-				}
-			}
-		})
-		return combined_content
-	}
-
-	// component data for compiling
-	$: data = get_data($locale, local_content)
-	function get_data(loc, content) {
-		return {
-			...getPageData({ loc }), // pass in page data for page head
-			...content[loc]
-		}
-	}
-
-	// swap content out of on-screen fields when locale changes
-	$: setupComponent($locale)
-	function setupComponent(loc) {
-	console.log(_.cloneDeep(fields))
-		fields = getFieldValues(fields, loc)
-		console.log(_.cloneDeep(fields))
-
-		// hydrate fields with content
-		function getFieldValues(fields, loc) {
-			return fields.map((field) => {
-				const field_value = local_content[loc]?.[field.key]
-				const value = field_value !== undefined ? field_value : getCachedPlaceholder(field)
-				return {
-					...field,
-					value
-				}
-			})
-		}
-	}
-
-	// Ensure all content keys match field keys
-	$: syncFieldKeys(fields)
-	$: syncLocales($content)
-
-	async function syncFieldKeys(fields) {
-		const updated_local_content = _.cloneDeep(local_content)
-		removeNonexistantKeys() // delete keys from content that do not appear in fields
-		addMissingKeys() // add keys that do appear in fields
-		local_content = updated_local_content
-
-		// Remove content when field deleted
-		function removeNonexistantKeys() {
-			Object.keys(local_content[$locale]).forEach((key) => {
-				if (!find(fields, ['key', key])) {
-					Object.keys(local_content).forEach((loc) => {
-						delete updated_local_content[loc][key]
-					})
-				}
-			})
-			refresh_preview()
-		}
-
-		function addMissingKeys() {
-			fields.forEach((field) => {
-				if (local_content[$locale][field.key] === undefined) {
-					Object.keys(local_content).forEach((loc) => {
-						updated_local_content[loc][field.key] = getEmptyValue(field)
-					})
-				}
-			})
-		}
-	}
-
-	function syncLocales(content) {
-		// runs when adding new locale from ComponentEditor
-		Object.keys(content).forEach((loc) => {
-			if (!local_content[loc]) {
-				local_content = {
-					...local_content,
-					[loc]: local_content['en']
-				}
-			}
-		})
-	}
-
-	function save_local_content() {
-		// TODO
-		// save field value to all locales where block is used
-		// when block gets added to page, add static value as content to locale
-		local_content = {
-			...local_content,
-			[$locale]: {
-				...local_content[$locale],
-				..._chain(fields).keyBy('key').mapValues('value').value()
-			}
-		}
-	}
 
 	let loading = false
 
 	// raw code bound to code editor
+	let local_code = _.cloneDeep(symbol.code)
 	let raw_html = local_code.html
 	let raw_css = local_code.css
 	let raw_js = local_code.js
+
+	let component_data = transform_content({ fields: local_fields, content: local_content })[$locale]
+	$: console.log({ component_data })
 
 	// changing codes triggers compilation
 	$: $autoRefresh &&
@@ -200,7 +81,8 @@
 	let componentApp // holds compiled component
 	let compilationError // holds compilation error
 
-	$: compilationError && data && refresh_preview() // recompile when there's a compilation error & data changes
+	$: console.log({ component_data })
+	$: compilationError && component_data && refresh_preview() // recompile when there's a compilation error & data changes
 
 	let disable_save = false
 	async function compile_component_code({ html, css, js }) {
@@ -215,9 +97,14 @@
 
 		async function compile() {
 			// const parentCSS = await processCSS($siteCode.css + $pageCode.css)
+			console.log({ component_data })
 			const res = await processCode({
 				component: {
-					html: html + $pageCode.foot + $pageCode.foot + `
+					html:
+						html +
+						$pageCode.foot +
+						$pageCode.foot +
+						`
 					 <svelte:head>
 						 ${$siteCode.head}
 						 ${$pageCode.foot}
@@ -225,7 +112,7 @@
 					 </svelte:head>`,
 					css,
 					js,
-					data
+					data: component_data
 				},
 				buildStatic: false
 			})
@@ -258,43 +145,98 @@
 
 		if (!disable_save) {
 			// parse content - static content gets saved to symbol, dynamic content gets saved to instance
-			const updated_symbol_content = cloneDeep(symbol.content)
-			const updated_section_content = cloneDeep(component.content)
+			// const updated_symbol_content = cloneDeep(symbol.content)
+			// const updated_section_content = cloneDeep(component.content)
 
-			Object.entries(local_content).forEach(([language_key, language_content]) => {
-				Object.entries(language_content).forEach(([field_key, field_value]) => {
-					const matching_field = fields.find((field) => field.key === field_key)
-					if (matching_field.is_static) {
-						updated_symbol_content[language_key][field_key] = field_value
-					} else {
-						updated_section_content[language_key][field_key] = field_value
-						// if symbol content doesn't have field key, save to symbol
-						if (symbol.content[language_key][field_key] === undefined) {
-							updated_symbol_content[language_key][field_key] = field_value
-						}
-					}
-				})
-			})
+			// Object.entries(local_content).forEach(([language_key, language_content]) => {
+			// 	Object.entries(language_content).forEach(([field_key, field_value]) => {
+			// 		const matching_field = fields.find((field) => field.key === field_key)
+			// 		if (matching_field.is_static) {
+			// 			updated_symbol_content[language_key][field_key] = field_value
+			// 		} else {
+			// 			updated_section_content[language_key][field_key] = field_value
+			// 			// if symbol content doesn't have field key, save to symbol
+			// 			if (symbol.content[language_key][field_key] === undefined) {
+			// 				updated_symbol_content[language_key][field_key] = field_value
+			// 			}
+			// 		}
+			// 	})
+			// })
 
 			// code & fields gets saved to symbol
 			actions.symbols.update(symbol.id, {
-				code: local_code,
-				content: updated_symbol_content,
-				fields: fields.map((field) => {
-					delete field.value
-					return field
-				})
+				code: local_code
+				// content: updated_symbol_content,
+				// fields: fields.map((field) => {
+				// 	delete field.value
+				// 	return field
+				// })
 			})
 
 			// non-static content gets saved to section
-			actions.update_section_content(component, updated_section_content)
+			console.log({
+				component,
+				local_content,
+				field_transactions,
+				content_transactions,
+				local_fields
+			})
+			actions.update_instance(component.id, {
+				field_transactions,
+				content_transactions,
+				updated_fields: local_fields,
+				updated_content: local_content
+			})
+			// actions.update_section_content(component, updated_section_content)
 
 			header.button.onclick()
 		}
 	}
 
-	console.log({fields})
-	$: console.log({fields})
+	let field_transactions = []
+	let content_transactions = []
+	$: console.log({ field_transactions, content_transactions })
+	function handle_field_transaction(transaction) {
+		console.log({ transaction })
+		const existing_content_transaction = content_transactions.find(
+			(t) => t.data.field === transaction.id
+		)
+		if (transaction.action === 'insert') {
+			console.log('inserting')
+			const new_content_row = Content_Row({ field: transaction.id })
+			local_content = [...local_content, new_content_row]
+			content_transactions = [
+				...content_transactions,
+				{ action: 'insert', id: new_content_row.id, data: new_content_row }
+			]
+		} else if (transaction.action === 'delete') {
+			if (existing_content_transaction.action === 'insert') {
+				console.log('removing existing', { existing_content_transaction, transaction })
+				content_transactions = content_transactions.filter(
+					(t) => t.data.field !== existing_content_transaction.data.field
+				)
+			} else {
+				const existing_content_row = content.find((r) => r.field === transaction.id)
+				console.log({ existing_content_row })
+				content_transactions = [
+					...content_transactions,
+					{ action: 'delete', id: existing_content_row.id }
+				]
+			}
+			local_content = local_content.filter((r) => r.field === transaction.id)
+		}
+		field_transactions = transaction.all
+	}
+
+	function handle_content_transaction({ id, data }) {
+		const existing_transaction = content_transactions.find((t) => t.id === id)
+		console.log({ id, data, existing_transaction })
+		if (existing_transaction) {
+			existing_transaction.data = { ...existing_transaction.data, ...data }
+		} else {
+			content_transactions = [...content_transactions, { action: 'update', id, data }]
+		}
+	}
 </script>
 
 {#if $userRole === 'DEV'}
@@ -361,15 +303,10 @@
 
 <main class:showing-fields={tab === 'fields'} lang={$locale}>
 	{#if tab === 'fields'}
-		<GenericFields
-			bind:fields
-			on:input={async ({ detail: updated_fields }) => {
-			console.log('fields', {updated_fields})
-				fields = updated_fields
-				// await tick()
-				save_local_content()
-			}}
-			showCode={true}
+		<Fields
+			fields={local_fields}
+			on:input={({ detail }) => (local_fields = detail)}
+			on:transaction={({ detail }) => handle_field_transaction(detail)}
 		/>
 	{:else}
 		<HSplitPane
@@ -382,23 +319,23 @@
 		>
 			<div slot="left" style="display: flex; flex-direction: column">
 				{#if tab === 'content'}
-					<GenericFields
-						{fields}
+					<Content
+						fields={local_fields}
+						content={local_content}
 						on:save={save_component}
-						on:input={({detail:updated_fields}) => {
-						console.log({updated_fields})
-  						    console.log('content', {updated_fields})
-							fields = updated_fields
-							save_local_content()
+						on:input={({ detail: updated_content }) => {
+							console.log('content', { updated_content })
+							local_content = updated_content.content
+							// TODO: store transactions (detail.row_id & detail.value) for db update on save
 						}}
-						showCode={false}
+						on:transaction={({ detail }) => handle_content_transaction(detail)}
 					/>
 				{:else if tab === 'code'}
 					<FullCodeEditor
 						bind:html={raw_html}
 						bind:css={raw_css}
 						bind:js={raw_js}
-						{data}
+						data={component_data}
 						on:save={save_component}
 						on:refresh={refresh_preview}
 					/>
@@ -410,7 +347,7 @@
 					view="small"
 					{loading}
 					{componentApp}
-					{data}
+					data={component_data}
 					error={compilationError}
 				/>
 			</div>

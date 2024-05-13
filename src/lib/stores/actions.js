@@ -4,6 +4,7 @@ import { get } from 'svelte/store'
 import { goto } from '$app/navigation'
 import * as activePage from './app/activePage'
 import { id as activePageID } from './app/activePage'
+import page_type from './app/active_page_type.js'
 import { locale } from './app/misc'
 import stores, { update_timeline } from './data'
 import { update as update_site, content as site_content, site } from './data/site'
@@ -83,6 +84,8 @@ export const symbols = {
 
 		// TODO: get updated content rows
 		// separate fields into rows (no parent)
+
+		console.log({ updated_symbol_props })
 
 		await update_timeline({
 			doing: async () => {
@@ -720,73 +723,165 @@ export async function update_page_preview(page = get(activePage.default)) {
 	// }
 }
 
+export async function update_instance(
+	instance_id,
+	{ field_transactions, content_transactions, updated_fields, updated_content }
+) {
+	const original_sections = _.cloneDeep(get(stores.sections))
+	const original_section = original_sections.find((section) => section.id === instance_id)
+	const original_symbols = _.cloneDeep(get(stores.symbols))
+	const original_symbol = original_symbols.find((symbol) => symbol.id === original_section.symbol)
+
+	await update_timeline({
+		doing: async () => {
+			// update symbol fields
+			stores.symbols.update((store) =>
+				store.map((symbol) =>
+					symbol.id === original_symbol.id ? { ...symbol, fields: updated_fields } : symbol
+				)
+			)
+
+			// update section content
+			stores.sections.update((store) =>
+				store.map((section) =>
+					section.id === instance_id ? { ...section, content: updated_content } : section
+				)
+			)
+
+			// Store fields
+			const new_field_ids = {} // store id's of newly created fields for new children to reference
+			for (const { action, id, data } of field_transactions) {
+				console.log('Store fields', { action, id, data })
+				if (action === 'insert') {
+					delete data.id
+					const new_id = await dataChanged({
+						table: 'fields',
+						action,
+						data: {
+							...data,
+							parent: new_field_ids[data.parent] || data.parent,
+							symbol: original_symbol.id
+						}
+					})
+					console.log({ new_id }, new_field_ids[data.parent])
+					new_field_ids[id] = new_id
+				} else {
+					await dataChanged({
+						table: 'fields',
+						action,
+						data,
+						id
+					})
+				}
+			}
+
+			// Store content
+			console.log({ new_field_ids })
+			const new_content_ids = {}
+			for (const { action, id, data } of content_transactions) {
+				console.log('Store content', { action, id, data })
+				if (action === 'insert') {
+					delete data.id
+					const res = await dataChanged({
+						table: 'content',
+						action,
+						data: {
+							...data,
+							field: new_field_ids[data.field] || data.field,
+							parent: new_content_ids[data.parent] || data.parent, // TODO
+							section: instance_id
+						}
+					})
+					console.log({ field: new_field_ids[data.field], parent: new_content_ids[data.parent] })
+					new_content_ids[id] = res.id
+				} else {
+					await dataChanged({
+						table: 'content',
+						action,
+						data,
+						id
+					})
+				}
+			}
+		},
+		undoing: async () => {
+			// stores.symbols.set(original_symbols)
+			// stores.sections.set(original_sections)
+			// await dataChanged({
+			// 	table: 'symbols',
+			// 	action: 'update',
+			// 	data: original_symbol,
+			// 	id: original_symbol.id
+			// })
+		}
+	})
+}
+
 // extract symbol/instance content from updated section content
-export async function update_section_content(section, updated_content) {
+export async function update_section_content(section, { key, value, locale }) {
 	const symbol = get(stores.symbols).find((symbol) => symbol.id === section.symbol)
+	const matching_field = symbol.fields.find((field) => field.key === key)
 
 	const original_symbol_content = _.cloneDeep(symbol.content)
 	const original_section_content = _.cloneDeep(section.content)
 
 	await update_timeline({
 		doing: async () => {
-			const updated_symbol_content = cloneDeep(symbol.content)
-			const updated_section_content = {}
-
-			Object.entries(updated_content).forEach(([language_key, language_content]) => {
-				Object.entries(language_content).forEach(([field_key, field_value]) => {
-					const matching_field = symbol.fields.find((field) => field.key === field_key)
-					if (matching_field?.is_static) {
-						updated_symbol_content[language_key] = {
-							...updated_symbol_content[language_key],
-							[field_key]: field_value
-						}
-					} else if (matching_field) {
-						updated_section_content[language_key] = {
-							...updated_section_content[language_key],
-							[field_key]: field_value
-						}
-					} else {
-						// field has changed keys, discard
-					}
-				})
-			})
-
-			console.log({ original_section_content, updated_section_content })
-
-			stores.symbols.update((store) =>
-				store.map((s) => (s.id === symbol.id ? { ...s, content: updated_symbol_content } : s))
-			)
-			stores.sections.update((store) =>
-				store.map((s) => (s.id === section.id ? { ...s, content: updated_section_content } : s))
-			)
-			await Promise.all([
+			if (matching_field?.is_static) {
 				dataChanged({
-					table: 'sections',
+					table: 'content',
 					action: 'update',
-					id: section.id,
-					data: { content: updated_section_content }
-				}),
-				dataChanged({
-					table: 'symbols',
-					action: 'update',
-					id: symbol.id,
-					data: { content: updated_symbol_content }
+					// id: symbol.id,
+					match: { symbol: symbol.id, field: matching_field.id, locale },
+					data: { value }
 				})
-			])
+
+				const updated_symbol_content = cloneDeep(symbol.content)
+				_.set(updated_symbol_content, `${locale}.${key}`, value)
+				stores.symbols.update((store) =>
+					store.map((s) => (s.id === symbol.id ? { ...s, content: updated_symbol_content } : s))
+				)
+			} else if (matching_field) {
+				await dataChanged({
+					table: 'content',
+					action: 'update',
+					match: { section: section.id, field: matching_field.id, locale },
+					data: { value }
+				})
+
+				const updated_section_content = _.cloneDeep(section.content)
+				_.set(updated_section_content, `${locale}.${key}`, value)
+				stores.sections.update((store) =>
+					store.map((s) => (s.id === section.id ? { ...s, content: updated_section_content } : s))
+				)
+			}
 		},
 		undoing: async () => {
-			stores.symbols.update((store) =>
-				store.map((s) => (s.id === symbol.id ? { ...s, content: original_symbol_content } : s))
-			)
-			stores.sections.update((store) =>
-				store.map((s) => (s.id === section.id ? { ...s, content: original_section_content } : s))
-			)
-			await dataChanged({
-				table: 'sections',
-				action: 'update',
-				id: section.id,
-				data: { content: original_section_content }
-			})
+			if (matching_field?.is_static) {
+				const original_value = _.get(original_symbol_content[locale][key], value)
+				dataChanged({
+					table: 'content',
+					action: 'update',
+					// id: symbol.id,
+					match: { symbol: symbol.id, field: matching_field.id, locale },
+					data: { value: original_value }
+				})
+				stores.symbols.update((store) =>
+					store.map((s) => (s.id === symbol.id ? { ...s, content: original_symbol_content } : s))
+				)
+			} else if (matching_field) {
+				const original_value = _.get(original_section_content, `${locale}.${key}`)
+				console.log({ original_value, original_section_content, locale, key })
+				await dataChanged({
+					table: 'content',
+					action: 'update',
+					match: { section: section.id, field: matching_field.id, locale },
+					data: { value: original_value }
+				})
+				stores.sections.update((store) =>
+					store.map((s) => (s.id === section.id ? { ...s, content: original_section_content } : s))
+				)
+			}
 		}
 	})
 	update_page_preview()

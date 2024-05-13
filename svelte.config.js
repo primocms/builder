@@ -1,10 +1,10 @@
-import adapter from '@sveltejs/adapter-auto';
-import preprocess from 'svelte-preprocess';
+import adapter from '@sveltejs/adapter-auto'
+import preprocess from 'svelte-preprocess'
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	preprocess: preprocess({
-    postcss: true
+		postcss: true
 	}),
 	kit: {
 		// adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
@@ -13,8 +13,8 @@ const config = {
 		adapter: adapter()
 	},
 	vitePlugin: {
-		inspector: true,
-	},
-};
+		inspector: true
+	}
+}
 
-export default config;
+export default config

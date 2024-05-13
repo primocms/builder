@@ -1,4 +1,5 @@
 <script>
+	import _ from 'lodash-es'
 	import Icon from '@iconify/svelte'
 	import { createEventDispatcher } from 'svelte'
 	import TextInput from '../ui/TextInput.svelte'
@@ -8,35 +9,23 @@
 
 	const dispatch = createEventDispatcher()
 
-	const defaultValue = {
+	const default_value = {
 		alt: '',
 		url: ''
 	}
 
-	export let field = {
-		value: defaultValue,
-		options: {
-			size: null,
-			type: null
-		}
-	}
+	export let field
+	export let value
 
-	if (typeof field.value === 'string' || !field.value) {
-		field.value = defaultValue
+	if (typeof value === 'string' || !value) {
+		value = _.cloneDeep(default_value)
 	}
 
 	function set_url(url) {
-		field.value = {
+		dispatch('input', {
 			url,
-			alt: field.value.alt
-		}
-	}
-
-	function set_options(options) {
-		field.options = {
-			...field.options,
-			...options
-		}
+			alt: value.alt
+		})
 	}
 
 	async function convert_image(url, new_type) {
@@ -79,18 +68,14 @@
 			if (url) {
 				imagePreview = url
 				set_url(url)
-				set_options({
-					original_type: field.options.original_type || file.type.replace('image/', ''),
-					type: file.type.replace('image/', ''),
-					size: Math.round(size / 1000)
-				})
-				dispatch('input', field)
+				image_size = size
 			}
 			loading = false
 		}
 	}
 
-	let imagePreview = field.value.url || ''
+	let image_size = null
+	let imagePreview = value.url || ''
 	let loading = false
 </script>
 
@@ -103,17 +88,17 @@
 					<Spinner />
 				</div>
 			{:else}
-				{#if field.options.size}
+				{#if image_size}
 					<span class="field-size">
-						{field.options.size}KB
+						{image_size}KB
 					</span>
 				{/if}
-				{#if field.value.url}
+				{#if value.url}
 					<img src={imagePreview} alt="Preview" />
 				{/if}
 				<label class="image-upload">
 					<Icon icon="uil:image-upload" />
-					{#if !field.value.url}
+					{#if !value.url}
 						<span>Upload</span>
 					{/if}
 					<input
@@ -131,22 +116,30 @@
 			{/if}
 		</div>
 		<div class="inputs">
-			<TextInput bind:value={field.value.alt} on:input label="Description" />
 			<TextInput
-				value={field.value.url}
+				value={value.alt}
+				label="Description"
+				on:input={({ detail }) => {
+					dispatch('input', {
+						url: value.url,
+						alt: detail
+					})
+				}}
+			/>
+			<TextInput
+				value={value.url}
 				label="URL"
 				on:input={({ detail: value }) => {
 					imagePreview = value
 					set_url(value)
-					dispatch('input', field)
 				}}
 			/>
-			{#if field.options.type && field.options.type !== 'svg+xml'}
+			<!-- {#if field.options.type && field.options.type !== 'svg+xml'}
 				{@const original_active = field.options.type === field.options.original_type}
 				{@const webp_active = field.options.type === 'webp'}
 				<div class="image-type-buttons">
 					<button
-						on:click={() => convert_image(field.value.url, field.options.original_type)}
+						on:click={() => convert_image(value.url, field.options.original_type)}
 						class:active={original_active}
 						disabled={original_active}
 					>
@@ -154,7 +147,7 @@
 					</button>
 					{#if field.options.original_type?.toUpperCase() !== 'WEBP'}
 						<button
-							on:click={() => convert_image(field.value.url, 'webp')}
+							on:click={() => convert_image(value.url, 'webp')}
 							class:active={webp_active}
 							disabled={webp_active}
 						>
@@ -162,7 +155,7 @@
 						</button>
 					{/if}
 				</div>
-			{/if}
+			{/if} -->
 		</div>
 	</div>
 </div>
