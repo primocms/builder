@@ -3,11 +3,12 @@
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 
-	import UI from '../../../ui'
+	import UI from '../../ui/index.js'
 
 	export let field
 	export let field_to_compare
-	// export let comparable_fields
+	export let comparable_fields
+	export let collapsed
 
 	$: condition_value = field.options.condition?.value
 
@@ -17,47 +18,31 @@
 	]
 </script>
 
-<div class="Condition">
-	<p style="margin-bottom: 0.25rem; font-size: var(--font-size-1); color: #9d9d9d;">Sync Field</p>
+<div class="Condition" class:collapsed>
+	<p style="margin-bottom: 0.25rem; font-size: var(--font-size-1); color: #9d9d9d;">Condition</p>
 	<div class="container">
 		<!-- Sibling field to compare to -->
 		<UI.Dropdown
 			on:input={({ detail: field_id }) => {
-				// field.options.condition.field = field_id
+				field.options.condition.field = field_id
 				dispatch('input')
 			}}
-			icon={'mdi:link'}
-			label={'Field Link'}
-			options={[
-				{
-					label: 'Symbol',
-					value: '',
-					disabled: false
-				},
-				{
-					label: 'Page',
-					value: '',
-					disabled: false
-				},
-				{
-					label: 'Page List',
-					value: '',
-					disabled: false
-				},
-				{
-					label: 'Site',
-					value: '',
-					disabled: false
-				}
-			]}
+			icon={comparable_fields.find((f) => f.id === field.options.condition?.field)?.icon}
+			label={comparable_fields.find((f) => f.id === field.options.condition?.field)?.label ||
+				'Field'}
+			options={comparable_fields.map((f) => ({
+				label: f.label,
+				value: f.id,
+				disabled: f.options.condition
+			}))}
 		/>
 		<!-- Comparison -->
 		<UI.Dropdown
 			on:input={({ detail: comparison }) => {
-				// field.options.condition.comparison = comparison
+				field.options.condition.comparison = comparison
 				dispatch('input')
 			}}
-			label={'Comp'}
+			label={comparisons.find((c) => c.value === field.options.condition?.comparison)?.label}
 			icon={comparisons.find((c) => c.value === field.options.condition?.comparison)?.icon}
 			options={comparisons}
 		/>
@@ -105,7 +90,11 @@
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
+	.collapsed .container {
+		grid-template-columns: 1fr !important;
+		gap: 0.75rem;
+	}
 	.container {
 		display: grid;
 		grid-template-columns: auto auto 1fr auto;

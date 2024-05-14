@@ -1,8 +1,7 @@
 import {
 	Deploy,
-	ComponentEditor,
+	SectionEditor,
 	SymbolEditor,
-	PageEditor,
 	SiteEditor,
 	SitePages,
 	Dialog,
@@ -17,8 +16,8 @@ export const modalTypes = {
 			icon: 'fas fa-cloud-upload-alt'
 		}
 	},
-	COMPONENT_EDITOR: {
-		component: ComponentEditor,
+	SECTION_EDITOR: {
+		component: SectionEditor,
 		header: {
 			title: 'Create Component',
 			icon: 'fas fa-code'
@@ -28,13 +27,6 @@ export const modalTypes = {
 		component: SymbolEditor,
 		header: {
 			title: 'Create Symbol',
-			icon: 'fas fa-code'
-		}
-	},
-	PAGE_EDITOR: {
-		component: PageEditor,
-		header: {
-			title: 'Edit Page',
 			icon: 'fas fa-code'
 		}
 	},

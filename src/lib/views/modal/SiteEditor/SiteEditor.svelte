@@ -11,13 +11,12 @@
 
 <script>
 	import _, { cloneDeep, find, chain as _chain } from 'lodash-es'
-	import HSplitPane from '../PageEditor/HSplitPane.svelte'
+	import HSplitPane from './HSplitPane.svelte'
 	import { getEmptyValue } from '../../../utils'
 	import ModalHeader from '../ModalHeader.svelte'
 	import Tabs from '../../../ui/Tabs.svelte'
-	import FullCodeEditor from '../PageEditor/FullCodeEditor.svelte'
+	import FullCodeEditor from './FullCodeEditor.svelte'
 	import { CodePreview } from '../../../components/misc'
-	import GenericFields from '../../../components/GenericFields/GenericFields.svelte'
 	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'
 	import { page_html } from '../../../code_generators'
 	import { locale, onMobile, userRole } from '../../../stores/app/misc'
@@ -77,7 +76,7 @@
 	// $: syncLocales($content)
 
 	function syncLocales(content) {
-		// runs when adding new locale from ComponentEditor
+		// runs when adding new locale from SectionEditor
 		Object.keys(content).forEach((loc) => {
 			if (!local_content[loc]) {
 				local_content = {
@@ -271,7 +270,7 @@
 
 <main>
 	{#if $activeTab === 'fields'}
-		<GenericFields
+		<!-- <GenericFields
 			{fields}
 			on:input={async ({ detail: updated_fields }) => {
 				fields = updated_fields
@@ -279,7 +278,7 @@
 				saveLocalContent()
 			}}
 			showCode={true}
-		/>
+		/> -->
 	{:else}
 		<HSplitPane
 			orientation={$orientation}

@@ -49,9 +49,8 @@
 		return modalType
 			? {
 					SITE_PAGES: modals.SitePages,
-					COMPONENT_EDITOR: modals.ComponentEditor,
+					SECTION_EDITOR: modals.SectionEditor,
 					SYMBOL_EDITOR: modals.SymbolEditor,
-					PAGE_EDITOR: modals.PageEditor,
 					SITE_EDITOR: modals.SiteEditor
 			  }[modalType] || $modal.component
 			: null

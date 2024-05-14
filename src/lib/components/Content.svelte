@@ -1,6 +1,5 @@
 <script>
 	import { createEventDispatcher } from 'svelte'
-	import Icon from '@iconify/svelte'
 	import _, {
 		find,
 		cloneDeep,
@@ -9,10 +8,10 @@
 		get as _get,
 		isRegExp as _isRegExp
 	} from 'lodash-es'
-	import Card from '../../../ui/Card.svelte'
-	import { userRole, fieldTypes } from '../../../stores/app'
-	import { is_regex, getEmptyValue } from '../../../utils'
-	import { Content_Row } from '../../../factories'
+	import Card from '../ui/Card.svelte'
+	import { userRole, fieldTypes } from '../stores/app'
+	import { is_regex, getEmptyValue } from '../utils'
+	import { Content_Row } from '../factories'
 
 	export let content
 	export let fields

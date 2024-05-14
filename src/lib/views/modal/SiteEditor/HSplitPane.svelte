@@ -6,6 +6,8 @@
 	let transitioning = false
 	let dragging = false
 
+	export let hideRightPanel = false
+
 	let breakpointWidth = 0
 
 	export let resetSize = () => {
@@ -13,8 +15,8 @@
 		if (center) {
 			center.removeAttribute('style')
 			rightPaneSize = '33%'
-			leftPaneSize = '33%'
-			centerPaneSize = '33%'
+			leftPaneSize = hideRightPanel ? '50%' : '33%'
+			centerPaneSize = hideRightPanel ? '50%' : '33%'
 		} else {
 			rightPaneSize = '50%'
 			leftPaneSize = '50%'
@@ -217,8 +219,12 @@
 
 	let left, center, right
 
-	export let style = ''
-	export let hideRightPanel = false
+	export let topPaneSize = '50%'
+	export let bottomPaneSize = '50%'
+
+	export let orientation = 'horizontal'
+
+	export let hideLeftOverflow = false
 
 	export let leftPaneSize = $$slots.center ? '33%' : '66%'
 	export let minLeftPaneSize = '1.5rem'
@@ -226,13 +232,6 @@
 	export let minCenterPaneSize = '1.5rem'
 	export let rightPaneSize = $$slots.center ? '33%' : '66%'
 	export let minRightPaneSize = '1.5rem'
-
-	export let topPaneSize = '50%'
-	export let bottomPaneSize = '50%'
-
-	export let orientation = 'horizontal'
-
-	export let hideLeftOverflow = false
 </script>
 
 <div
@@ -249,7 +248,6 @@
 
   --top-pane-size: {topPaneSize};
   --bottom-pane-size: {bottomPaneSize};
-  {style}
   "
 >
 	{#if $$slots.center}
@@ -360,7 +358,7 @@
 	.center,
 	.right {
 		position: relative;
-		/* transition: 0.1s width; */
+		transition: 0.1s width;
 	}
 	div.left {
 		width: var(--left-pane-size);
@@ -379,7 +377,7 @@
 		display: flex;
 	}
 	.transitioning {
-		/* transition: width 0.1s; */
+		transition: width 0.1s;
 	}
 	.overflow-hidden {
 		overflow: hidden !important;

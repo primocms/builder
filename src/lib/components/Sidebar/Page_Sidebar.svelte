@@ -12,7 +12,7 @@
 	import { site_design_css } from '../../code_generators.js'
 	import { Symbol } from '../../factories.js'
 	import Sidebar_Symbol from './Sidebar_Symbol.svelte'
-	import Content from '../../views/modal/ComponentEditor/Content.svelte'
+	import Content from '../Content.svelte'
 	import { symbols as symbol_actions } from '../../stores/actions.js'
 	import { v4 as uuidv4 } from 'uuid'
 	import { validate_symbol } from '../../converter.js'

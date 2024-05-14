@@ -11,13 +11,13 @@
 <script>
 	import { setContext } from 'svelte'
 	import _, { cloneDeep, find, isEqual, chain as _chain } from 'lodash-es'
-	import HSplitPane from '../ComponentEditor/HSplitPane.svelte'
+	import HSplitPane from '../SectionEditor/HSplitPane.svelte'
 	import { getEmptyValue } from '../../../utils'
 	import ModalHeader from '../ModalHeader.svelte'
 	import Tabs from '../../../ui/Tabs.svelte'
-	import FullCodeEditor from '../ComponentEditor/FullCodeEditor.svelte'
+	import FullCodeEditor from '../SectionEditor/FullCodeEditor.svelte'
 	import { CodePreview } from '../../../components/misc'
-	import GenericFields from '../../../components/GenericFields/GenericFields.svelte'
+	// import GenericFields from '../../../components/GenericFields/GenericFields.svelte'
 	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'
 	import { Site_Tokens_CSS } from '../../../constants'
 	import { processCode, processCSS, wrapInStyleTags } from '../../../utils'
@@ -130,7 +130,7 @@
 	}
 
 	function syncLocales(content) {
-		// runs when adding new locale from ComponentEditor
+		// runs when adding new locale from SectionEditor
 		Object.keys(content).forEach((loc) => {
 			if (!local_content[loc]) {
 				local_content = {
@@ -306,7 +306,7 @@
 
 <main>
 	{#if tab === 'fields'}
-		<GenericFields
+		<!-- <GenericFields
 			bind:fields
 			on:input={() => {
 				refreshPreview()
@@ -318,7 +318,7 @@
 				refreshPreview()
 			}}
 			showCode={true}
-		/>
+		/> -->
 	{:else}
 		<HSplitPane
 			orientation={$orientation}

@@ -217,7 +217,6 @@
 
 	let left, center, right
 
-	export let style = ''
 	export let hideRightPanel = false
 
 	export let leftPaneSize = $$slots.center ? '33%' : '66%'
@@ -249,7 +248,6 @@
 
   --top-pane-size: {topPaneSize};
   --bottom-pane-size: {bottomPaneSize};
-  {style}
   "
 >
 	{#if $$slots.center}
@@ -337,7 +335,8 @@
 		/* height: 100%; */ /* causing overflow in SectionEditor code view */
 	}
 	div.separator {
-		background: var(--color-gray-8);
+		/* background: var(--color-gray-8); */
+		background: #222;
 		color: var(--color-gray-2);
 		cursor: col-resize;
 		height: auto;
@@ -360,7 +359,7 @@
 	.center,
 	.right {
 		position: relative;
-		/* transition: 0.1s width; */
+		transition: 0.1s width;
 	}
 	div.left {
 		width: var(--left-pane-size);
@@ -379,7 +378,7 @@
 		display: flex;
 	}
 	.transitioning {
-		/* transition: width 0.1s; */
+		transition: width 0.1s;
 	}
 	.overflow-hidden {
 		overflow: hidden !important;

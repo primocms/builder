@@ -11,25 +11,22 @@
 <script>
 	import Tabs from '../../../ui/Tabs.svelte'
 	import { setContext } from 'svelte'
-	import _, { cloneDeep, find, isEqual, chain as _chain } from 'lodash-es'
+	import _, { chain as _chain } from 'lodash-es'
 	import HSplitPane from './HSplitPane.svelte'
-	import { getEmptyValue } from '../../../utils'
 	import ModalHeader from '../ModalHeader.svelte'
 	import FullCodeEditor from './FullCodeEditor.svelte'
-	import { CodePreview } from '../../../components/misc'
-	import GenericFields from '../../../components/GenericFields/GenericFields.svelte'
-	import Fields from './Fields.svelte'
-	import Content from './Content.svelte'
+	import { CodePreview } from '../../../components/misc/index.js'
+	import Fields from '../../../components/Fields/Fields.svelte'
+	import Content from '../../../components/Content.svelte'
 	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'
-	import { processCode, processCSS, wrapInStyleTags } from '../../../utils'
-	import { locale, onMobile, userRole, showKeyHint } from '../../../stores/app/misc'
+	import { processCode } from '../../../utils.js'
+	import { locale, onMobile, userRole } from '../../../stores/app/misc.js'
 
 	import { site_design_css } from '../../../code_generators.js'
-	import symbols from '../../../stores/data/symbols'
-	import * as actions from '../../../stores/actions'
-	import { content, design as siteDesign, code as siteCode } from '../../../stores/data/site'
-	import { code as pageCode } from '../../../stores/app/activePage'
-	import { Content_Row } from '../../../factories'
+	import symbols from '../../../stores/data/symbols.js'
+	import * as actions from '../../../stores/actions.js'
+	import { content, design as siteDesign, code as siteCode } from '../../../stores/data/site.js'
+	import { Content_Row } from '../../../factories.js'
 	import { transform_content } from '../../../transform_data.js'
 
 	/** @type {import('$lib').Section} */
@@ -137,25 +134,6 @@
 		}
 
 		if (!disable_save) {
-			// parse content - static content gets saved to symbol, dynamic content gets saved to instance
-			// const updated_symbol_content = cloneDeep(symbol.content)
-			// const updated_section_content = cloneDeep(component.content)
-
-			// Object.entries(local_content).forEach(([language_key, language_content]) => {
-			// 	Object.entries(language_content).forEach(([field_key, field_value]) => {
-			// 		const matching_field = fields.find((field) => field.key === field_key)
-			// 		if (matching_field.is_static) {
-			// 			updated_symbol_content[language_key][field_key] = field_value
-			// 		} else {
-			// 			updated_section_content[language_key][field_key] = field_value
-			// 			// if symbol content doesn't have field key, save to symbol
-			// 			if (symbol.content[language_key][field_key] === undefined) {
-			// 				updated_symbol_content[language_key][field_key] = field_value
-			// 			}
-			// 		}
-			// 	})
-			// })
-
 			// code & fields gets saved to symbol
 			actions.symbols.update(symbol.id, {
 				code: local_code
@@ -174,13 +152,14 @@
 				content_transactions,
 				local_fields
 			})
+
+			// TODO pass new content items for symbol for newly created fields
 			actions.update_instance(component.id, {
 				field_transactions,
 				content_transactions,
 				updated_fields: local_fields,
 				updated_content: local_content
 			})
-			// actions.update_section_content(component, updated_section_content)
 
 			header.button.onclick()
 		}

@@ -8,7 +8,7 @@
 		get as _get,
 		isRegExp as _isRegExp
 	} from 'lodash-es'
-	import { Field_Row } from '../../../factories'
+	import { Field_Row } from '../../factories'
 	import FieldItem from './FieldItem.svelte'
 
 	export let fields

@@ -268,7 +268,7 @@
 		lock_block(block_id)
 		const block = $sections.find((s) => s.id === block_id) // get updated block (necessary if actively editing on-page)
 		modal.show(
-			'COMPONENT_EDITOR',
+			'SECTION_EDITOR',
 			{
 				component: block,
 				tab: showIDE ? 'code' : 'content',
