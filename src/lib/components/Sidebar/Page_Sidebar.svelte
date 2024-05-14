@@ -129,7 +129,8 @@
 	async function refresh_symbols() {
 		await tick()
 		draggable_symbols = $symbols
-			.map((s, i) => ({ ...s, _drag_id: s.id }))
+			.filter((s) => s.page_type === page.page_type.id) // only show symbols belonging to this page type
+			.map((s) => ({ ...s, _drag_id: s.id }))
 			.sort((a, b) => a.index - b.index)
 	}
 
@@ -178,7 +179,8 @@
 	<div class="container">
 		{#if active_tab === 'BLOCKS'}
 			{#if $symbols.length > 0}
-				<div class="primo-buttons">
+				<!-- TODO: add 'edit blocks' link button -->
+				<!-- <div class="primo-buttons">
 					<button class="primo-button" on:click={show_block_picker}>
 						<Icon icon="mdi:plus" />
 						<span>Add</span>
@@ -194,7 +196,7 @@
 						<Icon icon="mdi:upload" />
 						<span>Upload</span>
 					</label>
-				</div>
+				</div> -->
 				<!-- svelte-ignore missing-declaration -->
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<div
@@ -319,6 +321,7 @@
 		flex-direction: column;
 		overflow-y: auto;
 		padding: 1rem;
+		padding-top: 0.5rem;
 	}
 
 	.symbols {

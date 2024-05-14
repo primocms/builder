@@ -55,7 +55,7 @@ export const Section = (section) => ({
 	page: section.page,
 	page_type: section.page_type,
 	created_at: section.created_at || new Date().toISOString(),
-	instance_of: section.instance_of || null
+	master: section.master || null
 })
 
 /**

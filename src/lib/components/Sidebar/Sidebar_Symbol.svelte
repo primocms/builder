@@ -3,6 +3,7 @@
 	import _ from 'lodash-es'
 	import axios from 'axios'
 	import Icon from '@iconify/svelte'
+	import Toggle from 'svelte-toggle'
 	import modal from '../../stores/app/modal'
 	import { userRole } from '../../stores/app/misc'
 	import MenuPopup from '../../ui/Dropdown.svelte'
@@ -17,6 +18,8 @@
 	export let symbol
 	export let controls_enabled = true
 	export let header_hidden = false
+	export let show_toggle = false
+	export let toggled = false
 	export let head = ''
 	export let append = ''
 
@@ -138,6 +141,8 @@
 			<div class="name">
 				<h3>{symbol.name}</h3>
 				{#if controls_enabled}
+					<!-- TODO: add popover w/ symbol info -->
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
 					<div
 						class="info"
 						title={active_symbol_label}
@@ -151,6 +156,15 @@
 		{/if}
 		{#if controls_enabled}
 			<div class="symbol-options">
+				{#if show_toggle}
+					<Toggle
+						label="Toggle Symbol for Page Type"
+						hideLabel={true}
+						{toggled}
+						small={true}
+						on:toggle
+					/>
+				{/if}
 				<MenuPopup
 					icon="carbon:overflow-menu-vertical"
 					options={[
@@ -223,7 +237,7 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			padding: 6px 0;
+			padding-bottom: 0.5rem;
 			color: #e7e7e7;
 			transition: opacity 0.2s;
 
@@ -246,6 +260,7 @@
 				display: flex;
 				align-items: center;
 				color: #e7e7e7;
+				gap: 3px;
 
 				:global(svg) {
 					height: 1rem;

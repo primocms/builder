@@ -13,7 +13,7 @@
 	import { Symbol } from '../../factories.js'
 	import Sidebar_Symbol from './Sidebar_Symbol.svelte'
 	import Fields from '../Fields/Fields.svelte'
-	import { symbols as symbol_actions } from '../../stores/actions.js'
+	import { symbols as symbol_actions, toggle_symbol_for_page_type } from '../../stores/actions.js'
 	import { v4 as uuidv4 } from 'uuid'
 	import { validate_symbol } from '../../converter.js'
 	import { dndzone } from 'svelte-dnd-action'
@@ -147,12 +147,12 @@
 			{
 				id: 'BLOCKS',
 				icon: 'lucide:blocks',
-				label: `${page_type.name} Blocks`
+				label: `Blocks`
 			},
 			{
 				id: 'PAGE_OPTIONS',
 				icon: 'material-symbols:article-outline',
-				label: `${page_type.name} Options`
+				label: `Options`
 			}
 		]}
 		bind:active_tab_id={active_tab}
@@ -200,6 +200,14 @@
 								head={$site.code.head + page_type.code.head}
 								append={site_design_css($site.design)}
 								header_hidden={dragging === symbol._drag_id}
+								show_toggle={true}
+								toggled={symbol.page_type === page_type.id}
+								on:toggle={({ detail }) =>
+									toggle_symbol_for_page_type({
+										symbol_id: symbol.id,
+										page_type_id: page_type.id,
+										toggled: detail
+									})}
 								on:mousedown={() => (dragging = symbol._drag_id)}
 								on:mouseup={() => (dragging = null)}
 								on:rename={({ detail: name }) => rename_symbol(symbol.id, name)}

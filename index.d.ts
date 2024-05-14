@@ -6,7 +6,7 @@ export type Section = {
 	page: string
 	page_type: string
 	created_at?: string
-	instance_of: string
+	master?: string
 }
 
 export type Symbol = {
@@ -59,18 +59,18 @@ export type Field = {
 	key: string
 	label: string
 	type:
-		| 'repeater'
-		| 'group'
-		| 'text'
-		| 'markdown'
-		| 'image'
-		| 'number'
-		| 'switch'
-		| 'url'
-		| 'link'
-		| 'select'
-		| 'icon'
-		| 'info'
+	| 'repeater'
+	| 'group'
+	| 'text'
+	| 'markdown'
+	| 'image'
+	| 'number'
+	| 'switch'
+	| 'url'
+	| 'link'
+	| 'select'
+	| 'icon'
+	| 'info'
 	fields: Array<Field>
 	options: object
 	is_static: boolean

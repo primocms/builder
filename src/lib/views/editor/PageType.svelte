@@ -31,7 +31,6 @@
 	import { site_design_css } from '../../code_generators.js'
 
 	export let page
-	$: console.log({ page })
 
 	let html_head = ''
 	let html_below = ''
@@ -41,7 +40,6 @@
 	async function set_page_content(page_data) {
 		// if (!page_data) return
 		// await tick()
-		console.log({ page_data })
 		$sections = page_data.sections
 
 		$pageID = page_data.id
@@ -116,7 +114,6 @@
 	$: if (sections_mounted === $sections.length && sections_mounted !== 0) {
 		page_mounted = true
 	}
-	$: console.log({ page_mounted, sections_mounted })
 
 	// afterNavigate(() => {
 	// 	console.log('nav')

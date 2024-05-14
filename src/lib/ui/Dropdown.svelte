@@ -247,7 +247,7 @@
 		/* justify-content: space-between; */
 		gap: 0.375rem;
 		border-radius: 0.25rem;
-		padding: 0.25rem 0.5rem;
+		padding: 0.25rem;
 		/* width: 100%; */
 		text-align: left;
 		white-space: nowrap;

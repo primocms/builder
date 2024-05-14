@@ -251,7 +251,7 @@ export const active_page = {
 									symbol: symbol.id,
 									page: page.id,
 									page_type: null,
-									instance_of: new_section.id
+									master: new_section.id
 								})
 							})
 						})
@@ -582,7 +582,7 @@ export const pages = {
 				id: uuidv4(), // recreate with unique IDs
 				page: new_page.id, // attach to new page
 				page_type: null, // remove attachment to page type (?)
-				instance_of: section.id // attach to master blocks
+				master: section.id // attach to master blocks
 			}))
 		}
 
@@ -814,6 +814,32 @@ export async function update_instance(
 			// 	data: original_symbol,
 			// 	id: original_symbol.id
 			// })
+		}
+	})
+}
+
+// toggle symbol in page type
+export async function toggle_symbol_for_page_type({ symbol_id, page_type_id, toggled }) {
+	await update_timeline({
+		doing: async () => {
+			await dataChanged({
+				table: 'symbols',
+				action: 'update',
+				id: symbol_id,
+				data: {
+					page_type: toggled ? page_type_id : null
+				}
+			})
+		},
+		undoing: async () => {
+			await dataChanged({
+				table: 'symbols',
+				action: 'update',
+				id: symbol_id,
+				data: {
+					page_type: toggled ? null : page_type_id
+				}
+			})
 		}
 	})
 }

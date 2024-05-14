@@ -74,7 +74,7 @@
 		display: grid;
 	}
 	.Card.minimal .card-body {
-		margin: 0 auto;
+		margin: 0;
 	}
 	button {
 		width: 100%;

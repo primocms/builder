@@ -182,7 +182,8 @@
 		width: 100%;
 		display: grid;
 		gap: 1rem;
-		padding-bottom: 1rem;
+		/* padding-bottom: 1rem; */
+		padding-block: 0.5rem;
 		color: var(--color-gray-2);
 		/* background: var(--primo-color-black); */
 		height: 100%;

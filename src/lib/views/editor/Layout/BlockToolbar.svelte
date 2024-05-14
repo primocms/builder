@@ -71,24 +71,22 @@
 				</button>
 			{/if}
 		</div>
-		{#if !$page.data.page.page_type}
-			<div class="top-right">
-				<button on:click={() => dispatch('delete')} class="button-delete">
-					<Icon icon="ion:trash" />
+		<div class="top-right">
+			<button on:click={() => dispatch('delete')} class="button-delete">
+				<Icon icon="ion:trash" />
+			</button>
+			<button on:click={() => dispatch('duplicate')}>
+				<Icon icon="ion:duplicate" />
+			</button>
+			{#if !isFirst}
+				<button on:click={() => dispatch('moveUp')}>
+					<Icon icon="heroicons-outline:chevron-up" />
 				</button>
-				<button on:click={() => dispatch('duplicate')}>
-					<Icon icon="ion:duplicate" />
-				</button>
-				{#if !isFirst}
-					<button on:click={() => dispatch('moveUp')}>
-						<Icon icon="heroicons-outline:chevron-up" />
-					</button>
-				{/if}
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
 	<div class="bottom">
-		{#if !isLast && !$page.data.page.page_type}
+		{#if !isLast}
 			<button class="bottom-right" on:click={() => dispatch('moveDown')}>
 				<Icon icon="heroicons-outline:chevron-down" />
 			</button>

@@ -7,6 +7,7 @@ import ListItem from './ListItem.svelte'
 import HSplitPane from './HSplitPane.svelte'
 import IconButton from './IconButton.svelte'
 import Tabs from './Tabs.svelte'
+import Toggle from './Toggle/Toggle.svelte'
 
 export default {
 	IconButton,
@@ -15,6 +16,7 @@ export default {
 	Spinner,
 	Dropdown,
 	Switch,
+	Toggle,
 	Card,
 	ListItem,
 	Tabs
