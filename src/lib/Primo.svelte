@@ -8,7 +8,7 @@
 	import modal from './stores/app/modal'
 	import * as modals from './views/modal'
 	import * as Mousetrap from 'mousetrap'
-	import { onMobile, showKeyHint } from './stores/app/misc'
+	import { onMobile, showKeyHint, page_loaded } from './stores/app/misc'
 	import built_in_symbols from './stores/data/primo_symbols'
 	import HSplitPane from './ui/HSplitPane.svelte'
 	import Page_Sidebar from './components/Sidebar/Page_Sidebar.svelte'
@@ -115,6 +115,8 @@
 		Mousetrap.bind('mod', () => ($showKeyHint = true), 'keydown')
 		Mousetrap.bind('mod', () => ($showKeyHint = false), 'keyup')
 	}
+
+	$: console.log({ $page_loaded })
 </script>
 
 <HSplitPane bind:leftPaneSize bind:rightPaneSize style="margin-top:54px">
@@ -123,7 +125,7 @@
 			{#if data.page_type}
 				<PageType_Sidebar page_type={data.page_type} />
 			{:else}
-				<Page_Sidebar page={data.page} />
+				<Page_Sidebar />
 			{/if}
 		{:else if !$onMobile}
 			<div class="expand primo-reset">

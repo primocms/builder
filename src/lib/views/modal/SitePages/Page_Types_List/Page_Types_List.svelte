@@ -4,7 +4,7 @@
 	import { PrimaryButton } from '../../../../components/buttons'
 	import page_types from '../../../../stores/data/page_types'
 	import { page_types as actions } from '../../../../stores/actions'
-	import { id as activePageID } from '../../../../stores/app/activePage'
+	import { id as active_pageID } from '../../../../stores/app/active_page'
 	import { id as site_id } from '../../../../stores/data/site'
 	import PageForm from './PageForm.svelte'
 	import modal from '../../../../stores/app/modal'
@@ -28,7 +28,7 @@
 			<li>
 				<Item
 					{page}
-					active={$activePageID === page.id}
+					active={$active_pageID === page.id}
 					on:edit={({ detail }) => {
 						console.log({ detail })
 						actions.update(page.id, detail)

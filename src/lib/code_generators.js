@@ -5,7 +5,7 @@ import { processors } from './component.js'
 import { site as activeSite } from './stores/data/site.js'
 import sections from './stores/data/sections.js'
 import symbols from './stores/data/symbols.js'
-import activePage from './stores/app/activePage.js'
+import active_page from './stores/app/active_page.js'
 import { processCSS } from './utils.js'
 import { get_content_with_static, getPageData } from './stores/helpers.js'
 import { design_tokens } from './constants.js'
@@ -22,7 +22,7 @@ import { design_tokens } from './constants.js'
  * @returns {Promise<{ html: string, js: string}>}
  * */
 export async function page_html({
-	page = get(activePage),
+	page = get(active_page),
 	site = get(activeSite),
 	page_sections = get(sections),
 	page_symbols = get(symbols),

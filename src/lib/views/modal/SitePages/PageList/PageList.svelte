@@ -3,7 +3,7 @@
 	import { PrimaryButton } from '../../../../components/buttons'
 	import pages from '../../../../stores/data/pages'
 	import { pages as actions } from '../../../../stores/actions'
-	import { id as activePageID } from '../../../../stores/app/activePage'
+	import { id as active_pageID } from '../../../../stores/app/active_page'
 	import PageForm from './PageForm.svelte'
 
 	async function create_page(new_page) {
@@ -29,7 +29,7 @@
 			<Item
 				{page}
 				{children}
-				active={$activePageID === page.id}
+				active={$active_pageID === page.id}
 				on:create={({ detail: page }) => create_page(page)}
 				on:delete={({ detail: terminal_page }) => delete_page(terminal_page.id)}
 			/>

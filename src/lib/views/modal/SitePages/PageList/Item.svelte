@@ -6,7 +6,7 @@
 	const dispatch = createEventDispatcher()
 	import modal from '../../../../stores/app/modal'
 	import pages from '../../../../stores/data/pages'
-	import { id as activePageID } from '../../../../stores/app/activePage'
+	import { id as active_pageID } from '../../../../stores/app/active_page'
 	import { pages as actions } from '../../../../stores/actions'
 	import { content_editable, validate_url } from '../../../../utilities'
 	import PageForm from './PageForm.svelte'
@@ -52,7 +52,7 @@
 <div
 	class="page-item-container"
 	class:contains-child={parent}
-	class:active={page.id === $activePageID}
+	class:active={page.id === $active_pageID}
 	class:expanded={showing_children && has_children}
 >
 	<div class="left">
@@ -176,7 +176,7 @@
 					page={subpage}
 					parent_urls={[...parent_urls, page.slug]}
 					children={subchildren}
-					active={$activePageID === subpage.id}
+					active={$active_pageID === subpage.id}
 					on:delete
 					on:create
 				/>

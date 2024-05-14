@@ -2,8 +2,7 @@ import { find, cloneDeep, some } from 'lodash-es'
 import _ from 'lodash-es'
 import { get } from 'svelte/store'
 import { goto } from '$app/navigation'
-import * as activePage from './app/activePage'
-import { id as activePageID } from './app/activePage'
+import * as active_page_store from './app/active_page'
 import page_type from './app/active_page_type.js'
 import { locale } from './app/misc'
 import stores, { update_timeline } from './data'
@@ -12,12 +11,13 @@ import { timeline } from './data'
 import { buildStaticPage } from './helpers'
 import { dataChanged, storageChanged } from '../database'
 import { swap_array_item_index } from '../utilities'
+import { getEmptyValue } from '../utils'
 import { v4 as uuidv4 } from 'uuid'
 import { Page, Page_Type, Symbol, Section } from '../factories'
 import { page } from '$app/stores'
 
 /**
- * Hydrates the active site, page, section, and symbol stores for th editor
+ * Hydrates the active site, page, section, and symbol stores for the editor
  * @param {import('$lib').Site_Data} data - Combined data object from the server
  */
 export async function hydrate_active_data(data) {
@@ -218,7 +218,7 @@ export const active_page = {
 			// adding to page
 			new_section = Section({
 				index: position,
-				page: get(activePageID),
+				page: get(active_page_store).id,
 				content: symbol.content,
 				symbol: symbol.id
 			})
@@ -301,7 +301,7 @@ export const active_page = {
 		const new_section = {
 			id: uuidv4(),
 			index: position,
-			page: get(activePageID),
+			page: get(active_page_store).id,
 			content: symbol.content,
 			symbol: new_symbol.id
 		}
@@ -455,10 +455,10 @@ export const active_page = {
 		update_page_preview()
 	},
 	update: async ({ obj, is_page_type = false }) => {
-		const current_page = _.cloneDeep(get(activePage.default))
+		const current_page = _.cloneDeep(get(active_page_store.default))
 		await update_timeline({
 			doing: async () => {
-				activePage.set(obj)
+				active_page.set(obj)
 				await dataChanged({
 					table: is_page_type ? 'page_types' : 'pages',
 					action: 'update',
@@ -467,7 +467,7 @@ export const active_page = {
 				})
 			},
 			undoing: async () => {
-				activePage.set(current_page)
+				active_page.set(current_page)
 				await dataChanged({
 					table: 'pages',
 					action: 'update',
@@ -526,7 +526,7 @@ export const page_types = {
 				await dataChanged({ table: 'page_types', action: 'delete', id: page_type_id })
 
 				// Go to home page if active page is deleted
-				if (get(activePageID) === page_type_id) {
+				if (get(active_page_store).id === page_type_id) {
 					await goto(`/${get(site)['url']}`)
 				}
 			},
@@ -661,7 +661,7 @@ export const pages = {
 				await dataChanged({ table: 'pages', action: 'delete', id: page_id })
 
 				// Go to home page if active page is deleted
-				if (get(activePageID) === page_id) {
+				if (get(active_page_store).id === page_id) {
 					await goto(`/${get(site)['url']}`)
 				}
 			},
@@ -694,7 +694,7 @@ export const pages = {
 
 // temporarily disable preview page for non-index pages
 // in the future, we'll enable page previews with cloud compilation instead of storing previews
-export async function update_page_preview(page = get(activePage.default)) {
+export async function update_page_preview(page = get(active_page_store.default)) {
 	if (page.url === 'index') {
 		const preview = await buildStaticPage({ page, no_js: true })
 		// await storageChanged({
@@ -818,6 +818,72 @@ export async function update_instance(
 	})
 }
 
+export async function update_page_type_fields({ changes, fields }) {
+	await update_timeline({
+		doing: async () => {
+			page_type.update((store) => ({ ...store, fields }))
+			for (const { action, id, data } of changes) {
+				if (action === 'insert') {
+					// overwrite original id w/ db id to register further updates
+					const original_id = data.id
+					delete data.id
+					const res = await dataChanged({
+						table: 'fields',
+						action: 'insert',
+						data: { ...data, page_type: get(page_type).id }
+					})
+					page_type.update((store) => ({
+						...store,
+						fields: fields.map((f) => (f.id === original_id ? { ...f, id: res } : f))
+					}))
+					// add content rows to each page of this type (TODO: better way to do this than fetching first?)
+					const pages_of_type = await dataChanged({
+						table: 'pages',
+						action: 'select',
+						data: 'id',
+						match: { page_type: get(page_type).id }
+					})
+					console.log({ pages_of_type, res })
+					await dataChanged({
+						table: 'content',
+						action: 'insert',
+						data: pages_of_type.map((p) => ({ page: p.id, field: res, value: getEmptyValue(data) }))
+					})
+				} else {
+					await dataChanged({
+						table: 'fields',
+						action,
+						id,
+						data: { ...data, page_type: get(page_type).id }
+					})
+				}
+			}
+		},
+		undoing: async () => {
+			// TODO: do the inverse
+		}
+	})
+}
+
+export async function update_page_content({ changes, content }) {
+	await update_timeline({
+		doing: async () => {
+			active_page_store.content.set(content)
+			for (const { action, id, data } of changes) {
+				await dataChanged({
+					table: 'content',
+					action,
+					id,
+					data: { ...data, page: get(active_page_store.id) }
+				})
+			}
+		},
+		undoing: async () => {
+			// TODO: do the inverse
+		}
+	})
+}
+
 // toggle symbol in page type
 export async function toggle_symbol_for_page_type({ symbol_id, page_type_id, toggled }) {
 	await update_timeline({
@@ -854,61 +920,31 @@ export async function update_section_content(section, { key, value, locale }) {
 
 	await update_timeline({
 		doing: async () => {
-			if (matching_field?.is_static) {
-				dataChanged({
-					table: 'content',
-					action: 'update',
-					// id: symbol.id,
-					match: { symbol: symbol.id, field: matching_field.id, locale },
-					data: { value }
-				})
+			await dataChanged({
+				table: 'content',
+				action: 'update',
+				match: { section: section.id, field: matching_field.id, locale },
+				data: { value }
+			})
 
-				const updated_symbol_content = cloneDeep(symbol.content)
-				_.set(updated_symbol_content, `${locale}.${key}`, value)
-				stores.symbols.update((store) =>
-					store.map((s) => (s.id === symbol.id ? { ...s, content: updated_symbol_content } : s))
-				)
-			} else if (matching_field) {
-				await dataChanged({
-					table: 'content',
-					action: 'update',
-					match: { section: section.id, field: matching_field.id, locale },
-					data: { value }
-				})
-
-				const updated_section_content = _.cloneDeep(section.content)
-				_.set(updated_section_content, `${locale}.${key}`, value)
-				stores.sections.update((store) =>
-					store.map((s) => (s.id === section.id ? { ...s, content: updated_section_content } : s))
-				)
-			}
+			const updated_section_content = _.cloneDeep(section.content)
+			_.set(updated_section_content, `${locale}.${key}`, value)
+			stores.sections.update((store) =>
+				store.map((s) => (s.id === section.id ? { ...s, content: updated_section_content } : s))
+			)
 		},
 		undoing: async () => {
-			if (matching_field?.is_static) {
-				const original_value = _.get(original_symbol_content[locale][key], value)
-				dataChanged({
-					table: 'content',
-					action: 'update',
-					// id: symbol.id,
-					match: { symbol: symbol.id, field: matching_field.id, locale },
-					data: { value: original_value }
-				})
-				stores.symbols.update((store) =>
-					store.map((s) => (s.id === symbol.id ? { ...s, content: original_symbol_content } : s))
-				)
-			} else if (matching_field) {
-				const original_value = _.get(original_section_content, `${locale}.${key}`)
-				console.log({ original_value, original_section_content, locale, key })
-				await dataChanged({
-					table: 'content',
-					action: 'update',
-					match: { section: section.id, field: matching_field.id, locale },
-					data: { value: original_value }
-				})
-				stores.sections.update((store) =>
-					store.map((s) => (s.id === section.id ? { ...s, content: original_section_content } : s))
-				)
-			}
+			const original_value = _.get(original_section_content, `${locale}.${key}`)
+			console.log({ original_value, original_section_content, locale, key })
+			await dataChanged({
+				table: 'content',
+				action: 'update',
+				match: { section: section.id, field: matching_field.id, locale },
+				data: { value: original_value }
+			})
+			stores.sections.update((store) =>
+				store.map((s) => (s.id === section.id ? { ...s, content: original_section_content } : s))
+			)
 		}
 	})
 	update_page_preview()

@@ -1,7 +1,7 @@
 import Primo from './Primo.svelte'
 import { saved, onMobile, userRole } from './stores/app/misc'
 import { site, content } from './stores/data/site'
-import activePage from './stores/app/activePage'
+import active_page from './stores/app/active_page'
 import fieldTypes from './stores/app/fieldTypes'
 import modal from './stores/app/modal'
 import { locale, locked_blocks } from './stores/app/misc'
@@ -47,7 +47,7 @@ export {
 	locked_blocks,
 	site,
 	content,
-	activePage,
+	active_page,
 	modal,
 	utils,
 	fieldTypes,

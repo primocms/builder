@@ -271,8 +271,10 @@
 	{#if tab === 'fields'}
 		<Fields
 			fields={local_fields}
-			on:input={({ detail: updated_fields }) => (local_fields = updated_fields)}
-			on:transaction={({ detail }) => handle_field_transaction(detail)}
+			on:input={({ detail }) => {
+				local_fields = detail.fields
+				detail.changes.forEach((change) => handle_field_transaction(change))
+			}}
 		/>
 	{:else}
 		<HSplitPane

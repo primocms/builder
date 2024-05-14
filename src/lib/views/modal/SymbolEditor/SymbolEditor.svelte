@@ -25,7 +25,7 @@
 
 	import * as actions from '../../../stores/actions'
 	import { content, code as siteCode, design as siteDesign } from '../../../stores/data/site'
-	import { code as pageCode } from '../../../stores/app/activePage'
+	import { code as pageCode } from '../../../stores/app/active_page'
 	import { getPageData } from '../../../stores/helpers'
 	import { tick } from 'svelte'
 

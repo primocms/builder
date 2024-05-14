@@ -1,6 +1,8 @@
 <script>
 	import Icon from '@iconify/svelte'
-	import { createEventDispatcher } from 'svelte'
+	import { onMount, createEventDispatcher } from 'svelte'
+	import autosize from 'autosize'
+
 	const dispatch = createEventDispatcher()
 
 	/** @type {string | null} */
@@ -18,6 +20,7 @@
 	export let type = 'text'
 	export let autofocus = false
 	export let selection = ''
+	export let grow = false
 
 	export let options = []
 
@@ -25,6 +28,13 @@
 	export let button = null
 
 	// Note: Svelte seems to have some issues with two-way binding, so if this is acting up it's probably that
+
+	let element
+	onMount(() => {
+		if (element) {
+			autosize(element)
+		}
+	})
 </script>
 
 <!-- svelte-ignore a11y-label-has-associated-control -->
@@ -50,18 +60,44 @@
 			{:else if prefix_icon}
 				<Icon icon={prefix_icon} />
 			{/if}
-			<input
-				{value}
-				{type}
-				{placeholder}
-				{autofocus}
-				on:focus
-				on:input={({ target }) => {
-					value = target.value
-					dispatch('input', value)
-				}}
-				on:keydown
-			/>
+			{#if grow}
+				<textarea
+					rows="1"
+					bind:this={element}
+					{value}
+					{type}
+					{placeholder}
+					{autofocus}
+					on:focus
+					on:input={({ target }) => {
+						value = target.value
+						dispatch('input', value)
+					}}
+					on:change={({ target }) => {
+						value = target.value
+						dispatch('input', value)
+					}}
+					on:keydown
+				/>
+			{:else}
+				<input
+					{value}
+					{type}
+					{placeholder}
+					{autofocus}
+					on:focus
+					on:input={({ target }) => {
+						value = target.value
+						dispatch('input', value)
+					}}
+					on:change={({ target }) => {
+						value = target.value
+						console.log(value)
+						dispatch('input', value)
+					}}
+					on:keydown
+				/>
+			{/if}
 			{#if button}
 				<button on:click={button.onclick} type={button.type} disabled={button.disabled}>
 					{button.label}
@@ -139,7 +175,8 @@
 			margin-right: 1rem;
 		}
 
-		input {
+		input,
+		textarea {
 			font-size: 0.875rem;
 			flex: 1;
 			background: transparent;

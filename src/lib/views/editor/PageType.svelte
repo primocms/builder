@@ -23,7 +23,8 @@
 		code as pageCode,
 		content as pageContent,
 		page_type
-	} from '../../stores/app/activePage.js'
+	} from '../../stores/app/active_page.js'
+	import active_page_type from '../../stores/app/active_page_type.js'
 	import sections from '../../stores/data/sections.js'
 	import symbols from '../../stores/data/symbols.js'
 	import { processCode } from '../../utils.js'
@@ -38,17 +39,19 @@
 	$: set_page_content(page)
 	set_page_content(page)
 	async function set_page_content(page_data) {
+		console.log({ page_data })
+		$active_page_type = page_data
 		// if (!page_data) return
 		// await tick()
-		$sections = page_data.sections
+		// $sections = page_data.sections
 
-		$pageID = page_data.id
-		$pageName = page_data.name
-		$pageURL = page_data.url
-		$pageFields = page_data.fields
-		$pageCode = page_data.code
-		$pageContent = page_data.content
-		$page_type = page_data.page_type
+		// $pageID = page_data.id
+		// $pageName = page_data.name
+		// $pageURL = page_data.url
+		// $pageFields = page_data.fields
+		// $pageCode = page_data.code
+		// $pageContent = page_data.content
+		// $page_type = page_data.page_type
 	}
 
 	const cached = { pageCode: null, siteCode: null, siteDesign: null }

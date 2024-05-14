@@ -24,7 +24,7 @@
 
 	import { highlightedElement } from '../../stores/app/misc'
 	import { code as site_code } from '../../stores/data/site'
-	import { code as page_code } from '../../stores/app/activePage'
+	import { code as page_code } from '../../stores/app/active_page'
 	import { basicSetup } from 'codemirror'
 	import { EditorView, keymap } from '@codemirror/view'
 	import { standardKeymap, indentWithTab } from '@codemirror/commands'

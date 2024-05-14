@@ -19,17 +19,27 @@
 
 	function create_field() {
 		const new_field = Field_Row({ index: parent_fields.length })
+		// delete new_field.id
 		const updated_fields = cloneDeep([...fields, new_field])
-		dispatch('input', updated_fields)
-		store_transaction({ action: 'insert', id: new_field.id, data: new_field })
+		// dispatch('input', updated_fields)
+		// store_change({ action: 'insert', data: new_field })
+		dispatch_update({
+			fields: updated_fields,
+			changes: [{ action: 'insert', data: new_field }]
+		})
 	}
 
 	function create_subfield(field) {
 		const siblings = fields.filter((f) => f.parent === field.parent) // remove self, select siblings
 		const new_field = Field_Row({ parent: field.id, index: siblings.length })
+		// delete new_field.id
 		const updated_fields = cloneDeep([...fields, new_field])
-		dispatch('input', updated_fields)
-		store_transaction({ action: 'insert', id: new_field.id, data: new_field })
+		// dispatch('input', updated_fields)
+		// store_change({ action: 'insert', id: new_field.id, data: new_field })
+		dispatch_update({
+			fields: updated_fields,
+			changes: [{ action: 'insert', data: new_field }]
+		})
 	}
 
 	function delete_field(field) {
@@ -43,8 +53,13 @@
 			const field = updated_fields.find((f) => f.id === sibling.id)
 			field.index = sibling.index
 		}
-		dispatch('input', updated_fields)
-		store_transaction({ action: 'delete', id: field.id })
+		// dispatch('input', updated_fields)
+		// store_change({ action: 'delete', id: field.id })
+
+		dispatch_update({
+			fields: updated_fields,
+			changes: [{ action: 'delete', id: field.id }]
+		})
 	}
 
 	let disabled = false
@@ -75,11 +90,22 @@
 			field.index = child.index
 		}
 
-		dispatch('input', updated_fields)
-		store_transaction({ action: 'insert', data: new_field })
-		updated_children.forEach((child) =>
-			store_transaction({ action: 'update', id: child.id, data: { index: child.index } })
-		)
+		// dispatch('input', updated_fields)
+		dispatch_update({
+			fields: updated_fields,
+			changes: [
+				{ action: 'insert', data: new_field },
+				...updated_children.map((child) => ({
+					action: 'update',
+					id: child.id,
+					data: { index: child.index }
+				}))
+			]
+		})
+		// store_change({ action: 'insert', data: new_field })
+		// updated_children.forEach((child) =>
+		// 	store_change({ action: 'update', id: child.id, data: { index: child.index } })
+		// )
 	}
 
 	function move_field({ field, direction }) {
@@ -101,32 +127,54 @@
 			const field = updated_fields.find((f) => f.id === child.id)
 			field.index = child.index
 		}
-		dispatch('input', updated_fields)
-		updated_children.forEach((child) =>
-			store_transaction({ action: 'update', id: child.id, data: { index: child.index } })
-		)
+		// dispatch('input', updated_fields)
+		dispatch_update({
+			fields: updated_fields,
+			changes: updated_children.map((child) => ({
+				action: 'update',
+				id: child.id,
+				data: { index: child.index }
+			}))
+		})
+		// updated_children.forEach((child) =>
+		// 	store_change({ action: 'update', id: child.id, data: { index: child.index } })
+		// )
 	}
 
 	function update_field(updated_field) {
 		const updated_fields = cloneDeep(
 			fields.map((field) => (field.id === updated_field.id ? updated_field : field))
 		)
-		dispatch('input', updated_fields)
-		store_transaction({ action: 'update', id: updated_field.id, data: updated_field })
+		// dispatch('input', updated_fields)
+		// store_change({ action: 'update', id: updated_field.id, data: updated_field })
+		dispatch_update({
+			fields: updated_fields,
+			changes: [{ action: 'update', id: updated_field.id, data: updated_field }]
+		})
 	}
 
-	let transactions = []
-	function store_transaction({ action, id, data }) {
-		const existing_transaction = transactions.find((transaction) => transaction.id === id)
+	let all_changes = []
+	function store_change({ action, id = null, data }) {
+		console.log({ action, id, data })
+		const existing_transaction = all_changes.find((transaction) => transaction.id === id)
 		if (action === 'update' && existing_transaction) {
 			existing_transaction.data = { ...existing_transaction.data, ...data }
 		} else if (action === 'delete' && existing_transaction) {
-			transactions = transactions.filter((t) => t.id !== existing_transaction.id)
+			all_changes = all_changes.filter((t) => t.id !== existing_transaction.id)
 		} else {
-			transactions = [...transactions, { action, id, data }]
+			all_changes = [...all_changes, { action, id, data }]
 		}
+	}
 
-		dispatch('transaction', { all: _.cloneDeep(transactions), action, id, data })
+	function dispatch_update({ fields, changes }) {
+		changes.forEach((change) => {
+			store_change(change)
+		})
+		dispatch('input', {
+			fields,
+			changes,
+			all_changes: _.cloneDeep(all_changes)
+		})
 	}
 </script>
 

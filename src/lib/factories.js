@@ -108,7 +108,7 @@ export const Page = (page = {}) => ({
 		description: '',
 		image: ''
 	},
-	page_type: null,
+	page_type: Page_Type(),
 	...page
 })
 
@@ -134,13 +134,8 @@ export const Page_Type = (page = {}) => ({
 	},
 	site: '',
 	created_at: new Date().toISOString(),
-	metadata: {
-		title: '',
-		description: '',
-		image: ''
-	},
-	color: '#2B407D',
-	icon: 'mdi:rocket',
+	color: 'transparent',
+	icon: '',
 	...page
 })
 

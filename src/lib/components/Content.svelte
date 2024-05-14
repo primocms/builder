@@ -60,8 +60,12 @@
 		)
 		const new_rows = [new_repeater_item, ...new_subcontent]
 		const updated_content = cloneDeep([...content, ...new_rows])
-		dispatch('input', updated_content)
-		new_rows.forEach((row) => store_transaction({ action: 'insert', id: row.id, data: row }))
+		dispatch_update({
+			content: updated_content,
+			changes: new_rows.map((row) => ({ action: 'insert', id: row.id, data: row }))
+		})
+		// dispatch('input', updated_content)
+		// new_rows.forEach((row) => store_change({ action: 'insert', id: row.id, data: row }))
 	}
 
 	function remove_repeater_item(item) {
@@ -75,7 +79,11 @@
 			const row = updated_content.find((c) => c.id === sibling.id)
 			row.index = sibling.index
 		}
-		dispatch('input', updated_content)
+		// dispatch('input', updated_content)
+		dispatch_update({
+			content: updated_content,
+			changes: [{ action: 'delete', id: item.id }]
+		})
 	}
 
 	function move_repeater_item({ item, direction }) {
@@ -97,38 +105,55 @@
 			const row = updated_content.find((c) => c.id === child.id)
 			row.index = child.index
 		}
-		dispatch('input', updated_content)
-		updated_children.forEach((child) =>
-			store_transaction({ action: 'update', id: child.id, data: { index: child.index } })
-		)
+		dispatch_update({
+			content: updated_content,
+			changes: updated_children.map((child) => ({
+				action: 'update',
+				id: child.id,
+				data: { index: child.index }
+			}))
+		})
+		// dispatch('input', updated_content)
+		// updated_children.forEach((child) =>
+		// 	store_change({ action: 'update', id: child.id, data: { index: child.index } })
+		// )
 	}
 
-	function dispatch_update({ id, data }) {
-		const updated_content = cloneDeep(
-			content.map((row) => (row.id === id ? { ...row, ...data } : row))
-		)
-		dispatch('input', updated_content)
-		store_transaction({ action: 'update', id, data })
-	}
+	// function dispatch_update({ id, data }) {
+	// 	const updated_content = cloneDeep(
+	// 		content.map((row) => (row.id === id ? { ...row, ...data } : row))
+	// 	)
+	// 	dispatch('input', updated_content)
+	// 	store_change({ action: 'update', id, data })
+	// }
 
-	let transactions = []
-	function store_transaction({ action, id, data }) {
-		const existing_transaction = transactions.find((transaction) => transaction.id === id)
-		if (action === 'update' && existing_transaction) {
-			existing_transaction.data = { ...existing_transaction.data, ...data }
-		} else if (action === 'delete' && existing_transaction) {
-			transactions = transactions.filter((t) => t.id !== existing_transaction.id)
+	let all_changes = []
+	function store_change({ action, id, data }) {
+		const existing_change = all_changes.find((change) => change.id === id)
+		if (action === 'update' && existing_change) {
+			existing_change.data = { ...existing_change.data, ...data }
+		} else if (action === 'delete' && existing_change) {
+			all_changes = all_changes.filter((t) => t.id !== existing_change.id)
 		} else {
-			transactions = [...transactions, { action, id, data }]
+			all_changes = [...all_changes, { action, id, data }]
 		}
-		dispatch('transaction', { all: _.cloneDeep(transactions), id, data })
+		// dispatch('change', { all: _.cloneDeep(all_changes), action, id, data })
 	}
 
-	const root_fields = fields.filter((f) => !f.parent)
+	function dispatch_update({ content, changes }) {
+		changes.forEach((change) => {
+			store_change(change)
+		})
+		dispatch('input', {
+			content,
+			changes,
+			all_changes: _.cloneDeep(all_changes)
+		})
+	}
 </script>
 
 <div class="Content">
-	{#each root_fields.sort((a, b) => a.index - b.index) as field}
+	{#each fields.filter((f) => !f.parent).sort((a, b) => a.index - b.index) as field}
 		{@const matching_content_row = content.find((r) => r.field === field.id)}
 		{@const is_visible = check_condition(field)}
 		{@const is_valid = (field.key || field.type === 'info') && getComponent(field)}
@@ -154,11 +179,18 @@
 						on:remove={({ detail }) => remove_repeater_item(detail)}
 						on:move={({ detail }) => move_repeater_item(detail)}
 						on:input={({ detail }) => {
-							if (detail.id) {
-								dispatch_update(detail)
-							} else {
-								dispatch_update({ id: matching_content_row.id, data: detail })
-							}
+							const row_id = detail.id || matching_content_row.id
+							const data = detail.data || detail
+							const updated_content = cloneDeep(
+								content.map((row) =>
+									row.id === row_id ? { ...row, ...(detail.data || detail) } : row
+								)
+							)
+							console.log({ row_id, data, updated_content })
+							dispatch_update({
+								content: updated_content,
+								changes: [{ action: 'update', id: row_id, data }]
+							})
 						}}
 					/>
 				</div>

@@ -5,7 +5,7 @@
 	import { createEventDispatcher, getContext } from 'svelte'
 	const dispatch = createEventDispatcher()
 	import pages from '../../../../stores/data/pages'
-	import { id as activePageID } from '../../../../stores/app/activePage'
+	import { id as active_pageID } from '../../../../stores/app/active_page'
 	import { id as siteID } from '../../../../stores/data/site'
 	import { pages as actions } from '../../../../stores/actions'
 	import { validate_url } from '../../../../utilities'
@@ -56,7 +56,7 @@
 {:else}
 	<div
 		class="page-item-container"
-		class:active={page.id === $activePageID}
+		class:active={page.id === $active_pageID}
 		class:expanded={showing_children}
 	>
 		<div class="left">
@@ -120,7 +120,7 @@
 				<svelte:self
 					parent={page}
 					page={subpage}
-					active={$activePageID === subpage.id}
+					active={$active_pageID === subpage.id}
 					on:delete
 					on:create
 				/>

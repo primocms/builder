@@ -204,7 +204,7 @@
 		border-radius: 4px;
 		aspect-ratio: 1;
 		height: 100%;
-		width: 13rem;
+		/* width: 13rem; */
 		position: relative;
 
 		.image-upload {

@@ -12,7 +12,7 @@
 	import { PrimoButton } from '../../components/buttons'
 	import site from '../../stores/data/site'
 	import { userRole } from '../../stores/app'
-	import { id as page_id, name as page_name, page_type } from '../../stores/app/activePage'
+	import { id as page_id, name as page_name, page_type } from '../../stores/app/active_page'
 	import modal from '../../stores/app/modal'
 	import { click_to_copy } from '../../utilities'
 	import { page } from '$app/stores'

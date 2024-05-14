@@ -6,7 +6,7 @@ import { site as activeSite } from './data/site.js'
 import sections from './data/sections.js'
 import symbols from './data/symbols.js'
 import { page } from '$app/stores'
-import activePage from './app/activePage.js'
+import active_page from './app/active_page.js'
 import { locale } from './app/misc.js'
 import { processCSS, getEmptyValue } from '../utils.js'
 import { site_design_css } from '../code_generators.js'
@@ -61,7 +61,7 @@ export function getSymbol(symbolID) {
  * @returns {Promise<{ html: string, js: string}>}
  * */
 export async function buildStaticPage({
-	page = get(activePage),
+	page = get(active_page),
 	site = get(activeSite),
 	page_sections = get(sections),
 	page_symbols = get(symbols),
@@ -259,7 +259,11 @@ export function get_content_with_static({ component, symbol }) {
 	})
 }
 
-export function getPageData({ page = get(activePage), site = get(activeSite), loc = get(locale) }) {
+export function getPageData({
+	page = get(active_page),
+	site = get(activeSite),
+	loc = get(locale)
+}) {
 	const page_content = page.content[loc]
 	const site_content = site.content[loc]
 	return {

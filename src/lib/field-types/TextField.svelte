@@ -34,36 +34,13 @@
 	{value}
 	{disabled}
 	{title}
+	grow={true}
 	on:focus={selectAll}
 	on:keydown={handleSave}
 	on:input={({ detail }) => {
 		dispatch('input', { value: detail })
 	}}
 />
-
-<!-- <label class={variants}>
-	<div>
-		<span>{field.label}</span>
-		{#if field.is_static}
-			<span class="pill">Static</span>
-		{/if}
-	</div>
-	<textarea
-		rows="1"
-		id={field.id}
-		class="input"
-		{title}
-		{disabled}
-		on:focus={selectAll}
-		on:keydown={handleSave}
-		on:input={({ target }) => {
-			field.value = target.value
-			dispatch('input')
-		}}
-		value={field.value}
-		bind:this={element}
-	/>
-</label> -->
 
 <style lang="postcss">
 	label {

@@ -6,6 +6,7 @@
 	import { userRole } from '../../stores/app/misc.js'
 	import modal from '../../stores/app/modal.js'
 	import site from '../../stores/data/site.js'
+	import page_type from '../../stores/app/active_page_type.js'
 	import symbols from '../../stores/data/symbols.js'
 	import UI from '../../ui/index.js'
 	import Icon from '@iconify/svelte'
@@ -13,16 +14,20 @@
 	import { Symbol } from '../../factories.js'
 	import Sidebar_Symbol from './Sidebar_Symbol.svelte'
 	import Fields from '../Fields/Fields.svelte'
-	import { symbols as symbol_actions, toggle_symbol_for_page_type } from '../../stores/actions.js'
+	import {
+		symbols as symbol_actions,
+		toggle_symbol_for_page_type,
+		update_page_type_fields
+	} from '../../stores/actions.js'
 	import { v4 as uuidv4 } from 'uuid'
 	import { validate_symbol } from '../../converter.js'
 	import { dndzone } from 'svelte-dnd-action'
 	import { flip } from 'svelte/animate'
 
-	export let page_type
+	// export let page_type
 	let active_tab = 'BLOCKS'
 
-	$: console.log({ page_type })
+	$: console.log({ $page_type })
 
 	async function create_symbol() {
 		const symbol = Symbol({ site: $site.id })
@@ -138,6 +143,15 @@
 	}
 
 	let dragging = null
+
+	const debounce = (callback, wait = 200) => {
+		let timeout
+
+		return (...args) => {
+			clearTimeout(timeout)
+			timeout = setTimeout(() => callback(...args), wait)
+		}
+	}
 </script>
 
 <div class="sidebar primo-reset">
@@ -197,15 +211,15 @@
 						<div animate:flip={{ duration: flipDurationMs }}>
 							<Sidebar_Symbol
 								{symbol}
-								head={$site.code.head + page_type.code.head}
+								head={$site.code.head + $page_type.code.head}
 								append={site_design_css($site.design)}
 								header_hidden={dragging === symbol._drag_id}
 								show_toggle={true}
-								toggled={symbol.page_type === page_type.id}
+								toggled={symbol.page_type === $page_type.id}
 								on:toggle={({ detail }) =>
 									toggle_symbol_for_page_type({
 										symbol_id: symbol.id,
-										page_type_id: page_type.id,
+										page_type_id: $page_type.id,
 										toggled: detail
 									})}
 								on:mousedown={() => (dragging = symbol._drag_id)}
@@ -242,10 +256,11 @@
 		{:else}
 			<div class="page-type-fields">
 				<Fields
-					fields={page_type.fields}
-					on:input={({ detail: updated_fields }) => {
-						console.log({ updated_fields })
-					}}
+					fields={$page_type.fields}
+					on:input={debounce(({ detail }) => {
+						console.log({ detail })
+						update_page_type_fields(detail)
+					})}
 				/>
 			</div>
 		{/if}
@@ -305,6 +320,7 @@
 		flex-direction: column;
 		overflow-y: auto;
 		padding: 1rem;
+		gap: 0.75rem;
 	}
 
 	.symbols {

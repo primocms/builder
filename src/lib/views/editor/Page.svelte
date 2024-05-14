@@ -12,19 +12,16 @@
 	import { afterNavigate } from '$app/navigation'
 	import { isEqual, cloneDeep } from 'lodash-es'
 	import { code as siteCode, design as siteDesign } from '../../stores/data/site'
-	import { locale, locked_blocks } from '../../stores/app/misc'
+	import { locale, locked_blocks, page_loaded } from '../../stores/app/misc'
 	import { active_page } from '../../stores/actions'
 	import modal from '../../stores/app/modal'
 	import {
-		hydrated,
 		id as pageID,
 		name as pageName,
 		url as pageURL,
-		fields as pageFields,
-		code as pageCode,
 		content as pageContent,
 		page_type
-	} from '../../stores/app/activePage'
+	} from '../../stores/app/active_page'
 	import sections from '../../stores/data/sections'
 	import symbols from '../../stores/data/symbols'
 	import { processCode } from '../../utils'
@@ -49,8 +46,8 @@
 		// $pageCode = page_data.code
 		$pageContent = page_data.content
 		$page_type = page_data.page_type
-		await tick()
-		$hydrated = true
+		// await tick()
+		$page_loaded = true
 	}
 
 	const cached = { pageCode: null, siteCode: null, siteDesign: null }
@@ -368,7 +365,7 @@
 <div
 	id="page"
 	bind:this={page_el}
-	class:fadein={page_mounted}
+	class:fadein={$page_loaded}
 	lang={$locale}
 	use:dndzone={{
 		items: draggable_sections,
