@@ -50,11 +50,7 @@
 	$: iframe && append_to_iframe(append)
 	function append_to_iframe(code) {
 		var container = document.createElement('div')
-
-		// Set the innerHTML of the container to your HTML string
 		container.innerHTML = code
-
-		// Append each element in the container to the document head
 		Array.from(container.childNodes).forEach((node) => {
 			iframe.contentWindow.document.head.appendChild(node)
 		})

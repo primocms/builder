@@ -19,13 +19,12 @@
 	import Fields from '../../../components/Fields/Fields.svelte'
 	import Content from '../../../components/Content.svelte'
 	import { autoRefresh } from '../../../components/misc/CodePreview.svelte'
-	import { processCode } from '../../../utils.js'
+	import { processCode, getEmptyValue } from '../../../utils.js'
 	import { locale, onMobile, userRole } from '../../../stores/app/misc.js'
-
 	import { site_design_css } from '../../../code_generators.js'
 	import symbols from '../../../stores/data/symbols.js'
 	import * as actions from '../../../stores/actions.js'
-	import { content, design as siteDesign, code as siteCode } from '../../../stores/data/site.js'
+	import { design as siteDesign, code as siteCode } from '../../../stores/data/site.js'
 	import { Content_Row } from '../../../factories.js'
 	import { transform_content } from '../../../transform_data.js'
 
@@ -47,7 +46,9 @@
 
 	const symbol = _.cloneDeep($symbols.find((s) => s.id === component.symbol))
 
+	let local_code = _.cloneDeep(symbol.code)
 	let local_fields = _.cloneDeep(symbol.fields)
+	console.log({ component })
 	let local_content = _.cloneDeep(component.content)
 
 	// Show Static Field toggle within Field Item
@@ -56,13 +57,12 @@
 	let loading = false
 
 	// raw code bound to code editor
-	let local_code = _.cloneDeep(symbol.code)
 	let raw_html = local_code.html
 	let raw_css = local_code.css
 	let raw_js = local_code.js
 
 	$: component_data = transform_content({ fields: local_fields, content: local_content })[$locale]
-	$: console.log({ component_data })
+	$: console.log({ local_fields, local_content })
 
 	// changing codes triggers compilation
 	$: $autoRefresh &&
@@ -89,7 +89,6 @@
 		}, 200)
 
 		async function compile() {
-			// const parentCSS = await processCSS($siteCode.css + $pageCode.css)
 			const res = await processCode({
 				component: {
 					html:
@@ -128,71 +127,25 @@
 		previewUpToDate = true
 	}
 
-	async function save_component() {
-		if (!previewUpToDate) {
-			await refresh_preview()
-		}
-
-		if (!disable_save) {
-			// code & fields gets saved to symbol
-			actions.symbols.update(symbol.id, {
-				code: local_code
-				// content: updated_symbol_content,
-				// fields: fields.map((field) => {
-				// 	delete field.value
-				// 	return field
-				// })
-			})
-
-			// non-static content gets saved to section
-			console.log({
-				component,
-				local_content,
-				field_transactions,
-				content_transactions,
-				local_fields
-			})
-
-			// TODO pass new content items for symbol for newly created fields
-			actions.update_instance(component.id, {
-				field_transactions,
-				content_transactions,
-				updated_fields: local_fields,
-				updated_content: local_content
-			})
-
-			header.button.onclick()
-		}
-	}
-
 	let field_transactions = []
 	let content_transactions = []
-	function handle_field_transaction(transaction) {
-		const existing_content_transaction = content_transactions.find(
-			(t) => t.data.field === transaction.id
-		)
+	function handle_field_changes(transaction) {
 		if (transaction.action === 'insert') {
-			const new_content_row = Content_Row({ field: transaction.id, locale: $locale })
+			const new_content_row = Content_Row({
+				field: transaction.data.id,
+				locale: $locale,
+				value: getEmptyValue(transaction.data)
+			})
 			local_content = [...local_content, new_content_row]
 			content_transactions = [
 				...content_transactions,
 				{ action: 'insert', id: new_content_row.id, data: new_content_row }
 			]
 		} else if (transaction.action === 'delete') {
-			if (existing_content_transaction.action === 'insert') {
-				content_transactions = content_transactions.filter(
-					(t) => t.data.field !== existing_content_transaction.data.field
-				)
-			} else {
-				const existing_content_row = content.find((r) => r.field === transaction.id)
-				content_transactions = [
-					...content_transactions,
-					{ action: 'delete', id: existing_content_row.id }
-				]
-			}
-			local_content = local_content.filter((r) => r.field === transaction.id)
+			// delete relevant content changes and rows
+			content_transactions = content_transactions.filter((t) => t.data.field !== transaction.id)
+			local_content = local_content.filter((r) => r.field !== transaction.id)
 		}
-		field_transactions = transaction.all
 	}
 
 	function handle_content_transaction({ id, data }) {
@@ -201,6 +154,25 @@
 			existing_transaction.data = { ...existing_transaction.data, ...data }
 		} else {
 			content_transactions = [...content_transactions, { action: 'update', id, data }]
+		}
+	}
+
+	async function save_component() {
+		if (!previewUpToDate) {
+			await refresh_preview()
+		}
+
+		if (!disable_save) {
+			// TODO pass new content items for symbol for newly created fields
+			actions.update_section(component.id, {
+				field_transactions,
+				content_transactions,
+				updated_code: local_code,
+				updated_fields: local_fields,
+				updated_content: local_content
+			})
+
+			header.button.onclick()
 		}
 	}
 </script>
@@ -273,7 +245,9 @@
 			fields={local_fields}
 			on:input={({ detail }) => {
 				local_fields = detail.fields
-				detail.changes.forEach((change) => handle_field_transaction(change))
+				detail.changes.forEach((change) => handle_field_changes(change))
+				console.log({ detail, local_content })
+				field_transactions = detail.all_changes
 			}}
 		/>
 	{:else}
@@ -291,8 +265,10 @@
 						fields={local_fields}
 						content={local_content}
 						on:save={save_component}
-						on:input={({ detail: updated_content }) => (local_content = updated_content)}
-						on:transaction={({ detail }) => handle_content_transaction(detail)}
+						on:input={({ detail }) => {
+							local_content = detail.content
+							detail.changes.forEach((change) => handle_content_transaction(change))
+						}}
 					/>
 				{:else if tab === 'code'}
 					<FullCodeEditor

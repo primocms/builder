@@ -128,7 +128,6 @@
 	}
 
 	async function refresh_symbols() {
-		console.log('refreshing')
 		await tick()
 		draggable_symbols = $symbols
 			.filter((s) => s.page_type === $page_type.id) // only show symbols belonging to this page type
@@ -137,8 +136,6 @@
 	}
 
 	let dragging = null
-
-	$: console.log({ $page_type })
 
 	const debounce = (callback, wait = 200) => {
 		let timeout
@@ -167,7 +164,6 @@
 		]}
 		bind:active_tab_id={active_tab}
 		on:switch={({ detail: tab_id }) => {
-			console.log({ tab_id })
 			localStorage.setItem('page-tab', tab_id)
 		}}
 		disable_hotkeys={true}
@@ -251,10 +247,7 @@
 				<Content
 					fields={$page_type.fields}
 					content={$page_content}
-					on:input={debounce(({ detail }) => {
-						console.log({ detail })
-						update_page_content(detail)
-					})}
+					on:input={debounce(({ detail }) => update_page_content(detail))}
 					minimal={true}
 				/>
 			</div>

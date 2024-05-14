@@ -115,8 +115,6 @@
 		Mousetrap.bind('mod', () => ($showKeyHint = true), 'keydown')
 		Mousetrap.bind('mod', () => ($showKeyHint = false), 'keyup')
 	}
-
-	$: console.log({ $page_loaded })
 </script>
 
 <HSplitPane bind:leftPaneSize bind:rightPaneSize style="margin-top:54px">

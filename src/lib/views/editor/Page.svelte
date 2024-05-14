@@ -37,7 +37,6 @@
 	$: hydrate_active_page(page)
 	hydrate_active_page(page)
 	async function hydrate_active_page(page_data) {
-		console.log('hydrating', page_data)
 		$sections = page_data.sections
 		$pageID = page_data.id
 		$pageName = page_data.name

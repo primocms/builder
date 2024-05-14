@@ -204,7 +204,8 @@
 				for (const [index, item] of Object.entries(value)) {
 					for (const [subkey, subvalue] of Object.entries(item)) {
 						search_elements_for_value({
-							key: `${key}[${index}].${subkey}`,
+							// key: `${key}[${index}].${subkey}`,
+							key: [key, parseInt(index), subkey],
 							value: subvalue,
 							type: get_value_type(subvalue)
 						})
@@ -213,7 +214,8 @@
 			} else if (type === 'GROUP') {
 				Object.entries(value).forEach(([subkey, subvalue]) => {
 					search_elements_for_value({
-						key: `${key}.${subkey}`,
+						// key: `${key}.${subkey}`,
+						key: { parent: key, child: subkey },
 						value: subvalue,
 						type: get_value_type(subvalue)
 					})

@@ -40,7 +40,7 @@ export async function page_html({
 				html: `
          <svelte:head>
            ${site.code.head}
-           ${page.code.head}
+           ${page?.page_type.code.head}
            ${site_design_css(site.design)}
          </svelte:head>`,
 				css: ``,

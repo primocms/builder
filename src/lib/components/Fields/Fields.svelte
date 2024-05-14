@@ -19,10 +19,7 @@
 
 	function create_field() {
 		const new_field = Field_Row({ index: parent_fields.length })
-		// delete new_field.id
 		const updated_fields = cloneDeep([...fields, new_field])
-		// dispatch('input', updated_fields)
-		// store_change({ action: 'insert', data: new_field })
 		dispatch_update({
 			fields: updated_fields,
 			changes: [{ action: 'insert', data: new_field }]
@@ -32,10 +29,7 @@
 	function create_subfield(field) {
 		const siblings = fields.filter((f) => f.parent === field.parent) // remove self, select siblings
 		const new_field = Field_Row({ parent: field.id, index: siblings.length })
-		// delete new_field.id
 		const updated_fields = cloneDeep([...fields, new_field])
-		// dispatch('input', updated_fields)
-		// store_change({ action: 'insert', id: new_field.id, data: new_field })
 		dispatch_update({
 			fields: updated_fields,
 			changes: [{ action: 'insert', data: new_field }]
@@ -43,22 +37,27 @@
 	}
 
 	function delete_field(field) {
-		const updated_fields = cloneDeep(fields.filter((f) => f.id !== field.id))
+		const updated_fields = cloneDeep(fields.filter((f) => f.id !== field.id)) // remove self
 		// get siblings, update indeces
 		const updated_siblings = updated_fields
-			.filter((f) => f.parent === field.parent) // remove self, select siblings
+			.filter((f) => f.parent === field.parent) // select siblings
 			.sort((a, b) => a.index - b.index)
 			.map((f, i) => ({ ...f, index: i }))
 		for (const sibling of updated_siblings) {
 			const field = updated_fields.find((f) => f.id === sibling.id)
 			field.index = sibling.index
 		}
-		// dispatch('input', updated_fields)
-		// store_change({ action: 'delete', id: field.id })
 
 		dispatch_update({
 			fields: updated_fields,
-			changes: [{ action: 'delete', id: field.id }]
+			changes: [
+				{ action: 'delete', id: field.id },
+				...updated_siblings.map((sibling) => ({
+					action: 'update',
+					id: sibling.id,
+					data: { index: sibling.index }
+				}))
+			]
 		})
 	}
 
@@ -102,10 +101,6 @@
 				}))
 			]
 		})
-		// store_change({ action: 'insert', data: new_field })
-		// updated_children.forEach((child) =>
-		// 	store_change({ action: 'update', id: child.id, data: { index: child.index } })
-		// )
 	}
 
 	function move_field({ field, direction }) {
@@ -127,7 +122,6 @@
 			const field = updated_fields.find((f) => f.id === child.id)
 			field.index = child.index
 		}
-		// dispatch('input', updated_fields)
 		dispatch_update({
 			fields: updated_fields,
 			changes: updated_children.map((child) => ({
@@ -136,17 +130,12 @@
 				data: { index: child.index }
 			}))
 		})
-		// updated_children.forEach((child) =>
-		// 	store_change({ action: 'update', id: child.id, data: { index: child.index } })
-		// )
 	}
 
 	function update_field(updated_field) {
 		const updated_fields = cloneDeep(
 			fields.map((field) => (field.id === updated_field.id ? updated_field : field))
 		)
-		// dispatch('input', updated_fields)
-		// store_change({ action: 'update', id: updated_field.id, data: updated_field })
 		dispatch_update({
 			fields: updated_fields,
 			changes: [{ action: 'update', id: updated_field.id, data: updated_field }]
@@ -155,12 +144,16 @@
 
 	let all_changes = []
 	function store_change({ action, id = null, data }) {
-		console.log({ action, id, data })
-		const existing_transaction = all_changes.find((transaction) => transaction.id === id)
-		if (action === 'update' && existing_transaction) {
-			existing_transaction.data = { ...existing_transaction.data, ...data }
-		} else if (action === 'delete' && existing_transaction) {
-			all_changes = all_changes.filter((t) => t.id !== existing_transaction.id)
+		const existing_change = all_changes.find((change) => change.id === id)
+		if (action === 'update' && existing_change?.action === 'update') {
+			// update the update
+			existing_change.data = { ...existing_change.data, ...data }
+		} else if (action === 'delete' && existing_change) {
+			// remove the insert/update & add the delete
+			all_changes = [
+				...all_changes.filter((t) => t.id !== existing_change.id),
+				{ action, id, data }
+			]
 		} else {
 			all_changes = [...all_changes, { action, id, data }]
 		}

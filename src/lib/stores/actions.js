@@ -206,73 +206,135 @@ export const active_page = {
 		// if adding to page type, also add section to every instance of section
 		let new_section
 		if (data.page_type) {
-			// adding to page type
-			new_section = Section({
-				index: position,
-				page: null,
-				page_type: data.page_type.id,
-				content: symbol.content,
-				symbol: symbol.id
-			})
+			// // adding to page type
+			// new_section = Section({
+			// 	index: position,
+			// 	page: null,
+			// 	page_type: data.page_type.id,
+			// 	// content: symbol.content,
+			// 	symbol: symbol.id
+			// })
 		} else {
 			// adding to page
 			new_section = Section({
 				index: position,
-				page: get(active_page_store).id,
-				content: symbol.content,
+				page: get(active_page_store.id),
 				symbol: symbol.id
 			})
 		}
-		const updated_sections = [
-			...original_sections.slice(0, position),
-			new_section,
-			...original_sections.slice(position)
-		].map((section, i) => ({ ...section, index: i }))
 
 		await update_timeline({
 			doing: async () => {
-				// is page type
+				const updated_sections = [
+					...original_sections.slice(0, position),
+					{
+						...new_section,
+						content: symbol.content.map((row) => ({
+							...row,
+							symbol: null,
+							section: new_section.id
+						}))
+					},
+					...original_sections.slice(position)
+				].map((section, i) => ({ ...section, index: i }))
+
+				// is page type, copy sections to pages of type
 				if (data.page_type) {
-					// fetch pages with given page type
-					const page_instances = await dataChanged({
-						table: 'pages',
-						action: 'select',
-						match: { page_type: data.page_type.id }
-					})
-					// add new section with given page type
-					await Promise.all(
-						page_instances?.map(async (page) => {
-							await dataChanged({
-								table: 'sections',
-								action: 'insert',
-								data: Section({
-									index: position,
-									content: symbol.content,
-									symbol: symbol.id,
-									page: page.id,
-									page_type: null,
-									master: new_section.id
-								})
-							})
-						})
-					)
+					// // fetch pages with given page type
+					// const page_instances = await dataChanged({
+					// 	table: 'pages',
+					// 	action: 'select',
+					// 	match: { page_type: data.page_type.id }
+					// })
+					// // add new section with given page type
+					// await Promise.all(
+					// 	page_instances?.map(async (page) => {
+					// 		await dataChanged({
+					// 			table: 'sections',
+					// 			action: 'insert',
+					// 			data: Section({
+					// 				index: position,
+					// 				content: symbol.content,
+					// 				symbol: symbol.id,
+					// 				page: page.id,
+					// 				page_type: null,
+					// 				master: new_section.id
+					// 			})
+					// 		})
+					// 	})
+					// )
 				}
 
 				stores.sections.set(updated_sections)
+
+				// upload new section, update local section w/ new ID
+				const new_section_db_id = await dataChanged({
+					table: 'sections',
+					action: 'insert',
+					data: {
+						index: new_section.index,
+						symbol: new_section.symbol,
+						page: new_section.page
+					}
+				})
+				_.find(updated_sections, { id: new_section.id }).id = new_section_db_id
+				stores.sections.set(updated_sections)
+
+				// add content items for section
+				const old_content_ids = symbol.content.map((r) => r.id)
+				const new_content_ids = await dataChanged({
+					table: 'content',
+					action: 'insert',
+					data: symbol.content.map((row) => ({
+						value: row.value,
+						index: row.index,
+						// parent: row.parent,
+						metadata: row.metadata,
+						locale: row.locale,
+						field: row.field,
+						section: new_section_db_id
+					}))
+				})
+
+				// TODO: handle transferring repeater items
+
+				// update local content IDs
+				let updated_section_content = _.find(updated_sections, { id: new_section_db_id }).content
+				updated_section_content = updated_section_content.map((row, i) => {
+					const parent_index = old_content_ids.indexOf(row.parent)
+					return {
+						...row,
+						id: new_content_ids[i]['id'],
+						parent: new_content_ids[parent_index]?.id || null
+					}
+				})
+				stores.sections.set(updated_sections)
+
+				// update section content w/ parents using db IDs
+				await dataChanged({
+					table: 'content',
+					action: 'upsert',
+					data: updated_section_content
+						.filter((s) => s.parent)
+						.map((s) => ({ id: s.id, parent: s.parent }))
+				})
+
+				// update indeces of sibling sections
 				await dataChanged({
 					table: 'sections',
 					action: 'upsert',
-					data: updated_sections
+					data: updated_sections.map((s) => ({ id: s.id, index: s.index }))
 				})
 			},
 			undoing: async () => {
-				stores.sections.set(original_sections)
-				await dataChanged({ table: 'sections', action: 'delete', id: new_section.id })
-				await dataChanged({
-					table: 'sections',
-					action: 'upsert',
-					data: original_sections
-				})
+				// TODO: inverse
+				// stores.sections.set(original_sections)
+				// await dataChanged({ table: 'sections', action: 'delete', id: new_section.id })
+				// await dataChanged({
+				// 	table: 'sections',
+				// 	action: 'upsert',
+				// 	data: original_sections
+				// })
 			}
 		})
 		update_page_preview()
@@ -444,12 +506,20 @@ export const active_page = {
 			doing: async () => {
 				stores.sections.set(new_sections)
 				await dataChanged({ table: 'sections', action: 'delete', id: block_id })
-				await dataChanged({ table: 'sections', action: 'upsert', data: new_sections })
+				await dataChanged({
+					table: 'sections',
+					action: 'upsert',
+					data: new_sections.map((s) => ({ id: s.id, index: s.index }))
+				})
 			},
 			undoing: async () => {
 				stores.sections.set(original_sections)
 				await dataChanged({ table: 'sections', action: 'insert', data: block })
-				await dataChanged({ table: 'sections', action: 'upsert', data: original_sections })
+				await dataChanged({
+					table: 'sections',
+					action: 'upsert',
+					data: original_sections.map((s) => ({ id: s.id, index: s.index }))
+				})
 			}
 		})
 		update_page_preview()
@@ -723,37 +793,75 @@ export async function update_page_preview(page = get(active_page_store.default))
 	// }
 }
 
-export async function update_instance(
-	instance_id,
-	{ field_transactions, content_transactions, updated_fields, updated_content }
+export async function update_section(
+	section_id,
+	{ field_transactions, content_transactions, updated_code, updated_fields, updated_content }
 ) {
+	console.log({
+		field_transactions,
+		content_transactions,
+		updated_code,
+		updated_fields,
+		updated_content
+	})
+
 	const original_sections = _.cloneDeep(get(stores.sections))
-	const original_section = original_sections.find((section) => section.id === instance_id)
+	const original_section = original_sections.find((section) => section.id === section_id)
 	const original_symbols = _.cloneDeep(get(stores.symbols))
 	const original_symbol = original_symbols.find((symbol) => symbol.id === original_section.symbol)
 
 	await update_timeline({
 		doing: async () => {
-			// update symbol fields
+			// Get new field content for symbol
+			const new_symbol_content = _.cloneDeep(
+				updated_content.filter(
+					(section_row) =>
+						!original_symbol.content.find((symbol_row) => section_row.field === symbol_row.field)
+				)
+			)
+			console.log({
+				new_symbol_content,
+				all_symbol_content: [...original_symbol.content, ...new_symbol_content]
+			})
+
+			// STORE: update symbol content (for new fields), fields, and code
+			// TODO: handle new repeater items
 			stores.symbols.update((store) =>
 				store.map((symbol) =>
-					symbol.id === original_symbol.id ? { ...symbol, fields: updated_fields } : symbol
+					symbol.id === original_symbol.id
+						? {
+								...symbol,
+								content: [...original_symbol.content, ...new_symbol_content],
+								code: updated_code,
+								fields: updated_fields
+						  }
+						: symbol
 				)
 			)
 
-			// update section content
+			// STORE: update section content
 			stores.sections.update((store) =>
 				store.map((section) =>
-					section.id === instance_id ? { ...section, content: updated_content } : section
+					section.id === section_id ? { ...section, content: updated_content } : section
 				)
 			)
 
-			// Store fields
+			// DB: save symbol code
+			await dataChanged({
+				table: 'symbols',
+				action: 'update',
+				id: original_symbol.id,
+				data: {
+					code: updated_code
+				}
+			})
+
+			// DB: save symbol fields
 			const new_field_ids = {} // store id's of newly created fields for new children to reference
 			for (const { action, id, data } of field_transactions) {
-				console.log('Store fields', { action, id, data })
 				if (action === 'insert') {
-					delete data.id
+					// const old_id = data.id
+					// delete data.id
 					const new_id = await dataChanged({
 						table: 'fields',
 						action,
@@ -763,11 +871,89 @@ export async function update_instance(
 							symbol: original_symbol.id
 						}
 					})
-					console.log({ new_id }, new_field_ids[data.parent])
-					new_field_ids[id] = new_id
+					new_field_ids[data.id] = new_id
+				} else {
+					// delete data?.id
+					await dataChanged({
+						id: new_field_ids[id] || id,
+						table: 'fields',
+						action,
+						data
+					})
+				}
+			}
+
+			// DB: save new symbol content
+			const new_symbol_content_ids = {}
+			for (const new_row of new_symbol_content) {
+				// delete new_row.section
+				const db_id = await dataChanged({
+					table: 'content',
+					action: 'insert',
+					data: {
+						value: new_row.value,
+						index: new_row.index,
+						metadata: new_row.metadata,
+						locale: new_row.locale,
+						field: new_field_ids[new_row.field],
+						// parent: new_content_ids[new_row.parent],
+						symbol: original_symbol.id
+					}
+				})
+				new_symbol_content_ids[new_row.id] = db_id
+			}
+
+			// DB: update symbol content w/ parent DB IDs (TODO: test)
+			await dataChanged({
+				table: 'content',
+				action: 'upsert',
+				data: new_symbol_content
+					.filter((r) => r.parent)
+					.map((row) => ({
+						id: new_symbol_content_ids[row.id],
+						parent: new_symbol_content_ids[row.parent]
+					}))
+			})
+
+			// STORE: update symbol fields & content locally w/ DB IDs
+			stores.symbols.update((store) =>
+				store.map((symbol) => {
+					if (symbol.id === original_symbol.id) {
+						const fields_with_updated_ids = symbol.fields.map((field) => ({
+							...field,
+							id: new_field_ids[field.id] || field.id,
+							parent: new_field_ids[field.parent] || field.parent
+						}))
+						const content_with_updated_ids = symbol.content.map((row) => ({
+							...row,
+							id: new_symbol_content_ids[row.id] || row.id,
+							parent: new_symbol_content_ids[row.parent] || row.parent,
+							field: new_field_ids[row.field] || row.field
+						}))
+						return { ...symbol, fields: fields_with_updated_ids, content: content_with_updated_ids }
+					} else return symbol
+				})
+			)
+
+			// DB: save section content
+			const new_content_ids = {}
+			for (const { action, id, data } of content_transactions) {
+				if (action === 'insert') {
+					// delete data.id
+					const db_id = await dataChanged({
+						table: 'content',
+						action,
+						data: {
+							...data,
+							field: new_field_ids[data.field] || data.field,
+							parent: new_content_ids[data.parent] || data.parent,
+							section: section_id
+						}
+					})
+					new_content_ids[data.id] = db_id
 				} else {
 					await dataChanged({
-						table: 'fields',
+						table: 'content',
 						action,
 						data,
 						id
@@ -775,34 +961,20 @@ export async function update_instance(
 				}
 			}
 
-			// Store content
-			console.log({ new_field_ids })
-			const new_content_ids = {}
-			for (const { action, id, data } of content_transactions) {
-				console.log('Store content', { action, id, data })
-				if (action === 'insert') {
-					delete data.id
-					const res = await dataChanged({
-						table: 'content',
-						action,
-						data: {
-							...data,
-							field: new_field_ids[data.field] || data.field,
-							parent: new_content_ids[data.parent] || data.parent, // TODO
-							section: instance_id
-						}
-					})
-					console.log({ field: new_field_ids[data.field], parent: new_content_ids[data.parent] })
-					new_content_ids[id] = res.id
-				} else {
-					await dataChanged({
-						table: 'content',
-						action,
-						data,
-						id
-					})
-				}
-			}
+			// STORE: update section content locally w/ DB IDs
+			stores.sections.update((store) =>
+				store.map((section) => {
+					if (section.id === section_id) {
+						const content_with_updated_ids = section.content.map((row) => ({
+							...row,
+							id: new_content_ids[row.id] || row.id,
+							parent: new_content_ids[row.parent] || row.parent,
+							field: new_field_ids[row.field] || row.field
+						}))
+						return { ...section, content: content_with_updated_ids }
+					} else return section
+				})
+			)
 		},
 		undoing: async () => {
 			// TODO: do reverse
@@ -913,7 +1085,24 @@ export async function toggle_symbol_for_page_type({ symbol_id, page_type_id, tog
 // extract symbol/instance content from updated section content
 export async function update_section_content(section, { key, value, locale }) {
 	const symbol = get(stores.symbols).find((symbol) => symbol.id === section.symbol)
-	const matching_field = symbol.fields.find((field) => field.key === key)
+
+	let matching_field
+	let repeater_item = null
+	if (Array.isArray(key)) {
+		const [repeater_key, index, subfield_key] = key
+		const { id: repeater_field_id } = symbol.fields.find((f) => f.key === repeater_key && !f.parent)
+		const { id: container_id } = section.content.find((r) => r.field === repeater_field_id)
+		repeater_item = section.content.find((r) => r.parent === container_id && r.index === index)
+		matching_field = symbol.fields.find(
+			(f) => f.key === subfield_key && f.parent === repeater_field_id
+		)
+	} else if (typeof key === 'object') {
+		const { id: parent_id } = symbol.fields.find((f) => f.key === key.parent && !f.parent)
+		matching_field = symbol.fields.find((f) => f.key === key.child && f.parent === parent_id)
+	} else {
+		matching_field = symbol.fields.find((field) => field.key === key)
+	}
+	console.log({ matching_field, repeater_item, content: section.content })
 
 	const original_symbol_content = _.cloneDeep(symbol.content)
 	const original_section_content = _.cloneDeep(section.content)
@@ -923,15 +1112,21 @@ export async function update_section_content(section, { key, value, locale }) {
 			await dataChanged({
 				table: 'content',
 				action: 'update',
-				match: { section: section.id, field: matching_field.id, locale },
+				match: {
+					section: section.id,
+					field: matching_field.id,
+					// index: repeater_item,
+					locale,
+					parent: repeater_item.id
+				},
 				data: { value }
 			})
 
-			const updated_section_content = _.cloneDeep(section.content)
-			_.set(updated_section_content, `${locale}.${key}`, value)
-			stores.sections.update((store) =>
-				store.map((s) => (s.id === section.id ? { ...s, content: updated_section_content } : s))
-			)
+			// TODO: update locally (maybe no need since page doesn't remount)
+			// const updated_section_content = _.cloneDeep(section.content)
+			// stores.sections.update((store) =>
+			// 	store.map((s) => (s.id === section.id ? { ...s, content: updated_section_content } : s))
+			// )
 		},
 		undoing: async () => {
 			const original_value = _.get(original_section_content, `${locale}.${key}`)

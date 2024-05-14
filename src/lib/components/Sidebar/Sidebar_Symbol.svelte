@@ -96,7 +96,6 @@
 			})
 			.catch((e) => console.error(e))
 		if (res?.data?.error) {
-			console.log({ res })
 			component_error = res.data.error
 		} else if (res?.data) {
 			const updated_componentCode = res.data
