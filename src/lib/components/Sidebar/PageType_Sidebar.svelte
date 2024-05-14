@@ -12,7 +12,7 @@
 	import { site_design_css } from '../../code_generators.js'
 	import { Symbol } from '../../factories.js'
 	import Sidebar_Symbol from './Sidebar_Symbol.svelte'
-	import GenericFields from '../GenericFields/GenericFields.svelte'
+	import Fields from '../../views/modal/ComponentEditor/Fields.svelte'
 	import { symbols as symbol_actions } from '../../stores/actions.js'
 	import { v4 as uuidv4 } from 'uuid'
 	import { validate_symbol } from '../../converter.js'
@@ -197,6 +197,7 @@
 						<div animate:flip={{ duration: flipDurationMs }}>
 							<Sidebar_Symbol
 								{symbol}
+								head={$site.code.head + page_type.code.head}
 								append={site_design_css($site.design)}
 								header_hidden={dragging === symbol._drag_id}
 								on:mousedown={() => (dragging = symbol._drag_id)}
@@ -232,14 +233,11 @@
 			{/if}
 		{:else}
 			<div class="page-type-fields">
-				<GenericFields
+				<Fields
 					fields={page_type.fields}
-					on:input={async ({ detail: updated_fields }) => {
-						console.log('fields', { updated_fields })
-						// fields = updated_fields
-						// save_local_content()
+					on:input={({ detail: updated_fields }) => {
+						console.log({ updated_fields })
 					}}
-					showCode={true}
 				/>
 			</div>
 		{/if}

@@ -10,7 +10,6 @@
 	export let value
 	export let disabled = false
 	export let title = null
-	export let variants = ''
 
 	function selectAll({ target }) {
 		if (field.default === field.value) target.select()
@@ -28,19 +27,17 @@
 	onMount(() => {
 		autosize(element)
 	})
-
-	console.log({ value })
-
-	$: console.log({ field })
 </script>
 
 <TextInput
 	{...field}
 	{value}
+	{disabled}
+	{title}
 	on:focus={selectAll}
 	on:keydown={handleSave}
 	on:input={({ detail }) => {
-		dispatch('input', detail)
+		dispatch('input', { value: detail })
 	}}
 />
 

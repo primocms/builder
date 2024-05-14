@@ -8,6 +8,7 @@
 	export let field
 	export let field_to_compare
 	export let comparable_fields
+	export let collapsed
 
 	$: condition_value = field.options.condition?.value
 
@@ -17,7 +18,7 @@
 	]
 </script>
 
-<div class="Condition">
+<div class="Condition" class:collapsed>
 	<p style="margin-bottom: 0.25rem; font-size: var(--font-size-1); color: #9d9d9d;">Condition</p>
 	<div class="container">
 		<!-- Sibling field to compare to -->
@@ -89,12 +90,17 @@
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
 	.container {
 		display: grid;
 		grid-template-columns: auto auto 1fr auto;
 		gap: 0.5rem;
 		place-items: center;
+
+		&.collapsed {
+			grid-template-columns: 1fr !important;
+			gap: 0.75rem;
+		}
 	}
 	.delete {
 		height: 100%;

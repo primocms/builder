@@ -28,29 +28,38 @@
 		})
 	}
 
-	async function convert_image(url, new_type) {
-		const response = await fetch(url)
-		const blob = await response.blob()
-
-		const image = new Image()
-		image.crossOrigin = 'anonymous' // This is important for CORS if the image is from a different domain
-		image.src = URL.createObjectURL(blob)
-		image.onload = () => {
-			const canvas = document.createElement('canvas')
-			canvas.width = image.naturalWidth
-			canvas.height = image.naturalHeight
-			canvas.getContext('2d').drawImage(image, 0, 0)
-			canvas.toBlob((blob) => {
-				// Now we have a `blob` containing webp data
-
-				// Use the file rename trick to turn it back into a file
-				const myImage = new File([blob], `${blob.name}.${new_type}`, { type: blob.type })
-				uploadImage(myImage)
-			}, `image/${new_type}`)
-		}
+	function dispatch_update({ url = value.url, alt = value.alt }) {
+		dispatch('input', {
+			value: {
+				url,
+				alt
+			}
+		})
 	}
 
-	async function uploadImage(image) {
+	// async function convert_image(url, new_type) {
+	// 	const response = await fetch(url)
+	// 	const blob = await response.blob()
+
+	// 	const image = new Image()
+	// 	image.crossOrigin = 'anonymous' // This is important for CORS if the image is from a different domain
+	// 	image.src = URL.createObjectURL(blob)
+	// 	image.onload = () => {
+	// 		const canvas = document.createElement('canvas')
+	// 		canvas.width = image.naturalWidth
+	// 		canvas.height = image.naturalHeight
+	// 		canvas.getContext('2d').drawImage(image, 0, 0)
+	// 		canvas.toBlob((blob) => {
+	// 			// Now we have a `blob` containing webp data
+
+	// 			// Use the file rename trick to turn it back into a file
+	// 			const myImage = new File([blob], `${blob.name}.${new_type}`, { type: blob.type })
+	// 			upload_image(myImage)
+	// 		}, `image/${new_type}`)
+	// 	}
+	// }
+
+	async function upload_image(image) {
 		loading = true
 
 		await upload(image)
@@ -66,8 +75,8 @@
 			})
 
 			if (url) {
-				imagePreview = url
-				set_url(url)
+				image_preview = url
+				dispatch_update({ url })
 				image_size = size
 			}
 			loading = false
@@ -75,7 +84,7 @@
 	}
 
 	let image_size = null
-	let imagePreview = value.url || ''
+	let image_preview = value.url || ''
 	let loading = false
 </script>
 
@@ -94,7 +103,7 @@
 					</span>
 				{/if}
 				{#if value.url}
-					<img src={imagePreview} alt="Preview" />
+					<img src={image_preview} alt="Preview" />
 				{/if}
 				<label class="image-upload">
 					<Icon icon="uil:image-upload" />
@@ -106,7 +115,7 @@
 							const { files } = target
 							if (files.length > 0) {
 								const image = files[0]
-								uploadImage(image)
+								upload_image(image)
 							}
 						}}
 						type="file"
@@ -119,19 +128,14 @@
 			<TextInput
 				value={value.alt}
 				label="Description"
-				on:input={({ detail }) => {
-					dispatch('input', {
-						url: value.url,
-						alt: detail
-					})
-				}}
+				on:input={({ detail }) => dispatch_update({ alt: detail })}
 			/>
 			<TextInput
 				value={value.url}
 				label="URL"
 				on:input={({ detail: value }) => {
-					imagePreview = value
-					set_url(value)
+					image_preview = value
+					dispatch_update({ url: value })
 				}}
 			/>
 			<!-- {#if field.options.type && field.options.type !== 'svg+xml'}
@@ -269,7 +273,7 @@
 		--TextInput-font-size: 0.75rem;
 	}
 
-	.image-type-buttons {
+	/* .image-type-buttons {
 		margin-top: 3px;
 		font-size: 0.75rem;
 		display: flex;
@@ -289,5 +293,5 @@
 				border-left: 1px solid var(--color-gray-8);
 			}
 		}
-	}
+	} */
 </style>

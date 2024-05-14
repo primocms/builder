@@ -29,7 +29,6 @@
 	import * as actions from '../../../stores/actions'
 	import { content, design as siteDesign, code as siteCode } from '../../../stores/data/site'
 	import { code as pageCode } from '../../../stores/app/activePage'
-	import { getPageData } from '../../../stores/helpers'
 	import { Content_Row } from '../../../factories'
 	import { transform_content } from '../../../transform_data.js'
 
@@ -49,12 +48,10 @@
 		}
 	}
 
-	const local_component = _.cloneDeep(component)
 	const symbol = _.cloneDeep($symbols.find((s) => s.id === component.symbol))
-	console.log({ symbol, local_component })
 
 	let local_fields = _.cloneDeep(symbol.fields)
-	let local_content = _.cloneDeep(local_component.content)
+	let local_content = _.cloneDeep(component.content)
 
 	// Show Static Field toggle within Field Item
 	setContext('show_static_field', true)
@@ -67,7 +64,7 @@
 	let raw_css = local_code.css
 	let raw_js = local_code.js
 
-	let component_data = transform_content({ fields: local_fields, content: local_content })[$locale]
+	$: component_data = transform_content({ fields: local_fields, content: local_content })[$locale]
 	$: console.log({ component_data })
 
 	// changing codes triggers compilation
@@ -81,8 +78,7 @@
 	let componentApp // holds compiled component
 	let compilationError // holds compilation error
 
-	$: console.log({ component_data })
-	$: compilationError && component_data && refresh_preview() // recompile when there's a compilation error & data changes
+	$: compilationError && component_data && refresh_preview() // recompile when there's a compilation error or data changes
 
 	let disable_save = false
 	async function compile_component_code({ html, css, js }) {
@@ -97,17 +93,14 @@
 
 		async function compile() {
 			// const parentCSS = await processCSS($siteCode.css + $pageCode.css)
-			console.log({ component_data })
 			const res = await processCode({
 				component: {
 					html:
 						html +
-						$pageCode.foot +
-						$pageCode.foot +
+						$siteCode.foot +
 						`
 					 <svelte:head>
 						 ${$siteCode.head}
-						 ${$pageCode.foot}
 						 ${site_design_css($siteDesign)}
 					 </svelte:head>`,
 					css,
@@ -195,15 +188,12 @@
 
 	let field_transactions = []
 	let content_transactions = []
-	$: console.log({ field_transactions, content_transactions })
 	function handle_field_transaction(transaction) {
-		console.log({ transaction })
 		const existing_content_transaction = content_transactions.find(
 			(t) => t.data.field === transaction.id
 		)
 		if (transaction.action === 'insert') {
-			console.log('inserting')
-			const new_content_row = Content_Row({ field: transaction.id })
+			const new_content_row = Content_Row({ field: transaction.id, locale: $locale })
 			local_content = [...local_content, new_content_row]
 			content_transactions = [
 				...content_transactions,
@@ -211,13 +201,11 @@
 			]
 		} else if (transaction.action === 'delete') {
 			if (existing_content_transaction.action === 'insert') {
-				console.log('removing existing', { existing_content_transaction, transaction })
 				content_transactions = content_transactions.filter(
 					(t) => t.data.field !== existing_content_transaction.data.field
 				)
 			} else {
 				const existing_content_row = content.find((r) => r.field === transaction.id)
-				console.log({ existing_content_row })
 				content_transactions = [
 					...content_transactions,
 					{ action: 'delete', id: existing_content_row.id }
@@ -230,7 +218,6 @@
 
 	function handle_content_transaction({ id, data }) {
 		const existing_transaction = content_transactions.find((t) => t.id === id)
-		console.log({ id, data, existing_transaction })
 		if (existing_transaction) {
 			existing_transaction.data = { ...existing_transaction.data, ...data }
 		} else {
@@ -305,7 +292,7 @@
 	{#if tab === 'fields'}
 		<Fields
 			fields={local_fields}
-			on:input={({ detail }) => (local_fields = detail)}
+			on:input={({ detail: updated_fields }) => (local_fields = updated_fields)}
 			on:transaction={({ detail }) => handle_field_transaction(detail)}
 		/>
 	{:else}
@@ -323,11 +310,7 @@
 						fields={local_fields}
 						content={local_content}
 						on:save={save_component}
-						on:input={({ detail: updated_content }) => {
-							console.log('content', { updated_content })
-							local_content = updated_content.content
-							// TODO: store transactions (detail.row_id & detail.value) for db update on save
-						}}
+						on:input={({ detail: updated_content }) => (local_content = updated_content)}
 						on:transaction={({ detail }) => handle_content_transaction(detail)}
 					/>
 				{:else if tab === 'code'}

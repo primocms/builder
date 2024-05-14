@@ -5,6 +5,7 @@
 
 	export let id = null
 	export let title = null
+	export let minimal = false
 
 	/** @param {string | null} pill */
 	export let icon = 'mdi:home'
@@ -29,7 +30,7 @@
 </script>
 
 <!-- <div class="Card" {id} transition:slide|local={{ duration: 200 }}></div> -->
-<div class="Card" {id}>
+<div class="Card" {id} class:minimal>
 	{#if title}
 		<button
 			class="header-button"
@@ -71,6 +72,9 @@
 	.Card {
 		background: var(--color-gray-9);
 		display: grid;
+	}
+	.Card.minimal .card-body {
+		margin: 0 auto;
 	}
 	button {
 		width: 100%;

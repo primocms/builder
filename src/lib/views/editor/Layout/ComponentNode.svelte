@@ -47,9 +47,8 @@
 
 	$: component_data = get_content_with_static({
 		component: block,
-		symbol,
-		loc: $locale
-	})
+		symbol
+	})[$locale]
 
 	let html = ''
 	let css = ''
@@ -543,11 +542,11 @@
 
 	$: if (browser && node) {
 		node.closest('#page').addEventListener('scroll', on_page_scroll)
-		node.closest('body').addEventListener('mouseover', (e) => {
-			if (hovering_outside(e, image_editor)) {
-				// image_editor_is_visible = false
-			}
-		})
+		// node.closest('body').addEventListener('mouseover', (e) => {
+		// 	if (hovering_outside(e, image_editor)) {
+		// 		// image_editor_is_visible = false
+		// 	}
+		// })
 	}
 
 	function on_page_scroll() {

@@ -14,7 +14,6 @@
 
 	let searched = false
 
-	$: console.log({ field })
 	if (!getIcon(value) && !value.startsWith('<svg')) {
 		// reset value when invalid (i.e. when switching field type)
 		value = ''
@@ -54,7 +53,10 @@
 			const { attributes } = buildIcon(icon_data)
 			const svg = `<svg xmlns="http://www.w3.org/2000/svg" data-key="${field.key}" data-icon="${icon}" aria-hidden="true" role="img" height="${attributes.height}" width="${attributes.width}" viewBox="${attributes.viewBox}" preserveAspectRatio="${attributes.preserveAspectRatio}">${icon_data.body}</svg>`
 			// value = svg
-			dispatch('input', { svg, icon })
+			dispatch('input', {
+				value: svg,
+				metadata: { icon }
+			})
 		}
 	}
 </script>

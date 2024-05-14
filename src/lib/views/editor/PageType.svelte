@@ -75,7 +75,8 @@
 		if (latest_run > this_run) return
 		latest_run = this_run
 
-		const data = getPageData({})
+		// const data = getPageData({}) // TODO: reinstate
+		const data = {}
 		const [head, below] = await Promise.all([
 			processCode({
 				component: {
@@ -449,7 +450,7 @@
 
 <!-- Empty State -->
 {#if page_is_empty}
-	<div class="empty-state">Looks like your page is empty, friendo.</div>
+	<div class="empty-state">Add blocks here that you want to appear on every page of this type</div>
 {/if}
 
 <style lang="postcss">

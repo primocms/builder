@@ -1,8 +1,11 @@
 <script>
 	import { find as _find, chain as _chain } from 'lodash-es'
+	import { createEventDispatcher } from 'svelte'
 	import { slide } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
 	import { fieldTypes } from '../stores/app'
+
+	const dispatch = createEventDispatcher()
 
 	export let field
 	export let subfields
@@ -28,14 +31,22 @@
 	{#if !hidden}
 		<div class="group-entries" transition:slide|local={{ duration: 100 }}>
 			{#each subfields as subfield}
+				{@const { id, value } = content.find((r) => r.field === subfield.id)}
 				<div class="group-item">
 					<svelte:component
 						this={getFieldComponent(subfield)}
 						field={subfield}
+						{value}
 						level={level + 1}
 						{fields}
 						{content}
-						on:input
+						on:input={({ detail }) => {
+							if (detail.id) {
+								dispatch('input', detail)
+							} else {
+								dispatch('input', { id, data: detail })
+							}
+						}}
 					/>
 				</div>
 			{/each}

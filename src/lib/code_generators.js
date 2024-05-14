@@ -57,9 +57,8 @@ export async function page_html({
 				}
 				const data = get_content_with_static({
 					component: section,
-					symbol,
-					loc: locale
-				})
+					symbol
+				})[locale]
 				const { css, error } = await processors.css(postcss || '')
 				return {
 					html: `
@@ -87,8 +86,6 @@ export async function page_html({
 		component,
 		locale
 	})
-
-	console.log({res})
 
 	const final = `\
  <!DOCTYPE html>
@@ -120,7 +117,7 @@ export async function page_html({
        ${page_sections
 					.filter((section) => section.symbol === symbol.id)
 					.map((section) => {
-						const instance_content = get_content_with_static({ component: section, symbol, locale })
+						const instance_content = get_content_with_static({ component: section, symbol })[locale]
 						return `
            new App({
              target: document.querySelector('#section-${section.id}'),

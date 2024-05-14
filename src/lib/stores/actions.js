@@ -805,6 +805,7 @@ export async function update_instance(
 			}
 		},
 		undoing: async () => {
+			// TODO: do reverse
 			// stores.symbols.set(original_symbols)
 			// stores.sections.set(original_sections)
 			// await dataChanged({

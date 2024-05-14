@@ -25,41 +25,30 @@
 	export let show_label = false
 	export let hidden_keys = []
 
-	console.log({ field, subfields, content })
+	$: repeater_container = getRepeaterFieldValues(content)
 
-	function add_repeater_item() {
-		dispatch('add')
-		const subfield = createSubfield()
+	// $: $locale, getRepeaterFieldValues().then((val) => (repeater_container = val))
+	// $: setTemplateKeys(repeater_container) // to reflect content change when updating locale
+
+	function getRepeaterFieldValues(content) {
+		const child_content_rows = content.filter((r) => r.parent === id)
+		return child_content_rows.map((child) => ({
+			subfields,
+			...child
+		}))
+	}
+
+	function add_item() {
+		dispatch('add', { parent: id, index: repeater_container.length, subfields })
 		visibleRepeaters[`${field.key}-${repeater_container.length}`] = true
-		repeater_container = [...repeater_container, subfield]
-		onInput()
 	}
 
-	function removeRepeaterItem(itemIndex) {
-		dispatch('remove')
-		repeater_container = repeater_container.filter((_, i) => i !== itemIndex)
-		onInput()
+	function remove_item(item) {
+		dispatch('remove', item)
 	}
 
-	function moveRepeaterItem(indexOfItem, direction) {
-		const item = repeater_container[indexOfItem]
-		const withoutItem = repeater_container.filter((_, i) => i !== indexOfItem)
-		if (direction === 'up') {
-			repeater_container = [
-				...withoutItem.slice(0, indexOfItem - 1),
-				item,
-				...withoutItem.slice(indexOfItem - 1)
-			]
-		} else if (direction === 'down') {
-			repeater_container = [
-				...withoutItem.slice(0, indexOfItem + 1),
-				item,
-				...withoutItem.slice(indexOfItem + 1)
-			]
-		} else {
-			console.error('Direction must be up or down')
-		}
-		onInput()
+	function move_item(item, direction) {
+		dispatch('move', { item, direction })
 	}
 
 	function createSubfield() {
@@ -70,34 +59,11 @@
 		}))
 	}
 
-	let repeater_container = []
-	getRepeaterFieldValues()
-
-	// $: $locale, getRepeaterFieldValues().then((val) => (repeater_container = val))
-	$: setTemplateKeys(repeater_container)
-
-	async function getRepeaterFieldValues() {
-		const child_content_rows = content.filter((r) => r.parent === id)
-		console.log({ child_content_rows })
-		repeater_container = child_content_rows.map((child) => ({
-			subfields,
-			...child
-		}))
-		console.log({ repeater_container })
-	}
-
 	function setTemplateKeys(val) {
 		repeater_container = val.map((f) => {
 			f._key = f._key || createUniqueID()
 			return f
 		})
-	}
-
-	function onInput() {
-		// field.value = repeater_container.map((items, i) =>
-		// 	_chain(items).keyBy('key').mapValues('value').value()
-		// )
-		// dispatch('input', field)
 	}
 
 	function getFieldComponent(subfield) {
@@ -136,7 +102,6 @@
 			const matching_content_row = content.find(
 				(r) => r.field === first_subfield.id && r.parent === repeater_item.id
 			)
-			console.log({ matching_content_row })
 			if (first_subfield.type === 'link') return matching_content_row?.value?.label
 			else if (first_subfield.type === 'markdown') return matching_content_row?.value?.markdown
 			else return matching_content_row?.value
@@ -164,7 +129,7 @@
 		<p class="label">{field.label}</p>
 	{/if}
 	<div class="fields">
-		{#each repeater_container as repeater_item, i (repeater_item._key)}
+		{#each repeater_container as repeater_item, i}
 			{@const subfieldID = `${field.key}-${i}`}
 			{@const item_image = get_image(repeater_item, field)}
 			{@const item_icon = get_icon(repeater_item, field)}
@@ -188,19 +153,22 @@
 					</button>
 					<div class="primo-buttons">
 						{#if i !== 0}
-							<button title="Move {singularLabel} up" on:click={() => moveRepeaterItem(i, 'up')}>
+							<button
+								title="Move {singularLabel} up"
+								on:click={() => move_item(repeater_item, 'up')}
+							>
 								<Icon icon="mdi:arrow-up" />
 							</button>
 						{/if}
 						{#if i !== repeater_container.length - 1}
 							<button
 								title="Move {singularLabel} down"
-								on:click={() => moveRepeaterItem(i, 'down')}
+								on:click={() => move_item(repeater_item, 'down')}
 							>
 								<Icon icon="mdi:arrow-down" />
 							</button>
 						{/if}
-						<button title="Delete {singularLabel} item" on:click={() => removeRepeaterItem(i)}>
+						<button title="Delete {singularLabel} item" on:click={() => remove_item(repeater_item)}>
 							<Icon icon="ion:trash" />
 						</button>
 					</div>
@@ -213,14 +181,38 @@
 									(r) => r.field === subfield.id && r.parent === repeater_item.id
 								)}
 								<div class="repeater-item-field" id="repeater-{field.key}-{i}-{subfield.key}">
-									{#if subfield.type === 'repeater'}
+									<svelte:component
+										this={getFieldComponent(subfield)}
+										id={matching_content_row.id}
+										field={subfield}
+										value={matching_content_row.value}
+										level={level + 1}
+										subfields={fields.filter((f) => f.parent === subfield.id)}
+										{fields}
+										{content}
+										show_label={true}
+										on:input={({ detail }) => {
+											if (detail.id) {
+												dispatch('input', detail)
+											} else {
+												dispatch('input', { id: matching_content_row.id, data: detail })
+											}
+										}}
+									/>
+									<!-- {#if subfield.type === 'repeater'}
 										<svelte:self
 											field={subfield}
 											id={matching_content_row.id}
 											{content}
 											{fields}
 											subfields={fields.filter((f) => f.parent === subfield.id)}
-											on:input={onInput}
+											on:input={({ detail }) => {
+												if (detail.id) {
+													dispatch('input', detail)
+												} else {
+													dispatch('input', { id: matching_content_row.id, data: detail })
+												}
+											}}
 											level={level + 1}
 											visible={true}
 											show_label={true}
@@ -231,9 +223,15 @@
 											field={subfield}
 											value={matching_content_row.value}
 											level={level + 1}
-											on:input={onInput}
+											on:input={({ detail }) => {
+												if (detail.id) {
+													dispatch('input', detail)
+												} else {
+													dispatch('input', { id: matching_content_row.id, data: detail })
+												}
+											}}
 										/>
-									{/if}
+									{/if} -->
 								</div>
 							{/if}
 						{/each}
@@ -241,7 +239,7 @@
 				{/if}
 			</div>
 		{/each}
-		<button class="field-button" on:click={add_repeater_item}>
+		<button class="field-button" on:click={add_item}>
 			<Icon icon="akar-icons:plus" />
 			<span>Add {$pluralize ? $pluralize.singular(field.label) : field.label}</span>
 		</button>

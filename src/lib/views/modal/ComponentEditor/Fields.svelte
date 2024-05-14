@@ -22,11 +22,6 @@
 		const updated_fields = cloneDeep([...fields, new_field])
 		dispatch('input', updated_fields)
 		store_transaction({ action: 'insert', id: new_field.id, data: new_field })
-		// dispatch('input', {
-		// 	fields: updated_fields,
-		// 	action: 'insert',
-		// 	data: new_field
-		// })
 	}
 
 	function create_subfield(field) {
@@ -35,11 +30,6 @@
 		const updated_fields = cloneDeep([...fields, new_field])
 		dispatch('input', updated_fields)
 		store_transaction({ action: 'insert', id: new_field.id, data: new_field })
-		// dispatch('input', {
-		// 	fields: updated_fields,
-		// 	action: 'insert',
-		// 	data: new_field
-		// })
 	}
 
 	function delete_field(field) {
@@ -55,11 +45,6 @@
 		}
 		dispatch('input', updated_fields)
 		store_transaction({ action: 'delete', id: field.id })
-		// dispatch('input', {
-		// 	fields: updated_fields,
-		// 	action: 'delete',
-		// 	data: field.id
-		// })
 	}
 
 	let disabled = false
@@ -95,11 +80,6 @@
 		updated_children.forEach((child) =>
 			store_transaction({ action: 'update', id: child.id, data: { index: child.index } })
 		)
-		// dispatch('input', {
-		// 	fields: updated_fields,
-		// 	action: 'insert',
-		// 	data: updated_fields.find((f) => f.id === new_field.id) // can I just pass new_field?
-		// })
 	}
 
 	function move_field({ field, direction }) {
@@ -125,12 +105,6 @@
 		updated_children.forEach((child) =>
 			store_transaction({ action: 'update', id: child.id, data: { index: child.index } })
 		)
-
-		// dispatch('input', {
-		// 	fields: updated_fields,
-		// 	action: 'update',
-		// 	data: updated_children // .map((f) => ({ id: f.id, index: f.index })) // which is better: upsert or many updates?
-		// })
 	}
 
 	function update_field(updated_field) {
@@ -139,16 +113,10 @@
 		)
 		dispatch('input', updated_fields)
 		store_transaction({ action: 'update', id: updated_field.id, data: updated_field })
-		// dispatch('input', {
-		// 	fields: updated_fields,
-		// 	action: 'update',
-		// 	data: [updated_field]
-		// })
 	}
 
 	let transactions = []
 	function store_transaction({ action, id, data }) {
-		// console.log({ action, data })
 		const existing_transaction = transactions.find((transaction) => transaction.id === id)
 		if (action === 'update' && existing_transaction) {
 			existing_transaction.data = { ...existing_transaction.data, ...data }
@@ -159,8 +127,6 @@
 		}
 
 		dispatch('transaction', { all: _.cloneDeep(transactions), action, id, data })
-
-		// console.log('fields', { local_content, fields, transactions })
 	}
 </script>
 
@@ -192,8 +158,6 @@
 		gap: 1rem;
 		padding-bottom: 1rem;
 		color: var(--color-gray-2);
-		background: var(--primo-color-black);
-		/* min-width: 23rem; */
 		height: 100%;
 		overflow-y: auto;
 		place-content: flex-start;

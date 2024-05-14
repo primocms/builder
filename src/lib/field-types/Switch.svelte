@@ -7,8 +7,7 @@
 	export let value
 
 	function toggleSwitch() {
-		// field.value = !field.value
-		dispatch('input', !value)
+		dispatch('input', { value: !value })
 	}
 </script>
 

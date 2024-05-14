@@ -62,9 +62,12 @@
 		} else {
 			const url_parts = url.slice(1).split('/')
 			const page_url = url_parts[url_parts.length - 1]
-			console.log({ url_parts, page_url, $pages })
 			return $pages.find((p) => p.url === page_url)?.name
 		}
+	}
+
+	function dispatch_update({ label = value.label, url = value.url }) {
+		dispatch('input', { value: { label, url } })
 	}
 
 	let page_name_edited = !!value.label
@@ -76,8 +79,7 @@
 		<UI.TextInput
 			on:input={({ detail }) => {
 				page_name_edited = true
-				dispatch('input', {
-					url: value.url,
+				dispatch_update({
 					label: detail
 				})
 			}}
@@ -108,21 +110,18 @@
 							.filter((p) => p.parent === page.id)
 							.map((p) => ({ value: getPageUrl(p, $locale, $pages), label: p.name }))
 					}))}
-					on:input={({ detail }) => {
-						dispatch('input', {
+					on:input={({ detail }) =>
+						dispatch_update({
 							url: detail,
 							label: page_name_edited ? value.label : get_page_name(detail)
-						})
-					}}
+						})}
 				/>
 			{:else}
 				<UI.TextInput
-					on:input={({ detail }) => {
-						dispatch('input', {
-							label: value.label,
+					on:input={({ detail }) =>
+						dispatch_update({
 							url: detail
-						})
-					}}
+						})}
 					value={value.url}
 					type="url"
 					placeholder="https://primocms.org"

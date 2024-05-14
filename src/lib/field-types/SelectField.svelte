@@ -19,7 +19,7 @@
 			<select
 				value={value || field?.options?.selected}
 				on:change={({ target }) => {
-					dispatch('input', target.value)
+					dispatch('input', { value: target.value })
 				}}
 			>
 				{#each field.options.options as option}

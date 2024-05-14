@@ -11,10 +11,12 @@
 	} from 'lodash-es'
 	import Card from '../../../ui/Card.svelte'
 	import { userRole, fieldTypes } from '../../../stores/app'
-	import { is_regex } from '../../../utils'
+	import { is_regex, getEmptyValue } from '../../../utils'
+	import { Content_Row } from '../../../factories'
 
 	export let content
 	export let fields
+	export let minimal = false
 
 	const dispatch = createEventDispatcher()
 
@@ -52,38 +54,81 @@
 		return false
 	}
 
-	function dispatch_update(content_row, updated_value) {
-		console.log('dispatch_update', { content_row, updated_value })
-		const updated_content = cloneDeep(
-			content.map((row) => (row.id === content_row.id ? { ...row, value: updated_value } : row))
+	function add_repeater_item({ parent, index, subfields }) {
+		const new_repeater_item = Content_Row({ parent, index })
+		const new_subcontent = subfields.map(
+			(s) => Content_Row({ parent: new_repeater_item.id, field: s.id, value: getEmptyValue(s) }) // TODO: set default value
 		)
-		dispatch('input', {
-			content: updated_content,
-			row_id: content_row.id,
-			value: updated_value
-		})
-		store_transaction({ id: content_row.id, data: { value: updated_value } })
+		const new_rows = [new_repeater_item, ...new_subcontent]
+		const updated_content = cloneDeep([...content, ...new_rows])
+		dispatch('input', updated_content)
+		new_rows.forEach((row) => store_transaction({ action: 'insert', id: row.id, data: row }))
+	}
+
+	function remove_repeater_item(item) {
+		const updated_content = cloneDeep(content.filter((c) => c.id !== item.id))
+		// get siblings, update indeces
+		const updated_siblings = updated_content
+			.filter((c) => c.parent === item.parent) // remove self, select siblings
+			.sort((a, b) => a.index - b.index)
+			.map((c, i) => ({ ...c, index: i }))
+		for (const sibling of updated_siblings) {
+			const row = updated_content.find((c) => c.id === sibling.id)
+			row.index = sibling.index
+		}
+		dispatch('input', updated_content)
+	}
+
+	function move_repeater_item({ item, direction }) {
+		const updated_content = cloneDeep(content)
+
+		// select siblings (could be root level)
+		const siblings = updated_content
+			.filter((c) => c.parent === item.parent && c.id !== item.id)
+			.sort((a, b) => a.index - b.index)
+
+		// update siblings & self w/ new indeces
+		const updated_children = {
+			up: [...siblings.slice(0, item.index - 1), item, ...siblings.slice(item.index - 1)],
+			down: [...siblings.slice(0, item.index + 1), item, ...siblings.slice(item.index + 1)]
+		}[direction].map((f, i) => ({ ...f, index: i }))
+
+		// set updated_content w/ updated indeces
+		for (const child of updated_children) {
+			const row = updated_content.find((c) => c.id === child.id)
+			row.index = child.index
+		}
+		dispatch('input', updated_content)
+		updated_children.forEach((child) =>
+			store_transaction({ action: 'update', id: child.id, data: { index: child.index } })
+		)
+	}
+
+	function dispatch_update({ id, data }) {
+		const updated_content = cloneDeep(
+			content.map((row) => (row.id === id ? { ...row, ...data } : row))
+		)
+		dispatch('input', updated_content)
+		store_transaction({ action: 'update', id, data })
 	}
 
 	let transactions = []
-	function store_transaction({ id, data }) {
-		// console.log({ action, data })
+	function store_transaction({ action, id, data }) {
 		const existing_transaction = transactions.find((transaction) => transaction.id === id)
-		if (existing_transaction) {
-			existing_transaction.data = data
+		if (action === 'update' && existing_transaction) {
+			existing_transaction.data = { ...existing_transaction.data, ...data }
+		} else if (action === 'delete' && existing_transaction) {
+			transactions = transactions.filter((t) => t.id !== existing_transaction.id)
 		} else {
-			transactions = [...transactions, { id, data }]
+			transactions = [...transactions, { action, id, data }]
 		}
-
 		dispatch('transaction', { all: _.cloneDeep(transactions), id, data })
-
-		// console.log('fields', { local_content, fields, transactions })
 	}
 
 	const root_fields = fields.filter((f) => !f.parent)
 </script>
 
-<div class="GenericFields">
+<div class="Content">
 	{#each root_fields.sort((a, b) => a.index - b.index) as field}
 		{@const matching_content_row = content.find((r) => r.field === field.id)}
 		{@const is_visible = check_condition(field)}
@@ -94,6 +139,7 @@
 				title={has_child_fields ? field.label : null}
 				icon={$fieldTypes.find((ft) => ft.id === field.type)?.icon}
 				pill={field.is_static ? 'Static' : null}
+				{minimal}
 			>
 				<div class="field-item" id="field-{field.key}" class:repeater={field.key === 'repeater'}>
 					<svelte:component
@@ -105,7 +151,16 @@
 						{fields}
 						{content}
 						on:save
-						on:input={({ detail }) => dispatch_update(matching_content_row, detail)}
+						on:add={({ detail }) => add_repeater_item(detail)}
+						on:remove={({ detail }) => remove_repeater_item(detail)}
+						on:move={({ detail }) => move_repeater_item(detail)}
+						on:input={({ detail }) => {
+							if (detail.id) {
+								dispatch_update(detail)
+							} else {
+								dispatch_update({ id: matching_content_row.id, data: detail })
+							}
+						}}
 					/>
 				</div>
 			</Card>
@@ -124,14 +179,13 @@
 </div>
 
 <style lang="postcss">
-	.GenericFields {
+	.Content {
 		width: 100%;
 		display: grid;
 		gap: 1rem;
 		padding-bottom: 1rem;
 		color: var(--color-gray-2);
-		background: var(--primo-color-black);
-		/* min-width: 23rem; */
+		/* background: var(--primo-color-black); */
 		height: 100%;
 		overflow-y: auto;
 		place-content: flex-start;

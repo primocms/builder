@@ -124,7 +124,7 @@
 	}
 
 	let width
-	$: collapsed = width < 560
+	$: collapsed = width < 400
 	$: minimal = field.type === 'info'
 	$: has_subfields = field.type === 'group' || field.type === 'repeater'
 	$: has_condition = field.options.condition
@@ -132,8 +132,8 @@
 	console.log({ field, fields })
 </script>
 
-<div class="top-container" class:top_level>
-	<div class="field-container" class:minimal class:collapsed bind:clientWidth={width}>
+<div class="top-container" class:top_level class:collapsed>
+	<div class="field-container" class:minimal bind:clientWidth={width}>
 		<div class="type column-container">
 			<span>Type</span>
 			<UI.Dropdown
@@ -299,6 +299,7 @@
 				comparable_fields={fields?.filter(
 					(f) => ['text', 'number', 'switch', 'url', 'select'].includes(f.type) && f.id !== field.id
 				)}
+				{collapsed}
 				on:input={dispatchUpdate}
 			/>
 		{/if}
@@ -358,6 +359,25 @@
 			border-radius: 6px;
 			padding: 24px 24px;
 		}
+
+		&.collapsed {
+			padding: 1rem;
+
+			.top-right {
+				top: -1rem;
+				right: -1rem;
+			}
+
+			.field-container {
+				grid-template-columns: 1fr !important;
+				gap: 0.75rem;
+			}
+
+			.subfield {
+				margin-top: 1rem;
+				margin-left: auto;
+			}
+		}
 	}
 
 	.top-right {
@@ -394,31 +414,6 @@
 		grid-template-columns: 1fr 3fr 3fr auto;
 		gap: 0.5rem;
 		place-items: start normal;
-
-		&.collapsed {
-			grid-template-columns: 2fr 2fr !important;
-
-			.subfield {
-				position: static;
-				grid-column: 2;
-				grid-row: 1;
-				margin-top: 1rem;
-				margin-left: auto;
-			}
-
-			.label {
-				grid-column: 1;
-			}
-
-			.field {
-				grid-column: 2;
-			}
-
-			.toggle {
-				grid-column: 2;
-				grid-row: 1;
-			}
-		}
 
 		&.collapsed.minimal {
 			.main {

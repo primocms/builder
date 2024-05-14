@@ -11,7 +11,7 @@
 	<div class="container">
 		<p class="value">{value}</p>
 		<input
-			on:input={({ target }) => dispatch('input', target.value)}
+			on:input={({ target }) => dispatch('input', { value: target.value })}
 			class="input"
 			{value}
 			type="range"

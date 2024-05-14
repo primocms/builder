@@ -136,9 +136,8 @@ export async function buildStaticPage({
 				}
 				const data = get_content_with_static({
 					component: section,
-					symbol,
-					loc: locale
-				})
+					symbol
+				})[locale]
 				const { css, error } = await processors.css(postcss || '')
 				const section_id = section.id.split('-')[0]
 				return {
@@ -199,7 +198,7 @@ export async function buildStaticPage({
 					.filter((section) => section.symbol === symbol.id)
 					.map((section) => {
 						const section_id = section.id.split('-')[0]
-						const instance_content = get_content_with_static({ component: section, symbol, locale })
+						const instance_content = get_content_with_static({ component: section, symbol })[locale]
 						return `
             new App({
               target: document.querySelector('#section-${section_id}'),
@@ -218,8 +217,10 @@ export async function buildStaticPage({
 }
 
 // Include static content alongside the component's content
-export function get_content_with_static({ component, symbol, loc = get(locale) }) {
+export function get_content_with_static({ component, symbol }) {
 	if (!symbol) return { en: {} }
+
+	const loc = 'en'
 
 	const symbol_fields = transform_fields(symbol)
 	const symbol_content = transform_content(symbol)
@@ -252,7 +253,10 @@ export function get_content_with_static({ component, symbol, loc = get(locale) }
 		.mapValues('value')
 		.value()
 
-	return _.cloneDeep(content)
+	// TODO: handle other locales
+	return _.cloneDeep({
+		en: content
+	})
 }
 
 export function getPageData({ page = get(activePage), site = get(activeSite), loc = get(locale) }) {

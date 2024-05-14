@@ -30,7 +30,7 @@
 
 	async function parseContent(markdown) {
 		const html = await convert_markdown_to_html(markdown)
-		dispatch('input', { html, markdown })
+		dispatch('input', { value: { html, markdown } })
 	}
 
 	function handleSave(event) {

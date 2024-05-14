@@ -12,7 +12,7 @@
 	import { site_design_css } from '../../code_generators.js'
 	import { Symbol } from '../../factories.js'
 	import Sidebar_Symbol from './Sidebar_Symbol.svelte'
-	import GenericFields from '../GenericFields/GenericFields.svelte'
+	import Content from '../../views/modal/ComponentEditor/Content.svelte'
 	import { symbols as symbol_actions } from '../../stores/actions.js'
 	import { v4 as uuidv4 } from 'uuid'
 	import { validate_symbol } from '../../converter.js'
@@ -250,24 +250,17 @@
 			{/if}
 		{:else}
 			<div class="page-type-fields">
-				<!-- <GenericFields
-					{fields}
-					on:save={() => {}}
-					on:input={({ detail: updated_fields }) => {
-						console.log({ updated_fields })
-						console.log('content', { updated_fields })
-						fields = updated_fields
-						// save_local_content()
+				<Content
+					fields={page.page_type.fields}
+					content={page.content}
+					on:input={({ detail: updated_content }) => {
+						console.log({ updated_content })
 					}}
-					showCode={false}
-				/> -->
-				<!-- <ul style="display: grid;gap: 0.75rem;">
-					{#each page.fields as field}
-						<li>
-							<UI.TextInput label={field.label} value={} />
-						</li>
-					{/each}
-				</ul> -->
+					on:transaction={({ detail }) => {
+						console.log({ detail })
+					}}
+					minimal={true}
+				/>
 			</div>
 		{/if}
 	</div>

@@ -3,9 +3,12 @@ import { createUniqueID } from './utilities.js'
 
 export const Content_Row = (row = {}) => ({
 	id: uuidv4(),
-	value: row.value || null,
-	locale: row.locale || 'en',
-	field: row.field
+	value: row.value !== undefined ? row.value : null,
+	locale: row.locale || null,
+	field: row.field || null,
+	index: row.index || null,
+	parent: row.parent || null,
+	metadata: row.metadata || null
 })
 
 export const Field_Row = (field = {}) => ({
