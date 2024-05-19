@@ -14,6 +14,7 @@ export const Field = (field = {}) => ({
 	fields: [],
 	options: {},
 	is_static: false,
+	is_language_independent: false,
 	...field
 })
 
