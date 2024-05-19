@@ -240,6 +240,16 @@
 		{/if}
 	</div>
 
+	<div slot="toggle">
+			<Toggle
+				label="Language Independent"
+				toggled={field.is_language_independent}
+				on:toggle={({ detail }) => {
+					field.is_language_independent = detail
+				}}
+			/>
+	</div>
+
 	<!-- <input type="checkbox" bind:checked={field.is_static} slot="static" /> -->
 
 	{#each field.fields as subfield, i (subfield.id)}

@@ -166,6 +166,7 @@ export function validate_site_structure_v2(site) {
       fields: [],
       options: {},
       is_static: false,
+      is_language_independent: false,
     }],
     content: {
       en: {
@@ -426,6 +427,7 @@ export function convertFields(fields = [], fn = () => { }) {
       options: field.options || {},
       default: field.default || '',
       is_static: field.is_static || false,
+      is_language_independent: field.is_language_independent || false,
     }
   })
 }

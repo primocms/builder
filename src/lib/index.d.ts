@@ -48,6 +48,7 @@ export type Field = {
 	fields: Array<Field>,
 	options: object,
 	is_static: boolean,
+	is_language_independent: false,
 	value?: any
 }
 
