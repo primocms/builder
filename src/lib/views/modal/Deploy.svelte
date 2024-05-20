@@ -66,7 +66,7 @@
 
 	async function download_site() {
 		loading = true
-		const files = await build_site_bundle({ pages: $pages, symbols: $symbols })
+		const files = await build_site_bundle({ pages: $pages, symbols: $symbols }, true)
 		if (!files) {
 			loading = false
 			return
@@ -77,8 +77,12 @@
 
 		async function create_site_zip(files) {
 			const zip = new JSZip()
-			files.forEach(({ path, content }) => {
-				zip.file(path, content)
+			files.forEach(({ path, content, blob }) => {
+				if (blob) {
+					zip.file(path, blob, { binary: true })
+				} else {
+					zip.file(path, content)
+				}
 			})
 			return await zip.generateAsync({ type: 'blob' })
 		}
