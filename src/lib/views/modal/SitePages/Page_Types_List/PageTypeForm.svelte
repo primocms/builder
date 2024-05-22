@@ -1,10 +1,10 @@
 <script>
 	import { createEventDispatcher } from 'svelte'
 	import { fade } from 'svelte/transition'
-	import UI from '../../../../ui'
+	import UI from '../../../../ui/index.js'
 	import Icon from '@iconify/svelte'
-	import IconPicker from '../../../../field-types/IconPicker.svelte'
-	import { clickOutside } from '../../../../utilities'
+	import IconPicker from '../../../../components/IconPicker.svelte'
+	import { clickOutside } from '../../../../utilities.js'
 	import { createPopperActions } from 'svelte-popperjs'
 
 	const dispatch = createEventDispatcher()
@@ -38,7 +38,7 @@
 	in:fade={{ duration: 100 }}
 >
 	<div style="width: 100%">
-		<div class="top" style="display: flex;gap: 0.5rem;">
+		<div class="top" style="display: flex; gap: 0.5rem;">
 			<UI.TextInput
 				autofocus={true}
 				bind:value={new_page_name}
@@ -85,9 +85,7 @@
 					modifiers: [{ name: 'offset', options: { offset: [0, 3] } }]
 				}}
 				use:clickOutside
-				on:click_outside={() => {
-					showing_icon_picker = false
-				}}
+				on:click_outside={() => (showing_icon_picker = false)}
 				class="icon-picker"
 				style="position: absolute;
     background: var(--color-gray-9);
@@ -96,12 +94,9 @@
 			>
 				<IconPicker
 					search_query={new_page_name}
-					field={{
-						value: new_icon,
-						options: {}
-					}}
+					icon={new_icon}
 					on:input={({ detail }) => {
-						new_icon = detail.icon
+						new_icon = detail
 					}}
 				/>
 			</div>

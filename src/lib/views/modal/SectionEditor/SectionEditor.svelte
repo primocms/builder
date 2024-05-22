@@ -48,7 +48,6 @@
 
 	let local_code = _.cloneDeep(symbol.code)
 	let local_fields = _.cloneDeep(symbol.fields)
-	console.log({ component })
 	let local_content = _.cloneDeep(component.content)
 
 	// Show Static Field toggle within Field Item
@@ -61,8 +60,9 @@
 	let raw_css = local_code.css
 	let raw_js = local_code.js
 
-	$: component_data = transform_content({ fields: local_fields, content: local_content })[$locale]
 	$: console.log({ local_fields, local_content })
+	// TODO: add empty content when field exists but not content (to prevent error when creating field before filling out content)
+	$: component_data = transform_content({ fields: local_fields, content: local_content })[$locale]
 
 	// changing codes triggers compilation
 	$: $autoRefresh &&
@@ -131,29 +131,77 @@
 	let content_transactions = []
 	function handle_field_changes(transaction) {
 		if (transaction.action === 'insert') {
-			const new_content_row = Content_Row({
-				field: transaction.data.id,
-				locale: $locale,
-				value: getEmptyValue(transaction.data)
-			})
-			local_content = [...local_content, new_content_row]
-			content_transactions = [
-				...content_transactions,
-				{ action: 'insert', id: new_content_row.id, data: new_content_row }
-			]
+			// NEXT: SectionEditor and BlockEditor can pass the updates/changes to Content.svelte, PageTypeSidebar and PageSidebar can pass them to the action for local/db update
+			// const new_content_row = Content_Row({
+			// 	field: transaction.data.id,
+			// 	locale: $locale,
+			// 	value: getEmptyValue(transaction.data)
+			// })
+			// local_content = [...local_content, new_content_row]
+			// content_transactions = [
+			// 	...content_transactions,
+			// 	{ action: 'insert', id: new_content_row.id, data: new_content_row }
+			// ]
 		} else if (transaction.action === 'delete') {
-			// delete relevant content changes and rows
+			// so that we don't create content for fields that don't exist
+			// could Content.svelte take care of this?
 			content_transactions = content_transactions.filter((t) => t.data.field !== transaction.id)
-			local_content = local_content.filter((r) => r.field !== transaction.id)
-		}
-	}
+			// TODO: delete descendent transactions too
 
-	function handle_content_transaction({ id, data }) {
-		const existing_transaction = content_transactions.find((t) => t.id === id)
-		if (existing_transaction) {
-			existing_transaction.data = { ...existing_transaction.data, ...data }
-		} else {
-			content_transactions = [...content_transactions, { action: 'update', id, data }]
+			function get_ancestors(field) {
+				const parent = local_fields.find((f) => f.id === field.parent)
+				return parent ? [parent.id, ...get_ancestors(parent)] : []
+			}
+
+			// remove related content rows to not error out transform_content (maybe TODO: handle it in transform_content, just don't return it)
+			// could Content.svelte take care of this?
+			local_content = local_content.filter((row) => {
+				const parent_row = local_content.find((r) => r.id === row.parent)
+
+				const parent_is_repeater_item = parent_row?.index
+				const parent_is_repeater_container = parent_row?.field
+
+				let field
+				if (!parent_is_repeater_item && !parent_is_repeater_container) {
+					field = local_fields.find((f) => f.id === row.field)
+				} else if (parent_is_repeater_item) {
+					const grandparent_container = local_content.find((r) => r.id === parent_row.parent)
+					field = local_fields.find((f) => f.id === grandparent_container.field)
+				} else if (parent_is_repeater_container) {
+					field = local_fields.find((f) => f.id === parent_row.field)
+				}
+
+				console.log(row.id, {
+					field,
+					row,
+					parent_row,
+					parent_is_repeater_item,
+					parent_is_repeater_container
+				})
+
+				// console.log({ field, row, local_content, parent_repeater_container })
+				// root-level & not a match
+				if (!field.parent && field.id !== transaction.id) {
+					return true
+				}
+
+				// field matches
+				if (field.id === transaction.id) {
+					console.log('match, deleting', { field, row })
+					return false
+				}
+
+				// is descendent of field
+				const ancestors = get_ancestors(field)
+				console.log({ ancestors })
+				if (ancestors.includes(transaction.id)) {
+					console.log('ancestors includes', { field, row })
+					return false
+				}
+
+				return true
+			})
+			console.log({ local_content })
 		}
 	}
 
@@ -244,8 +292,10 @@
 		<Fields
 			fields={local_fields}
 			on:input={({ detail }) => {
-				local_fields = detail.fields
+				// modify content first to pass clean data to transform_content
 				detail.changes.forEach((change) => handle_field_changes(change))
+
+				local_fields = detail.fields
 				console.log({ detail, local_content })
 				field_transactions = detail.all_changes
 			}}
@@ -264,10 +314,13 @@
 					<Content
 						fields={local_fields}
 						content={local_content}
+						transactions={content_transactions}
 						on:save={save_component}
 						on:input={({ detail }) => {
+							console.log({ detail })
 							local_content = detail.content
-							detail.changes.forEach((change) => handle_content_transaction(change))
+							content_transactions = detail.all_changes
+							// detail.changes.forEach((change) => handle_content_transaction(change))
 						}}
 					/>
 				{:else if tab === 'code'}

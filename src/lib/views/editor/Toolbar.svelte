@@ -145,10 +145,22 @@
 				{/each}
 			</div>
 			{#if !$timeline.first}
-				<ToolbarButton id="undo" title="Undo" icon="material-symbols:undo" on:click={undo_change} />
+				<ToolbarButton
+					id="undo"
+					title="Undo"
+					icon="material-symbols:undo"
+					style="border: 0; font-size: 1.5rem;"
+					on:click={undo_change}
+				/>
 			{/if}
 			{#if !$timeline.last}
-				<ToolbarButton id="redo" title="Redo" icon="material-symbols:redo" on:click={redo_change} />
+				<ToolbarButton
+					id="redo"
+					title="Redo"
+					icon="material-symbols:redo"
+					style="border: 0; font-size: 1.5rem;"
+					on:click={redo_change}
+				/>
 			{/if}
 			<slot />
 			<!-- <LocaleSelector /> -->

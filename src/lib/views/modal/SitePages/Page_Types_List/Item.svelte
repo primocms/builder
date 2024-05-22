@@ -9,7 +9,7 @@
 	import { id as siteID } from '../../../../stores/data/site'
 	import { pages as actions } from '../../../../stores/actions'
 	import { validate_url } from '../../../../utilities'
-	import PageForm from './PageForm.svelte'
+	import PageForm from './PageTypeForm.svelte'
 	import MenuPopup from '../../../../ui/Dropdown.svelte'
 	import modal from '../../../../stores/app/modal'
 

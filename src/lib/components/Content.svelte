@@ -9,17 +9,33 @@
 		isRegExp as _isRegExp
 	} from 'lodash-es'
 	import Card from '../ui/Card.svelte'
-	import { userRole, fieldTypes } from '../stores/app'
+	import { userRole, fieldTypes, locale } from '../stores/app'
 	import { is_regex, getEmptyValue } from '../utils'
 	import { Content_Row } from '../factories'
 
 	export let content
 	export let fields
+	export let changes
 	export let minimal = false
+
+	// TODO: automatically create and delete content rows as 'fields' changes
+	// so that SectionEditor and BlockEditor don't have to manage them themselves,
+	// should create change records as well for insertion and deletion.
+	// Downside is that this component needs to be mounted to create/delete necessary content rows (at least for local stores),
+	// so maybe it'll be necessary for Fields.svelte to modify content as well,
+	// OR we just handle it in actions.js (but that would only work outside of a modal (i.e. Site & Page Types))
+	// OR OR transform_content can just not return content rows for fields that don't exist anymore
+	// I'm just worried about getting false positives and would prefer to see an error if there's corrupted data somewhere
+	// then again, I could just log the items that aren't being included
 
 	const dispatch = createEventDispatcher()
 
-	function getComponent(field) {
+	function get_ancestors(entry) {
+		const parent = content.find((e) => e.id === entry.parent)
+		return parent ? [parent.id, ...get_ancestors(parent)] : []
+	}
+
+	function get_component(field) {
 		const fieldType = find($fieldTypes, ['id', field.type])
 		if (fieldType) {
 			return fieldType.component
@@ -54,32 +70,48 @@
 	}
 
 	function add_repeater_item({ parent, index, subfields }) {
-		const new_repeater_item = Content_Row({ parent, index })
-		const new_subcontent = subfields.map(
-			(s) => Content_Row({ parent: new_repeater_item.id, field: s.id, value: getEmptyValue(s) }) // TODO: set default value
+		const parent_container = content.find((r) => r.id === parent)
+		const new_repeater_item = Content_Row({ parent: parent_container.id, index })
+		const new_entries = subfields.map((subfield) =>
+			Content_Row({
+				parent: new_repeater_item.id,
+				field: subfield.id,
+				value: getEmptyValue(subfield),
+				locale: subfield.type === 'repeater' || subfield.type === 'group' ? null : $locale
+			})
 		)
-		const new_rows = [new_repeater_item, ...new_subcontent]
+		const new_rows = [new_repeater_item, ...new_entries]
 		const updated_content = cloneDeep([...content, ...new_rows])
 		dispatch_update({
 			content: updated_content,
 			changes: new_rows.map((row) => ({ action: 'insert', id: row.id, data: row }))
 		})
-		// dispatch('input', updated_content)
-		// new_rows.forEach((row) => store_change({ action: 'insert', id: row.id, data: row }))
 	}
 
 	function remove_repeater_item(item) {
-		const updated_content = cloneDeep(content.filter((c) => c.id !== item.id))
+		let updated_content = cloneDeep(content.filter((c) => c.id !== item.id)) // remove repeater item entry
+
 		// get siblings, update indeces
-		const updated_siblings = updated_content
-			.filter((c) => c.parent === item.parent) // remove self, select siblings
+		const siblings = updated_content
+			.filter((c) => c.parent === item.parent)
 			.sort((a, b) => a.index - b.index)
 			.map((c, i) => ({ ...c, index: i }))
-		for (const sibling of updated_siblings) {
-			const row = updated_content.find((c) => c.id === sibling.id)
-			row.index = sibling.index
+		for (const sibling of siblings) {
+			const entry = updated_content.find((c) => c.id === sibling.id)
+			entry.index = sibling.index
 		}
-		// dispatch('input', updated_content)
+
+		// remove descendents
+		updated_content = updated_content.filter((entry) => {
+			const is_descendent = get_ancestors(entry).includes(item.id)
+			if (is_descendent) {
+				console.log(entry, is_descendent)
+				return false
+			} else return true
+		})
+
+		console.log({ content, updated_content, siblings })
+
 		dispatch_update({
 			content: updated_content,
 			changes: [{ action: 'delete', id: item.id }]
@@ -113,41 +145,63 @@
 				data: { index: child.index }
 			}))
 		})
-		// dispatch('input', updated_content)
-		// updated_children.forEach((child) =>
-		// 	store_change({ action: 'update', id: child.id, data: { index: child.index } })
-		// )
 	}
 
-	// function dispatch_update({ id, data }) {
-	// 	const updated_content = cloneDeep(
-	// 		content.map((row) => (row.id === id ? { ...row, ...data } : row))
-	// 	)
-	// 	dispatch('input', updated_content)
-	// 	store_change({ action: 'update', id, data })
-	// }
+	$: console.log('content changes', { changes })
 
-	let all_changes = []
-	function store_change({ action, id, data }) {
-		const existing_change = all_changes.find((change) => change.id === id)
-		if (action === 'update' && existing_change) {
-			existing_change.data = { ...existing_change.data, ...data }
-		} else if (action === 'delete' && existing_change) {
-			all_changes = all_changes.filter((t) => t.id !== existing_change.id)
-		} else {
-			all_changes = [...all_changes, { action, id, data }]
+	function validate_changes(new_changes = []) {
+		let validated_changes = _.cloneDeep(changes)
+
+		if (new_changes.length === 0) {
+			return validated_changes
 		}
-		// dispatch('change', { all: _.cloneDeep(all_changes), action, id, data })
+
+		for (const change of new_changes) {
+			const { action, id, data } = change
+			const previous_change_on_same_item = validated_changes.find((c) => c.id === change.id)
+
+			if (!previous_change_on_same_item) {
+				validated_changes = [...validated_changes, { action, id, data }]
+				continue
+			}
+
+			const { action: previous_action, data: previous_data } = previous_change_on_same_item
+
+			if (action === 'update' && previous_action === 'insert') {
+				previous_change_on_same_item.data = { ...previous_data, ...data }
+				continue
+			}
+
+			if (action === 'update') {
+				previous_change_on_same_item.data = { ...previous_data, ...data }
+				continue
+			}
+
+			if (action === 'delete') {
+				validated_changes = validated_changes.filter((c) => {
+					// remove insert/updates on entry
+					if (c.id === change.id) return false
+
+					// remove insert/updates on entry descendents
+					const entry = content.find((e) => e.id === c.id)
+					console.log('HERE', { entry, content, c, change, ancestors: get_ancestors(entry) })
+					if (get_ancestors(entry).includes(change.id)) {
+						console.log('removing change', { entry, c })
+						return false
+					}
+
+					return true
+				})
+			}
+		}
+		return validated_changes
 	}
 
-	function dispatch_update({ content, changes }) {
-		changes.forEach((change) => {
-			store_change(change)
-		})
+	function dispatch_update(updated) {
+		console.log({ updated })
 		dispatch('input', {
-			content,
-			changes,
-			all_changes: _.cloneDeep(all_changes)
+			content: _.cloneDeep(updated.content),
+			changes: validate_changes(updated.changes)
 		})
 	}
 </script>
@@ -155,8 +209,9 @@
 <div class="Content">
 	{#each fields.filter((f) => !f.parent).sort((a, b) => a.index - b.index) as field}
 		{@const matching_content_row = content.find((r) => r.field === field.id)}
+		{@const Field_Component = get_component(field)}
 		{@const is_visible = check_condition(field)}
-		{@const is_valid = (field.key || field.type === 'info') && getComponent(field)}
+		{@const is_valid = (field.key || field.type === 'info') && Field_Component}
 		{@const has_child_fields = field.type === 'repeater' || field.type === 'group'}
 		{#if is_valid && is_visible}
 			<Card
@@ -167,13 +222,13 @@
 			>
 				<div class="field-item" id="field-{field.key}" class:repeater={field.key === 'repeater'}>
 					<svelte:component
-						this={getComponent(field)}
-						{field}
-						id={matching_content_row?.id}
-						value={matching_content_row?.value}
-						subfields={fields.filter((f) => f.parent === field.id)}
-						{fields}
+						this={Field_Component}
+						id={matching_content_row.id}
+						value={matching_content_row.value}
 						{content}
+						{field}
+						{fields}
+						autocomplete={matching_content_row.value === ''}
 						on:save
 						on:add={({ detail }) => add_repeater_item(detail)}
 						on:remove={({ detail }) => remove_repeater_item(detail)}
@@ -181,16 +236,39 @@
 						on:input={({ detail }) => {
 							const row_id = detail.id || matching_content_row.id
 							const data = detail.data || detail
-							const updated_content = cloneDeep(
-								content.map((row) =>
-									row.id === row_id ? { ...row, ...(detail.data || detail) } : row
-								)
+
+							const updated_content = content.map((row) =>
+								row.id === row_id ? { ...row, ...data } : row
 							)
-							console.log({ row_id, data, updated_content })
+
 							dispatch_update({
 								content: updated_content,
 								changes: [{ action: 'update', id: row_id, data }]
 							})
+
+							// if (existing_content_row) {
+							// 	const updated_content = content.map((row) =>
+							// 		row.id === row_id ? { ...row, ...(detail.data || detail) } : row
+							// 	)
+							// 	console.log({ row_id, data, updated_content })
+							// 	dispatch_update({
+							// 		content: updated_content,
+							// 		changes: [{ action: 'update', id: row_id, data }]
+							// 	})
+							// } else {
+							// 	const updated_content_row = { ...matching_content_row, ...data }
+							// 	const updated_content = [...content, updated_content_row]
+							// 	console.log('UPDATE - INSERT', {
+							// 		row_id,
+							// 		data,
+							// 		updated_content,
+							// 		updated_content_row
+							// 	})
+							// 	dispatch_update({
+							// 		content: updated_content,
+							// 		changes: [{ action: 'insert', id: row_id, data: updated_content_row }]
+							// 	})
+							// }
 						}}
 					/>
 				</div>
@@ -214,8 +292,8 @@
 		width: 100%;
 		display: grid;
 		gap: 1rem;
-		/* padding-bottom: 1rem; */
-		padding-block: 0.5rem;
+		padding-bottom: 0.5rem;
+		/* padding-block: 0.5rem; */
 		color: var(--color-gray-2);
 		/* background: var(--primo-color-black); */
 		height: 100%;
@@ -230,7 +308,6 @@
 			height: 100%;
 			display: flex;
 			align-items: flex-start;
-			padding: 6rem;
 			justify-content: center;
 			margin-top: 12px;
 		}

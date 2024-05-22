@@ -1,5 +1,6 @@
 <script>
 	import '@fontsource/fira-code/index.css'
+	import _ from 'lodash-es'
 	import { loadIcons, enableCache } from '@iconify/svelte'
 	import { browser } from '$app/environment'
 	import IconButton from './ui/IconButton.svelte'
@@ -8,6 +9,7 @@
 	import modal from './stores/app/modal'
 	import * as modals from './views/modal'
 	import * as Mousetrap from 'mousetrap'
+	import hotkey_events from './stores/app/hotkey_events'
 	import { onMobile, showKeyHint, page_loaded } from './stores/app/misc'
 	import built_in_symbols from './stores/data/primo_symbols'
 	import HSplitPane from './ui/HSplitPane.svelte'
@@ -50,7 +52,7 @@
 			? {
 					SITE_PAGES: modals.SitePages,
 					SECTION_EDITOR: modals.SectionEditor,
-					SYMBOL_EDITOR: modals.SymbolEditor,
+					BLOCK_EDITOR: modals.SymbolEditor,
 					SITE_EDITOR: modals.SiteEditor
 			  }[modalType] || $modal.component
 			: null
@@ -111,9 +113,37 @@
 	])
 	enableCache('local')
 
+	// listen for Cmd/Ctrl key to show key hint
 	if (browser) {
 		Mousetrap.bind('mod', () => ($showKeyHint = true), 'keydown')
 		Mousetrap.bind('mod', () => ($showKeyHint = false), 'keyup')
+		// sometimes keyup doesn't fire
+		window.addEventListener('mousemove', _.throttle(handle_mouse_move, 100))
+		function handle_mouse_move(e) {
+			if (!e.metaKey && $showKeyHint) {
+				$showKeyHint = false
+			}
+		}
+
+		Mousetrap.bind(['mod+1'], (e) => {
+			e.preventDefault()
+			hotkey_events.dispatch('tab-switch', 1)
+		})
+		Mousetrap.bind(['mod+2'], (e) => {
+			e.preventDefault()
+			hotkey_events.dispatch('tab-switch', 2)
+		})
+		Mousetrap.bind(['mod+3'], (e) => {
+			e.preventDefault()
+			hotkey_events.dispatch('tab-switch', 3)
+		})
+		Mousetrap.bind('escape', (e) => {
+			hotkey_events.dispatch('escape')
+		})
+		Mousetrap.bind('mod+s', (e) => {
+			e.preventDefault()
+			hotkey_events.dispatch('save')
+		})
 	}
 </script>
 
@@ -170,6 +200,7 @@
 
 		--primo-border-radius: 4px;
 
+		--primo-color-danger: #ef4444;
 		--primo-color-black: rgb(17, 17, 17);
 		--primo-color-black-opaque: rgba(17, 17, 17, 0.95);
 
@@ -216,5 +247,13 @@
 		--primo-ring-primogreen: 0px 0px 0px 2px var(--primo-color-brand, #35d994);
 		--primo-ring-primogreen-thin: 0px 0px 0px 1px var(--primo-color-brand, #35d994);
 		--primo-ring-primogreen-thick: 0px 0px 0px 3px var(--primo-color-brand, #35d994);
+	}
+
+	:global(.primo--field-label) {
+		display: inline-block;
+		font-size: var(--font-size-1);
+		line-height: var(--font-size-1);
+		color: #9d9d9d;
+		margin-bottom: 0.25rem;
 	}
 </style>

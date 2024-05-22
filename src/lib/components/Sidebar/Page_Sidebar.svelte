@@ -159,7 +159,7 @@
 			{
 				id: 'PAGE_OPTIONS',
 				icon: 'material-symbols:article-outline',
-				label: `Options`
+				label: `Properties`
 			}
 		]}
 		bind:active_tab_id={active_tab}

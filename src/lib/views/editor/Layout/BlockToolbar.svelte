@@ -21,17 +21,19 @@
 	if (browser) DEBUGGING = getContext('DEBUGGING')
 
 	if (!import.meta.env.SSR) {
-		Mousetrap.bind(['mod+1'], (e) => {
+		Mousetrap.bind(['mod+e'], (e) => {
 			e.preventDefault()
 			dispatch('edit-code')
 		})
-		Mousetrap.bind(['mod+2'], (e) => {
-			e.preventDefault()
-			dispatch('edit-content')
-		})
+		// Mousetrap.bind(['mod+2'], (e) => {
+		// 	e.preventDefault()
+		// 	dispatch('edit-content')
+		// })
 	}
 
-	onDestroy(() => Mousetrap.unbind(['mod+1', 'mod+2']))
+	onDestroy(() => {
+		Mousetrap.unbind(['mod+e'])
+	})
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -46,21 +48,17 @@
 					aria-label="Edit Block Code"
 				>
 					{#if $showKeyHint}
-						<span class="key-hint">&#8984; 1</span>
+						<span class="key-hint">&#8984; E</span>
 					{/if}
 					<span class="icon">
 						<Icon icon="ph:code-bold" />
 					</span>
 				</button>
 			{/if}
-			<button
-				class:showing_key_hint={$showKeyHint}
-				on:click={() => dispatch('edit-content')}
-				aria-label="Edit Block Content"
-			>
-				{#if $showKeyHint}
+			<button on:click={() => dispatch('edit-content')} aria-label="Edit Block Content">
+				<!-- {#if $showKeyHint}
 					<span class="key-hint">&#8984; 2</span>
-				{/if}
+				{/if} -->
 				<span class="icon">
 					<Icon icon="material-symbols:edit-square-outline-rounded" />
 				</span>

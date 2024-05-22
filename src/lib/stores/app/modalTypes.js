@@ -23,7 +23,7 @@ export const modalTypes = {
 			icon: 'fas fa-code'
 		}
 	},
-	SYMBOL_EDITOR: {
+	BLOCK_EDITOR: {
 		component: SymbolEditor,
 		header: {
 			title: 'Create Symbol',

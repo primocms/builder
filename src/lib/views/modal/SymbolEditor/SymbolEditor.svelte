@@ -24,11 +24,11 @@
 	import { site_design_css } from '../../../code_generators.js'
 	import * as actions from '../../../stores/actions.js'
 	import { design as siteDesign, code as siteCode } from '../../../stores/data/site.js'
-	import { Content_Row } from '../../../factories.js'
+	import { Symbol } from '../../../factories.js'
 	import { transform_content } from '../../../transform_data.js'
 
 	/** @type {import('$lib').Section} */
-	export let symbol
+	export let symbol = Symbol()
 	export let tab = 'content'
 
 	export let header = {
@@ -47,6 +47,15 @@
 	let local_fields = _.cloneDeep(symbol.fields)
 	let local_content = _.cloneDeep(symbol.content)
 
+	$: console.log({
+		local_content,
+		local_fields,
+		content_changes,
+		fields_changes,
+		content_changes,
+		fields_changes
+	})
+
 	// Show Static Field toggle within Field Item
 	setContext('show_static_field', true)
 
@@ -58,7 +67,7 @@
 	let raw_js = local_code.js
 
 	$: component_data = transform_content({ fields: local_fields, content: local_content })[$locale]
-	$: console.log({ component_data })
+	$: console.log({ component_data, local_fields, local_content })
 
 	// changing codes triggers compilation
 	$: $autoRefresh &&
@@ -123,35 +132,8 @@
 		previewUpToDate = true
 	}
 
-	let field_transactions = []
-	let content_transactions = []
-	function handle_field_changes(transaction) {
-		if (transaction.action === 'insert') {
-			const new_content_row = Content_Row({
-				field: transaction.data.id,
-				locale: $locale,
-				value: getEmptyValue(transaction.data)
-			})
-			local_content = [...local_content, new_content_row]
-			content_transactions = [
-				...content_transactions,
-				{ action: 'insert', id: new_content_row.id, data: new_content_row }
-			]
-		} else if (transaction.action === 'delete') {
-			// delete relevant content changes and rows
-			content_transactions = content_transactions.filter((t) => t.data.field !== transaction.id)
-			local_content = local_content.filter((r) => r.field !== transaction.id)
-		}
-	}
-
-	function handle_content_transaction({ id, data }) {
-		const existing_transaction = content_transactions.find((t) => t.id === id)
-		if (existing_transaction) {
-			existing_transaction.data = { ...existing_transaction.data, ...data }
-		} else {
-			content_transactions = [...content_transactions, { action: 'update', id, data }]
-		}
-	}
+	let fields_changes = []
+	let content_changes = []
 
 	async function save_component() {
 		if (!previewUpToDate) {
@@ -159,14 +141,18 @@
 		}
 
 		if (!disable_save) {
-			// code & fields gets saved to symbol
-			actions.symbols.update(symbol.id, {
-				code: local_code,
-				content: local_content,
-				fields: local_fields
-			})
-
-			header.button.onclick()
+			header.button.onclick(
+				{
+					...symbol,
+					code: local_code,
+					content: local_content,
+					fields: local_fields
+				},
+				{
+					content: content_changes,
+					fields: fields_changes
+				}
+			)
 		}
 	}
 </script>
@@ -175,9 +161,11 @@
 	<ModalHeader
 		{...header}
 		warn={() => {
-			const component_changed = true
-			// !isEqual(local_content, get_local_content()) || !isEqual(local_code, symbol.code)
-			if (component_changed) {
+			const component_unchanged =
+				_.isEqual(symbol.code, local_code) &&
+				_.isEqual(symbol.content, local_content) &&
+				_.isEqual(symbol.fields, local_fields)
+			if (!component_unchanged) {
 				const proceed = window.confirm('Undrafted changes will be lost. Continue?')
 				return proceed
 			} else return true
@@ -237,10 +225,15 @@
 	{#if tab === 'fields'}
 		<Fields
 			fields={local_fields}
+			{fields_changes}
+			content={local_content}
+			{content_changes}
 			on:input={({ detail }) => {
+				console.log({ detail })
 				local_fields = detail.fields
-				detail.changes.forEach((change) => handle_field_changes(change))
-				field_transactions = detail.all_changes
+				fields_changes = detail.fields_changes
+				local_content = detail.content
+				content_changes = detail.content_changes
 			}}
 		/>
 	{:else}
@@ -257,10 +250,11 @@
 					<Content
 						fields={local_fields}
 						content={local_content}
+						changes={content_changes}
 						on:save={save_component}
 						on:input={({ detail }) => {
 							local_content = detail.content
-							detail.changes.forEach((change) => handle_content_transaction(change))
+							content_changes = detail.changes
 						}}
 					/>
 				{:else if tab === 'code'}

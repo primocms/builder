@@ -3,6 +3,7 @@
 	import Icon from '@iconify/svelte'
 	import modal from '../../stores/app/modal'
 	import { showKeyHint } from '../../stores/app/misc.js'
+	import hotkey_events from '../../stores/app/hotkey_events.js'
 	// import LocaleSelector from '../../views/editor/LocaleSelector.svelte'
 
 	export let variants = ''
@@ -15,15 +16,11 @@
 	export let warn = () => true
 	export let onclose = () => {}
 
-	if (!import.meta.env.SSR) {
-		Mousetrap.bind('escape', (e) => {
-			closeModal()
-		})
-		Mousetrap.bind('mod+s', (e) => {
-			e.preventDefault()
-			button.onclick()
-		})
-	}
+	hotkey_events.on('escape', () => {
+		console.log('hea')
+		closeModal()
+	})
+	hotkey_events.on('save', button?.onclick)
 
 	function closeModal() {
 		if (warn()) {
@@ -143,6 +140,7 @@
 			align-items: center;
 			justify-content: center;
 			padding: 0.5rem 1rem;
+			padding-bottom: 0;
 			font-size: var(--font-size-2);
 			font-weight: 600;
 			gap: 0.25rem;
@@ -173,9 +171,13 @@
 		transition: var(--transition-colors), 0.1s box-shadow;
 
 		&.primary {
-			border: 2px solid var(--primo-color-brand);
+			/* border: 2px solid var(--primo-color-brand); */
 			color: var(--primo-color-white);
-			margin-left: 0.5rem;
+			background: #1a1a1a;
+			/* background: #292929; */
+			/* background: var(--color-gray-8); */
+			padding: 0.75rem 1rem;
+			/* margin-left: 0.5rem; */
 
 			.key-hint {
 				position: absolute;

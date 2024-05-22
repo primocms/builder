@@ -6,12 +6,12 @@
 	import { id as active_pageID } from '../../../../stores/app/active_page'
 	import PageForm from './PageForm.svelte'
 
-	async function create_page(new_page) {
-		const url_taken = $pages.some((page) => page.url === new_page.url)
+	async function create_page(new_page, index) {
+		const url_taken = $pages.some((page) => page.slug === new_page.slug)
 		if (url_taken) {
 			alert(`That URL is already in use`)
 		} else {
-			await actions.create(new_page)
+			await actions.create({ ...new_page, index })
 		}
 	}
 
@@ -30,7 +30,7 @@
 				{page}
 				{children}
 				active={$active_pageID === page.id}
-				on:create={({ detail: page }) => create_page(page)}
+				on:create={({ detail }) => create_page(detail.page, detail.index)}
 				on:delete={({ detail: terminal_page }) => delete_page(terminal_page.id)}
 			/>
 		</li>
@@ -40,7 +40,7 @@
 			<PageForm
 				on:create={({ detail: new_page }) => {
 					creating_page = false
-					create_page(new_page)
+					create_page(new_page, $pages.length)
 				}}
 			/>
 		</li>

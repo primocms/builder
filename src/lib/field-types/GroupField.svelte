@@ -8,10 +8,12 @@
 	const dispatch = createEventDispatcher()
 
 	export let field
-	export let subfields
 	export let fields
 	export let content
 	export let level = 0
+
+	$: subfields = fields.filter((f) => f.parent === field.id)
+	$: console.log({ subfields, content })
 
 	let hidden = false
 
@@ -35,11 +37,16 @@
 				<div class="group-item">
 					<svelte:component
 						this={getFieldComponent(subfield)}
-						field={subfield}
+						{id}
 						{value}
-						level={level + 1}
+						field={subfield}
 						{fields}
 						{content}
+						level={level + 1}
+						on:save
+						on:add
+						on:remove
+						on:move
 						on:input={({ detail }) => {
 							if (detail.id) {
 								dispatch('input', detail)

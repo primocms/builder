@@ -1,12 +1,21 @@
 <script>
+	import UI from '../../ui/index.js'
 	import Icon from '@iconify/svelte'
 	import { createEventDispatcher } from 'svelte'
 	const dispatch = createEventDispatcher()
 
 	export let field
-	export let level
 
 	$: options = field.options?.options
+
+	function update_option(updated_option, i) {
+		const updated_options = options.map((opt, index) => (index === i ? updated_option : opt))
+		dispatch_update(updated_options)
+	}
+
+	function dispatch_update(updated_options) {
+		dispatch('input', { options: { ...field.options, options: updated_options } })
+	}
 
 	function validateFieldKey(key) {
 		// replace dash and space with underscore
@@ -16,14 +25,15 @@
 	function moveOption(indexOfItem, direction) {
 		const item = options[indexOfItem]
 		const withoutItem = options.filter((_, i) => i !== indexOfItem)
+		let updated_options
 		if (direction === 'up') {
-			field.options.options = [
+			updated_options = [
 				...withoutItem.slice(0, indexOfItem - 1),
 				item,
 				...withoutItem.slice(indexOfItem - 1)
 			]
 		} else if (direction === 'down') {
-			field.options.options = [
+			updated_options = [
 				...withoutItem.slice(0, indexOfItem + 1),
 				item,
 				...withoutItem.slice(indexOfItem + 1)
@@ -31,67 +41,96 @@
 		} else {
 			console.error('Direction must be up or down')
 		}
-		dispatch('input')
+		dispatch_update(updated_options)
+		// dispatch('input', { options: { ...field.options, options: updated_options } })
 	}
 
 	function removeOption(itemIndex) {
-		field.options.options = field.options.options.filter((_, i) => i !== itemIndex)
-		dispatch('input')
+		// field.options.options = field.options.options.filter((_, i) => i !== itemIndex)
+		dispatch_update(field.options.options.filter((_, i) => i !== itemIndex))
+		// dispatch('input')
 	}
 
 	// track focused value inputs to auto-fill values when unedited
 	const clicked_value_inputs = new Set()
 </script>
 
-<div class="main" style="margin-left: {1.5 + level}rem">
+<!-- <div class="SelectField" style="margin-left: {1.5 + level}rem"> -->
+<div class="SelectField">
 	{#if options}
 		{#each options as option, i}
 			<div class="select-field">
-				<label>
-					<span>Label</span>
-					<input
-						class="input label-input"
-						type="text"
-						bind:value={option.label}
-						on:input={(e) => {
-							if (!clicked_value_inputs.has(i)) {
-								option.value = validateFieldKey(option.label)
-							}
-							dispatch('input', e)
-						}}
-					/>
-				</label>
-				<label>
-					<span>Value</span>
-					<input
-						class="input key-input"
-						type="text"
-						bind:value={option.value}
-						on:focus={() => {
-							clicked_value_inputs.add(i)
-						}}
-						on:input={() => {
-							option.value = validateFieldKey(option.value)
-							dispatch('input')
-						}}
-					/>
-				</label>
-				<div class="primo-buttons" id="repeater-{field.key}-{i}">
-					<div class="item-options">
-						{#if i !== 0}
-							<button title="Move {field.label} up" on:click={() => moveOption(i, 'up')}>
-								<Icon icon="fa-solid:arrow-up" />
-							</button>
-						{/if}
-						{#if i !== options.length - 1}
-							<button title="Move {field.label} down" on:click={() => moveOption(i, 'down')}>
-								<Icon icon="fa-solid:arrow-down" />
-							</button>
-						{/if}
-						<button title="Delete {field.label} item" on:click={() => removeOption(i)}>
-							<Icon icon="ion:trash" />
+				<UI.TextInput
+					label="Option Label"
+					value={option.label}
+					on:input={({ detail }) => {
+						// if (!clicked_value_inputs.has(i)) {
+						// 	option.value = validateFieldKey(option.label)
+						// }
+						// const updated_options = options.map((opt, index) =>
+						// 	index === i
+						// 		? {
+						// 				...opt,
+						// 				value: clicked_value_inputs.has(i) ? option.value : validateFieldKey(detail),
+						// 				label: detail
+						// 		  }
+						// 		: opt
+						// )
+						update_option(
+							{
+								...option,
+								value: clicked_value_inputs.has(i) ? option.value : validateFieldKey(detail),
+								label: detail
+							},
+							i
+						)
+						// dispatch_update(updated_options)
+						// dispatch('input', e)
+					}}
+				/>
+				<UI.TextInput
+					label="Option Value"
+					value={option.value}
+					on:focus={() => clicked_value_inputs.add(i)}
+					on:input={({ detail }) => {
+						// option.value = validateFieldKey(option.value)
+						// const updated_options = options.map((opt, index) =>
+						// 	index === i
+						// 		? {
+						// 				...opt,
+						// 				value: clicked_value_inputs.has(i) ? detail : validateFieldKey(detail)
+						// 		  }
+						// 		: opt
+						// )
+						// dispatch_update(updated_options)
+						update_option(
+							{
+								...option,
+								value: detail
+							},
+							i
+						)
+						// dispatch('input')
+					}}
+				/>
+				<div class="item-options" id="repeater-{field.key}-{i}">
+					{#if i !== 0}
+						<button title="Move {field.label} up" on:click={() => moveOption(i, 'up')}>
+							<Icon icon="fa-solid:arrow-up" />
 						</button>
-					</div>
+					{/if}
+					{#if i !== options.length - 1}
+						<button title="Move {field.label} down" on:click={() => moveOption(i, 'down')}>
+							<Icon icon="fa-solid:arrow-down" />
+						</button>
+					{/if}
+					<button
+						style="color: var(--primo-color-danger)"
+						title="Delete {field.label} item"
+						on:click={() => removeOption(i)}
+					>
+						<Icon icon="ion:trash" />
+					</button>
 				</div>
 			</div>
 		{/each}
@@ -121,30 +160,26 @@
 		}}
 	>
 		<Icon icon="ic:baseline-plus" />
-		Add Option
+		Create Option
 	</button>
 </div>
 
 <style lang="postcss">
+	.SelectField {
+		display: grid;
+		gap: 1rem;
+		margin-left: 1rem;
+	}
 	.select-field {
 		display: grid;
-		grid-template-columns: 1fr 1fr 45px;
-		padding: 0.5rem;
+		grid-template-columns: 1fr 1fr auto;
 		grid-gap: 1rem;
-		gap: 1rem;
-
-		label {
-			display: grid;
-			gap: 0.25rem;
-
-			span {
-				font-size: 0.75rem;
-				font-weight: 700;
-			}
-		}
+		gap: 0.5rem;
 	}
 	.field-button {
 		display: flex;
+		align-items: center;
+		justify-content: center;
 		gap: 0.5rem;
 		width: 100%;
 		background: var(--color-gray-7);
@@ -158,10 +193,9 @@
 		background: var(--color-gray-9);
 	}
 	.field-button.subfield-button {
-		width: calc(100% - 1rem);
-		border-radius: 2px;
-		margin-top: 8px;
-		margin-bottom: 8px;
+		border-radius: 4px;
+		/* margin-top: 8px;
+		margin-bottom: 8px; */
 		font-size: var(--font-size-2);
 		background: var(--primo-color-codeblack);
 		color: var(--color-gray-2);
@@ -169,38 +203,28 @@
 		outline: 0;
 	}
 	.field-button.subfield-button:hover {
-		background: var(--color-gray-9);
-	}
-	.field-button.subfield-button:focus {
 		background: var(--color-gray-8);
 	}
-	.primo-buttons {
+	.field-button.subfield-button:focus {
+		/* background: var(--color-gray-8); */
+		border-color: var(--primo-color-brand);
+		outline: 0;
+	}
+	.item-options {
 		display: flex;
 		align-items: center;
-		margin-top: 25px; /* to align with inputs */
+		margin-top: 15px; /* to align with inputs */
+		justify-content: flex-end;
+		/* gap: 0.25rem; */
 
-		.item-options {
-			font-size: 0.75rem;
-		}
-	}
-	.input {
-		border: 1px solid #333333;
-		background: #1f1f1f;
-		padding: 0.5rem 0.75rem;
-		border-radius: 0.25rem;
-		height: 100%;
-		width: 100%;
-		font-size: var(--font-size-2);
-		color: #858585;
+		button {
+			padding: 0.5rem 9px; /* align with inputs */
+			transition: 0.1s;
+			border-radius: var(--primo-border-radius);
 
-		&::placeholder {
-			color: var(--color-gray-7);
-		}
-		&:focus {
-			outline: 0;
-			border: 1px solid #b5b5b5;
-			transition: 0.3s;
-			color: #b6b6b6;
+			&:hover {
+				background: var(--color-gray-8);
+			}
 		}
 	}
 </style>

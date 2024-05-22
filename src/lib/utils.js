@@ -101,8 +101,8 @@ export function wrapInStyleTags(css, id) {
 
 export function getEmptyValue(field) {
 	if (field.default) return field.default
-	if (field.type === 'repeater') return []
-	else if (field.type === 'group') return getGroupValue(field)
+	if (field.type === 'repeater') return null
+	else if (field.type === 'group') return null
 	else if (field.type === 'image')
 		return {
 			url: '',

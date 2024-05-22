@@ -27,8 +27,6 @@
 	/** @type {{ label: string, onclick?: function, type?: string, disabled?: boolean } | null} */
 	export let button = null
 
-	// Note: Svelte seems to have some issues with two-way binding, so if this is acting up it's probably that
-
 	let element
 	onMount(() => {
 		if (element) {
@@ -39,7 +37,7 @@
 
 <!-- svelte-ignore a11y-label-has-associated-control -->
 <label class="TextInput {variants}" {id}>
-	{#if label}<span class="label">{label}</span>{/if}
+	{#if label}<span class="primo--field-label">{label}</span>{/if}
 	<div style="display: flex;width: 100%;gap: 0.5rem;">
 		{#if options.length > 0}
 			<select
@@ -92,7 +90,6 @@
 					}}
 					on:change={({ target }) => {
 						value = target.value
-						console.log(value)
 						dispatch('input', value)
 					}}
 					on:keydown
@@ -110,8 +107,10 @@
 <style lang="postcss">
 	.TextInput {
 		display: flex;
-		width: 100%;
+		/* width: 100%; */
+		flex: 1;
 		flex-wrap: wrap;
+		justify-content: flex-start;
 		/* gap: 0.5rem; */
 	}
 	.options {
@@ -136,6 +135,8 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
+		justify-content: flex-end;
+		/* gap: 0.25rem; */
 		color: var(--color-gray-2);
 		margin-top: var(--TextInput-mt, 0);
 		margin-bottom: var(--TextInput-mb, 0);
@@ -143,18 +144,15 @@
 		margin-left: var(--TextInput-ml, 0);
 		width: 100%;
 
-		span.label {
+		span.primo--field-label {
 			font-size: var(--TextInput-label-font-size, 0.75rem);
-			margin-bottom: 0.25rem;
-			color: #9d9d9d;
-			font-weight: 400;
 		}
 	}
 
 	.input-container {
 		display: flex;
 		align-items: center;
-		gap: 0.25rem;
+		/* gap: 0.25rem; */
 		width: 100%;
 		background: #1f1f1f; /* TODO: set to variable (this is nice inbetween color) */
 		border: 1px solid var(--color-gray-8);

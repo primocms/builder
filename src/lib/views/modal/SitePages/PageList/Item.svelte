@@ -157,10 +157,10 @@
 		<PageForm
 			{page}
 			parent={page.id}
-			on:create={({ detail: page }) => {
+			on:create={({ detail: new_page }) => {
 				creating_page = false
 				showing_children = true
-				dispatch('create', page)
+				dispatch('create', { page: new_page, index: children.length })
 			}}
 		/>
 	</div>

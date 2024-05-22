@@ -4,8 +4,8 @@
 	import { createEventDispatcher } from 'svelte'
 	import TextInput from '../ui/TextInput.svelte'
 	import Spinner from '../ui/Spinner.svelte'
-	import site from '../stores/data/site'
-	import { storageChanged } from '../database'
+	import site from '../stores/data/site.js'
+	import { storageChanged } from '../database.js'
 
 	const dispatch = createEventDispatcher()
 
@@ -19,13 +19,6 @@
 
 	if (typeof value === 'string' || !value) {
 		value = _.cloneDeep(default_value)
-	}
-
-	function set_url(url) {
-		dispatch('input', {
-			url,
-			alt: value.alt
-		})
 	}
 
 	function dispatch_update({ url = value.url, alt = value.alt }) {
@@ -86,10 +79,13 @@
 	let image_size = null
 	let image_preview = value.url || ''
 	let loading = false
+
+	let width
+	$: collapsed = width < 200
 </script>
 
-<div class="image-field">
-	<span class="field-label">{field.label}</span>
+<div class="ImageField" bind:clientWidth={width} class:collapsed>
+	<span class="primo--field-label">{field.label}</span>
 	<div class="image-info">
 		<div class="image-preview">
 			{#if loading}
@@ -169,14 +165,12 @@
 	* {
 		--TextInput-label-font-size: 0.75rem;
 	}
-	.image-field {
+	.ImageField {
 		display: grid;
-		gap: 0.5rem;
-	}
-	.field-label {
-		font-weight: 600;
-		display: inline-block;
-		font-size: var(--label-font-size, 1rem);
+
+		&.collapsed .image-info {
+			display: grid;
+		}
 	}
 	.image-info {
 		display: flex;

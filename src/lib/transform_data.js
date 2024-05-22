@@ -28,17 +28,20 @@ export function transform_fields({ fields }) {
 				done.add(field.id)
 				continue
 			}
+			count++
 		}
 	}
+	count++
 
 	return transformed_fields
 }
 
 export function transform_content({ fields, content }) {
 	if (!content) return { en: {} }
+	// console.log('transform_content', { fields, content })
 
 	// initialize and set locales
-	const structured_content = {}
+	let structured_content = { en: {} }
 	content.forEach((row) => {
 		if (row.locale) {
 			structured_content[row.locale] = {}
@@ -70,84 +73,106 @@ export function transform_content({ fields, content }) {
 		}
 	}
 
+	let count = 0
 	try {
-		let count = 0
 		let done = new Set() // track transformed content row IDs for reference
 
 		// then, set all content values
 		while (done.size < content.length && count < 999) {
-			for (const row of content) {
+			for (const entry of content) {
 				// skip if item already added
-				if (done.has(row.id)) continue
+				if (done.has(entry.id)) continue
 
 				// skip if has parent and parent hasn't been added yet
-				if (row.parent && !done.has(row.parent)) {
+				if (entry.parent && !done.has(entry.parent)) {
 					continue
 				}
 
 				// get matching field to use key
-				const field = fields.find((f) => f.id === row.field)
+				const field = fields.find((f) => f.id === entry.field)
 
-				// if root-level content, add to root
-				if (!row.parent && field) {
-					if (field.type === 'repeater') {
-						// TODO: add to every locale
-						structured_content['en'][field.key] = []
-					} else if (field.type === 'group') {
-						structured_content['en'][field.key] = {}
-					} else {
-						structured_content[row.locale][field.key] = row.value
-					}
-					done.add(row.id)
+				// // TODO remove this code, handle below
+				// // if root-level entries, add to root
+				// if (!entry.parent && field) {
+				// 	if (field.type === 'repeater') {
+				// 		// TODO: add to every locale
+				// 		structured_content['en'][field.key] = []
+				// 	} else if (field.type === 'group') {
+				// 		structured_content['en'][field.key] = {}
+				// 	} else {
+				// 		structured_content['en'][field.key] = entry.value
+				// 	}
+				// 	done.add(entry.id)
+				// 	continue
+				// }
+
+				const parent_node = get_parent_node(entry.parent)
+				const parent_content = content.find((i) => i.id === entry.parent)
+
+				// initialize repeater container
+				if (field?.type === 'repeater') {
+					parent_node[field.key] = []
+					done.add(entry.id)
 					continue
 				}
-
-				const parent_node = get_parent_node(row.parent)
-				const parent_content = content.find((i) => i.id === row.parent)
 
 				// initialize repeater item
-				if (!field) {
-					parent_node[row.index] = {}
-					done.add(row.id)
+				if (!entry.field) {
+					parent_node[entry.index] = {}
+					done.add(entry.id)
 					continue
 				}
 
-				// parent is a repeater item
-				if (parent_content.index !== null) {
-					// repeater container
-
-					if (field.type === 'repeater') {
-						parent_node[field.key] = []
-						done.add(row.id)
-						continue
-					}
-
-					if (field.type === 'group') {
-						parent_node[field.key] = {}
-						done.add(row.id)
-						continue
-					}
-
-					// value content
-					parent_node[field.key] = row.value
-					done.add(row.id)
+				// initialize group container
+				if (field.type === 'group') {
+					parent_node[field.key] = {}
+					done.add(entry.id)
 					continue
 				}
 
-				// parent is a group container
-				if (!parent_content.index) {
-					parent_node[field.key] = row.value
-					done.add(row.id)
-					continue
-				}
+				// set value item
+				parent_node[field.key] = entry.value
+				done.add(entry.id)
+
+				// // parent is a repeater item
+				// if (parent_content.index !== null) {
+				// 	// repeater container
+
+				// 	if (field.type === 'repeater') {
+				// 		parent_node[field.key] = []
+				// 		done.add(entry.id)
+				// 		continue
+				// 	}
+
+				// 	if (field.type === 'group') {
+				// 		parent_node[field.key] = {}
+				// 		done.add(entry.id)
+				// 		continue
+				// 	}
+
+				// 	// value content
+				// 	parent_node[field.key] = entry.value
+				// 	done.add(entry.id)
+				// 	continue
+				// }
+
+				// // parent is a group container
+				// if (_.isNil(parent_content.index)) {
+				// 	parent_node[field.key] = entry.value
+				// 	done.add(entry.id)
+				// 	continue
+				// }
 			}
 
 			count++
 		}
+		const finished = Array.from(done.values())
+		const looking = content.filter((r) => !finished.includes(r.id))
+		console.log({ looking, content, fields })
 	} catch (e) {
 		console.error(e)
+		structured_content = null
 	}
-
 	return structured_content
 }
 

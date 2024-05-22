@@ -1,12 +1,11 @@
 import { v4 as uuidv4 } from 'uuid'
-import { createUniqueID } from './utilities.js'
 
 export const Content_Row = (row = {}) => ({
 	id: uuidv4(),
 	value: row.value !== undefined ? row.value : null,
 	locale: row.locale || null,
 	field: row.field || null,
-	index: row.index || null,
+	index: row.index === undefined ? null : row.index,
 	parent: row.parent || null,
 	metadata: row.metadata || null
 })
@@ -19,7 +18,7 @@ export const Field_Row = (field = {}) => ({
 	type: field.type || 'text',
 	options: field.options || {},
 	is_static: field.is_static || false,
-	index: field.index || 0,
+	index: field.index === undefined ? null : field.index,
 	parent: field.parent || null
 })
 
@@ -37,8 +36,8 @@ export const Field = (field = {}) => ({
 	fields: field.fields || [],
 	options: field.options || {},
 	is_static: field.is_static || false,
-	index: field.index || 0,
-	links: field.links || []
+	index: field.index !== undefined ? field.index : null,
+	source: field.source || null
 })
 
 /**
@@ -63,7 +62,7 @@ export const Section = (section) => ({
  * @param symbol - The symbol properties to be applied to the new symbol
  * @returns {import('$lib').Symbol}
  */
-export const Symbol = (symbol) => ({
+export const Symbol = (symbol = {}) => ({
 	id: symbol.id || uuidv4(),
 	name: symbol.name || 'New Block',
 	code: symbol.code || {
@@ -71,12 +70,10 @@ export const Symbol = (symbol) => ({
 		html: '',
 		js: ''
 	},
-	// fields: symbol.fields || [],
-	// content: symbol.content || {
-	// 	en: {}
-	// },
+	fields: [],
+	content: [],
 	site: symbol.site || null,
-	index: symbol.index || 0
+	index: symbol.index === undefined ? null : symbol.index
 })
 
 /**
@@ -86,30 +83,13 @@ export const Symbol = (symbol) => ({
  */
 export const Page = (page = {}) => ({
 	id: uuidv4(),
-	slug: '',
-	name: '',
-	code: {
-		html: {
-			head: '',
-			below: ''
-		},
-		css: '',
-		js: ''
-	},
-	fields: [],
-	content: {
-		en: {}
-	},
-	parent: null,
-	site: '',
-	created_at: new Date().toISOString(),
-	metadata: {
-		title: '',
-		description: '',
-		image: ''
-	},
-	page_type: Page_Type(),
-	...page
+	slug: page.slug || '',
+	name: page.name || '',
+	parent: page.parent || null,
+	// created_at: new Date().toISOString(),
+	index: page.index !== undefined ? page.index : null,
+	page_type: page.page_type || Page_Type(),
+	...page // TODO: remove
 })
 
 /**
@@ -121,17 +101,11 @@ export const Page_Type = (page = {}) => ({
 	id: uuidv4(),
 	name: '',
 	code: {
-		html: {
-			head: '',
-			below: ''
-		},
-		css: '',
-		js: ''
+		head: '',
+		foot: ''
 	},
 	fields: [],
-	content: {
-		en: {}
-	},
+	content: [],
 	site: '',
 	created_at: new Date().toISOString(),
 	color: 'transparent',

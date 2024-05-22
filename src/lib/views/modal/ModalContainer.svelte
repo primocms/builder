@@ -63,6 +63,8 @@
 		position: relative;
 		border-radius: var(--primo-border-radius);
 		/* flex: 1; */
+		padding: 0.5rem;
+
 		max-height: 100vh;
 		justify-content: center;
 		pointer-events: none;

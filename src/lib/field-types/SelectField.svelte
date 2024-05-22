@@ -10,19 +10,27 @@
 			options: []
 		}
 	}
+
+	// set initial value
+	if (!value) {
+		console.log('setting initial value', field.options.options)
+		dispatch('input', { value: field.options.options[0]?.value })
+	}
+
+	$: options = field.options.options
 </script>
 
 <div class="label-container">
 	<label for={field.key}>
 		<span>{field.label}</span>
-		{#if field.options.options.length > 0}
+		{#if options.length > 0}
 			<select
 				value={value || field?.options?.selected}
 				on:change={({ target }) => {
 					dispatch('input', { value: target.value })
 				}}
 			>
-				{#each field.options.options as option}
+				{#each options as option}
 					<option value={option.value}>{option.label}</option>
 				{/each}
 			</select>

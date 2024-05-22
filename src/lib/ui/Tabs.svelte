@@ -1,10 +1,9 @@
 <script>
-	import { onDestroy } from 'svelte'
-	import * as Mousetrap from 'mousetrap'
 	import Icon from '@iconify/svelte'
 	import { fade } from 'svelte/transition'
 	import { createEventDispatcher } from 'svelte'
 	import { showKeyHint } from '../stores/app/misc.js'
+	import hotkey_events from '../stores/app/hotkey_events.js'
 	const dispatch = createEventDispatcher()
 
 	export let tabs
@@ -12,21 +11,7 @@
 	export let variant = 'primary'
 	export let disable_hotkeys = false
 
-	if (!import.meta.env.SSR && !disable_hotkeys) {
-		Mousetrap.bind(['mod+1'], (e) => {
-			e.preventDefault()
-			active_tab_id = tabs[0]['id']
-		})
-		Mousetrap.bind(['mod+2'], (e) => {
-			e.preventDefault()
-			active_tab_id = tabs[1]['id']
-		})
-		Mousetrap.bind(['mod+3'], (e) => {
-			e.preventDefault()
-			active_tab_id = tabs[2]['id']
-		})
-		onDestroy(() => Mousetrap.unbind(['mod+1', 'mod+2', 'mod+3']))
-	}
+	hotkey_events.on('tab-switch', (tab) => (active_tab_id = tabs[tab - 1]?.id))
 
 	$: dispatch('switch', active_tab_id)
 </script>
@@ -77,6 +62,10 @@
 			color: var(--color-gray-2);
 			border-bottom: 1px solid var(--color-gray-8);
 			transition: 0.1s;
+
+			&:focus-visible {
+				outline: 1px solid var(--primo-color-brand);
+			}
 
 			&.active {
 				color: white;

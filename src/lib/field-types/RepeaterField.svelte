@@ -1,6 +1,6 @@
 <script context="module">
 	import { writable } from 'svelte/store'
-	const pluralize = writable(null)
+	export const pluralize = writable(null)
 	import('../libraries/pluralize').then((mod) => pluralize.set(mod.default))
 </script>
 
@@ -12,25 +12,25 @@
 	import * as idb from 'idb-keyval'
 	const dispatch = createEventDispatcher()
 
-	import { getEmptyValue } from '../utils'
 	import { createUniqueID } from '../utilities'
 	import { fieldTypes } from '../stores/app'
 
 	export let id
 	export let field
-	export let subfields
 	export let fields
 	export let content
 	export let level = 0
 	export let show_label = false
 	export let hidden_keys = []
 
-	$: repeater_container = getRepeaterFieldValues(content)
+	$: subfields = fields.filter((f) => f.parent === field.id)
+	$: repeater_container = build_repeater_container(content)
+	$: console.log({ repeater_container })
 
 	// $: $locale, getRepeaterFieldValues().then((val) => (repeater_container = val))
 	// $: setTemplateKeys(repeater_container) // to reflect content change when updating locale
 
-	function getRepeaterFieldValues(content) {
+	function build_repeater_container(content) {
 		const child_content_rows = content.filter((r) => r.parent === id)
 		return child_content_rows.map((child) => ({
 			subfields,
@@ -38,27 +38,23 @@
 		}))
 	}
 
-	function add_item() {
+	let repeater_item_just_created = null // to autofocus on creation
+	async function add_item() {
+		const n_sibling_entries = repeater_container.length
+		repeater_item_just_created = n_sibling_entries
+		console.log({ repeater_item_just_created })
+		await tick()
 		dispatch('add', { parent: id, index: repeater_container.length, subfields })
 		visibleRepeaters[`${field.key}-${repeater_container.length}`] = true
-	}
-
-	function remove_item(item) {
-		dispatch('remove', item)
+		console.log('done')
+		// repeater_item_just_created = false
 	}
 
 	function move_item(item, direction) {
 		dispatch('move', { item, direction })
 	}
 
-	function createSubfield() {
-		return field.fields.map((subfield) => ({
-			...subfield,
-			id: createUniqueID(),
-			value: getEmptyValue(subfield)
-		}))
-	}
-
+	// used for tracking locale change I think, delete after configuring locale switching
 	function setTemplateKeys(val) {
 		repeater_container = val.map((f) => {
 			f._key = f._key || createUniqueID()
@@ -71,7 +67,7 @@
 		return field ? field.component : null
 	}
 
-	$: singularLabel = $pluralize && $pluralize?.singular(field.label)
+	$: singular_label = $pluralize && $pluralize?.singular(field.label)
 
 	function get_image(repeater_item) {
 		const [first_subfield] = repeater_item.subfields
@@ -106,7 +102,7 @@
 			else if (first_subfield.type === 'markdown') return matching_content_row?.value?.markdown
 			else return matching_content_row?.value
 		} else {
-			return singularLabel
+			return singular_label
 		}
 	}
 
@@ -126,71 +122,83 @@
 
 <div class="RepeaterField repeater-level-{level}">
 	{#if show_label}
-		<p class="label">{field.label}</p>
+		<p class="primo--field-label">{field.label}</p>
 	{/if}
 	<div class="fields">
-		{#each repeater_container as repeater_item, i}
-			{@const subfieldID = `${field.key}-${i}`}
+		{#each repeater_container as repeater_item, index}
+			{@const subfieldID = `${field.key}-${index}`}
 			{@const item_image = get_image(repeater_item, field)}
 			{@const item_icon = get_icon(repeater_item, field)}
 			{@const item_title = get_title(repeater_item, field)}
-			<div class="repeater-item" id="repeater-{field.key}-{i}">
+			<div class="repeater-item" id="repeater-{field.key}-{index}">
 				<div class="item-options">
 					<button
 						class="title"
 						on:click={() => (visibleRepeaters[subfieldID] = !visibleRepeaters[subfieldID])}
 					>
 						{#if item_image}
-							<img src={item_image} alt={item_title || `Preview for item ${i} in ${field.label}`} />
+							<img
+								src={item_image}
+								alt={item_title || `Preview for item ${index} in ${field.label}`}
+							/>
 						{:else if item_icon}
 							<div style="font-size:1.5rem;">{@html item_icon}</div>
 						{:else}
-							<span style="white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">
+							<span
+								style="white-space: nowrap;text-overflow: ellipsis;overflow: hidden;min-height: 19px;"
+							>
 								{item_title}
 							</span>
 						{/if}
 						<Icon icon={visibleRepeaters[subfieldID] ? 'ph:caret-up-bold' : 'ph:caret-down-bold'} />
 					</button>
 					<div class="primo-buttons">
-						{#if i !== 0}
+						{#if index !== 0}
 							<button
-								title="Move {singularLabel} up"
+								title="Move {singular_label} up"
 								on:click={() => move_item(repeater_item, 'up')}
 							>
 								<Icon icon="mdi:arrow-up" />
 							</button>
 						{/if}
-						{#if i !== repeater_container.length - 1}
+						{#if index !== repeater_container.length - 1}
 							<button
-								title="Move {singularLabel} down"
+								title="Move {singular_label} down"
 								on:click={() => move_item(repeater_item, 'down')}
 							>
 								<Icon icon="mdi:arrow-down" />
 							</button>
 						{/if}
-						<button title="Delete {singularLabel} item" on:click={() => remove_item(repeater_item)}>
+						<button
+							title="Delete {singular_label} item"
+							on:click={() => dispatch('remove', repeater_item)}
+						>
 							<Icon icon="ion:trash" />
 						</button>
 					</div>
 				</div>
 				{#if visibleRepeaters[subfieldID]}
 					<div class="field-values">
-						{#each repeater_item.subfields as subfield (repeater_item._key + subfield.key)}
+						{#each repeater_item.subfields as subfield, subfield_index (repeater_item._key + subfield.key)}
 							{#if !hidden_keys.includes(subfield.key)}
 								{@const matching_content_row = content.find(
 									(r) => r.field === subfield.id && r.parent === repeater_item.id
 								)}
-								<div class="repeater-item-field" id="repeater-{field.key}-{i}-{subfield.key}">
+								<div class="repeater-item-field" id="repeater-{field.key}-{index}-{subfield.key}">
 									<svelte:component
 										this={getFieldComponent(subfield)}
 										id={matching_content_row.id}
-										field={subfield}
 										value={matching_content_row.value}
-										level={level + 1}
-										subfields={fields.filter((f) => f.parent === subfield.id)}
+										field={subfield}
 										{fields}
 										{content}
+										level={level + 1}
 										show_label={true}
+										autofocus={index === repeater_item_just_created && subfield_index === 0}
+										on:save
+										on:add
+										on:remove
+										on:move
 										on:input={({ detail }) => {
 											if (detail.id) {
 												dispatch('input', detail)
@@ -199,39 +207,6 @@
 											}
 										}}
 									/>
-									<!-- {#if subfield.type === 'repeater'}
-										<svelte:self
-											field={subfield}
-											id={matching_content_row.id}
-											{content}
-											{fields}
-											subfields={fields.filter((f) => f.parent === subfield.id)}
-											on:input={({ detail }) => {
-												if (detail.id) {
-													dispatch('input', detail)
-												} else {
-													dispatch('input', { id: matching_content_row.id, data: detail })
-												}
-											}}
-											level={level + 1}
-											visible={true}
-											show_label={true}
-										/>
-									{:else}
-										<svelte:component
-											this={getFieldComponent(subfield)}
-											field={subfield}
-											value={matching_content_row.value}
-											level={level + 1}
-											on:input={({ detail }) => {
-												if (detail.id) {
-													dispatch('input', detail)
-												} else {
-													dispatch('input', { id: matching_content_row.id, data: detail })
-												}
-											}}
-										/>
-									{/if} -->
 								</div>
 							{/if}
 						{/each}
@@ -255,11 +230,11 @@
 		gap: 1.5rem;
 	}
 
-	.label {
-		font-size: var(--title-font-size, 1rem);
-		font-weight: var(--title-font-weight, 600);
-		padding-bottom: 1rem;
-		letter-spacing: 1px;
+	.primo--field-label {
+		/* font-size: var(--title-font-size, 1rem);
+		font-weight: var(--title-font-weight, 600); */
+		padding-bottom: 0.75rem;
+		/* letter-spacing: 1px; */
 	}
 
 	.repeater-level-0 {
@@ -295,7 +270,7 @@
 		padding-left: 1.5rem;
 		border-left: 0.5rem solid var(--field-border-color, #252627);
 		display: grid;
-		gap: 1.5rem;
+		gap: 1rem;
 		position: relative;
 		border-radius: 1px;
 		min-width: 10rem;
@@ -324,7 +299,7 @@
 
 			&:not(:only-child) {
 				border-bottom: var(--input-border);
-				padding-bottom: 0.75rem;
+				/* padding-bottom: 0.75rem; */
 			}
 
 			button.title {
@@ -373,24 +348,24 @@
 		padding-top: 0;
 	}
 	button.field-button {
+		width: 100%;
+		background: #1f1f1f;
+		color: var(--button-color);
+		transition: background 0.1s, color 0.1s;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
-		width: 100%;
-		background: var(--primo-button-background);
-		color: var(--button-color);
-		padding: 0.5rem 0;
-		border-radius: 1px;
-		transition: background 0.1s, color 0.1s;
-
-		font-size: 0.875rem;
-		padding: 0.75rem;
+		font-size: var(--font-size-2);
+		padding: 0.5rem;
 		border-radius: 4px;
-		font-weight: 700;
+		font-weight: 400;
+		border: 1px solid transparent;
+		transition: 0.1s;
 
 		&:hover {
-			background: var(--button-hover-color);
+			/* background: var(--button-hover-color); */
+			background: #292929;
 		}
 
 		/* &[disabled] {

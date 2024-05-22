@@ -1,6 +1,7 @@
 <script>
 	import { getIcon, loadIcon, buildIcon } from '@iconify/svelte'
 	import TextInput from '../ui/TextInput.svelte'
+	import IconPicker from '../components/IconPicker.svelte'
 	import { createEventDispatcher } from 'svelte'
 	import { fade } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
@@ -80,39 +81,7 @@
 			/>
 		</form>
 	</div>
-	{#if searched}
-		<div class="icons" in:fade>
-			<button
-				class="close"
-				aria-label="Close"
-				on:click={() => {
-					searched = false
-					search_query = ''
-				}}
-			>
-				<Icon icon="material-symbols:close" />
-			</button>
-			{#each icons as icon}
-				<button
-					class="icon"
-					class:active={value === icon}
-					on:click={() => select_icon(icon)}
-					type="button"
-				>
-					<Icon {icon} width="50px" />
-				</button>
-			{:else}
-				<span
-					style="grid-column: 1 / -1;
-				padding: 0.5rem;
-				font-size: 0.875rem;
-				border-left: 3px solid red;"
-				>
-					No icons found
-				</span>
-			{/each}
-		</div>
-	{/if}
+	<IconPicker on:input={({ detail: icon }) => select_icon(icon)} />
 </div>
 
 <style lang="postcss">
@@ -137,35 +106,5 @@
 
 	form {
 		flex: 1;
-	}
-
-	.icons {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-		border: 1px solid var(--color-gray-8);
-		margin-top: 0.25rem;
-		border-radius: var(--primo-border-radius);
-		position: relative;
-		margin-top: 0.25rem;
-		padding: 0.75rem;
-
-		button.close {
-			position: absolute;
-			top: 0;
-			right: 0;
-			padding: 0.5rem;
-
-			&:hover {
-				color: var(--color-gray-4);
-			}
-		}
-	}
-
-	button {
-		transition: 0.1s;
-
-		&.active {
-			color: var(--primo-color-brand);
-		}
 	}
 </style>

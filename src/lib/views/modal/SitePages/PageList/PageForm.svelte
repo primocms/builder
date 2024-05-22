@@ -6,6 +6,7 @@
 	import page_types from '../../../../stores/data/page_types'
 	import Icon from '@iconify/svelte'
 	import { validate_url } from '../../../../utilities'
+	import { Page } from '../../../../factories.js'
 
 	/** @type {string | null} */
 	export let parent = null
@@ -13,20 +14,20 @@
 	const dispatch = createEventDispatcher()
 
 	let new_page_name = ''
-	let new_page_url = ''
-	let new_page_type = null
-	$: page_creation_disabled = !new_page_name || !new_page_url
+	let new_page_slug = ''
+	let new_page_type = $page_types[0].id
+	console.log({ new_page_type, $page_types })
+	$: page_creation_disabled = !new_page_name || !new_page_slug
 
 	let page_label_edited = false
-	$: new_page_url = page_label_edited ? validate_url(new_page_url) : validate_url(new_page_name)
+	$: new_page_slug = page_label_edited ? validate_url(new_page_slug) : validate_url(new_page_name)
 
-	$: new_page_details = {
-		id: uuidv4(),
+	$: new_page_details = Page({
 		name: new_page_name,
-		url: new_page_url,
+		slug: new_page_slug,
 		parent,
 		page_type: $page_types.find((p) => p.id === new_page_type)
-	}
+	})
 </script>
 
 <form
@@ -42,22 +43,20 @@
 		placeholder="About Us"
 	/>
 	<UI.TextInput
-		bind:value={new_page_url}
+		bind:value={new_page_slug}
 		id="page-url"
 		label="Page URL"
 		on:input={() => (page_label_edited = true)}
 		placeholder="about-us"
 	/>
-	{#if $page_types.length > 0}
+	<div>
+		<span class="primo--field-label">Page Type</span>
 		<UI.Dropdown
-			label={$page_types.find((pt) => pt.id === new_page_type)?.name || 'Page Type'}
-			options={[
-				{ value: null, label: 'None' },
-				...$page_types.map((p) => ({ value: p.id, icon: p.icon, label: p.name }))
-			]}
+			label={$page_types.find((pt) => pt.id === new_page_type).name}
+			options={$page_types.map((p) => ({ value: p.id, icon: p.icon, label: p.name }))}
 			on:input={({ detail }) => (new_page_type = detail)}
 		/>
-	{/if}
+	</div>
 	<button disabled={page_creation_disabled}>
 		<Icon icon="akar-icons:check" />
 	</button>

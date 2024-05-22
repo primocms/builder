@@ -30,9 +30,31 @@
 	$: console.log({ $page_type })
 
 	async function create_symbol() {
-		const symbol = Symbol({ site: $site.id })
-		symbol_actions.create(symbol)
-		refresh_symbols()
+		// symbol_actions.create(symbol)
+		// refresh_symbols()
+		modal.show(
+			'BLOCK_EDITOR',
+			{
+				header: {
+					title: `Create Block'}`,
+					icon: 'fas fa-check',
+					button: {
+						label: `Save Block`,
+						icon: 'fas fa-check',
+						onclick: (new_symbol, changes) => {
+							console.log({ new_symbol, changes })
+							symbol_actions.create(new_symbol, changes)
+							modal.hide()
+						}
+					}
+				},
+				tab: 'code'
+			},
+			{
+				showSwitch: true,
+				disabledBgClose: true
+			}
+		)
 	}
 
 	async function show_block_picker() {
@@ -164,9 +186,9 @@
 				label: `Blocks`
 			},
 			{
-				id: 'PAGE_OPTIONS',
+				id: 'PROPERTIES',
 				icon: 'material-symbols:article-outline',
-				label: `Options`
+				label: `Properties`
 			}
 		]}
 		bind:active_tab_id={active_tab}
@@ -300,8 +322,10 @@
 
 		.primo-button {
 			padding: 0.25rem 0.5rem;
-			color: #b6b6b6;
-			background: #292929;
+			/* color: #b6b6b6;
+			background: #292929; */
+			color: var(--color-gray-2);
+			background: var(--color-gray-8);
 			border-radius: 4px;
 			cursor: pointer;
 			display: flex;

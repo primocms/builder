@@ -10,6 +10,16 @@ import { processCSS } from './utils.js'
 import { get_content_with_static, getPageData } from './stores/helpers.js'
 import { design_tokens } from './constants.js'
 
+export async function block_html({ code, data }) {
+	const { html, css: postcss, js } = code
+	const { css, error } = await processors.css(postcss || '')
+	const res = await processors.html({
+		component: { html, css, js, data }
+	})
+	console.log({ res })
+	return res
+}
+
 /**
  * @param {{
  *  page?: import('$lib').Page
@@ -74,7 +84,7 @@ export async function page_html({
 		(async () => {
 			const data = getPageData({ page, site, loc: locale })
 			return {
-				html: site.code.foot + page.code.foot,
+				html: site.code.foot,
 				css: ``,
 				js: ``,
 				data

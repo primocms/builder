@@ -217,41 +217,47 @@ export async function buildStaticPage({
 }
 
 // Include static content alongside the component's content
-export function get_content_with_static({ component, symbol }) {
+export function get_content_with_static({ component, symbol, existing_content }) {
 	if (!symbol) return { en: {} }
 
 	const loc = 'en'
 
-	const symbol_fields = transform_fields(symbol)
-	const symbol_content = transform_content(symbol)
-	const component_content = transform_content({ ...component, fields: symbol.fields })
-
-	const content = _chain(symbol_fields)
-		.map((field) => {
-			const field_value = component_content?.[loc]?.[field.key]
-			// if field is static, use value from symbol content
-			if (field.is_static) {
-				const symbol_value = symbol_content?.[loc]?.[field.key]
-				return {
-					key: field.key,
-					value: symbol_value
+	// temp workaround for error that happens when saving a symbol's fields & updating its local field IDs before section has updated
+	let content = _.cloneDeep(existing_content)
+	try {
+		const symbol_fields = transform_fields(symbol)
+		const symbol_content = transform_content(symbol)
+		const component_content = transform_content({ ...component, fields: symbol.fields })
+		if (!component_content) throw Error()
+		content = _chain(symbol_fields)
+			.map((field) => {
+				const field_value = component_content?.[loc]?.[field.key]
+				// if field is static, use value from symbol content
+				if (field.is_static) {
+					const symbol_value = symbol_content?.[loc]?.[field.key]
+					return {
+						key: field.key,
+						value: symbol_value
+					}
+				} else if (field_value !== undefined) {
+					return {
+						key: field.key,
+						value: field_value
+					}
+				} else {
+					const default_content = symbol_content?.[loc]?.[field.key]
+					return {
+						key: field.key,
+						value: default_content || getEmptyValue(field)
+					}
 				}
-			} else if (field_value !== undefined) {
-				return {
-					key: field.key,
-					value: field_value
-				}
-			} else {
-				const default_content = symbol_content?.[loc]?.[field.key]
-				return {
-					key: field.key,
-					value: default_content || getEmptyValue(field)
-				}
-			}
-		})
-		.keyBy('key')
-		.mapValues('value')
-		.value()
+			})
+			.keyBy('key')
+			.mapValues('value')
+			.value()
+	} catch (e) {
+		console.log('could not load new component content')
+	}
 
 	// TODO: handle other locales
 	return _.cloneDeep({

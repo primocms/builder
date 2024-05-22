@@ -1,5 +1,5 @@
 import Number from './Number.svelte'
-import Image from './Image.svelte'
+import ImageField from './ImageField.svelte'
 import Markdown from './Markdown.svelte'
 import Switch from './Switch.svelte'
 import URL from './URL.svelte'
@@ -10,7 +10,7 @@ import UserFormSelect from './UserFormSelect.svelte'
 import RepeaterField from './RepeaterField.svelte'
 import GroupField from './GroupField.svelte'
 import TextField from './TextField.svelte'
-import IconPicker from './IconPicker.svelte'
+import IconField from './IconField.svelte'
 // import Date from './Date.svelte'
 import Slider from './Slider.svelte'
 
@@ -49,13 +49,13 @@ export default [
 		id: 'image',
 		icon: 'carbon:image',
 		label: 'Image',
-		component: Image
+		component: ImageField
 	},
 	{
 		id: 'icon',
 		icon: 'fa6-solid:icons',
 		label: 'Icon',
-		component: IconPicker
+		component: IconField
 	},
 
 	{

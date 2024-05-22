@@ -11,6 +11,8 @@
 	import { locale } from '../../stores/app/misc'
 	import { click_to_copy } from '../../utilities'
 	import { transform_content } from '../../transform_data.js'
+	import { block_html } from '../../code_generators.js'
+
 	import { browser } from '$app/environment'
 	import IFrame from '../../components/IFrame.svelte'
 	const dispatch = createEventDispatcher()
@@ -25,7 +27,7 @@
 
 	function edit_symbol(symbol) {
 		modal.show(
-			'SYMBOL_EDITOR',
+			'BLOCK_EDITOR',
 			{
 				symbol,
 				header: {
@@ -83,15 +85,17 @@
 		) {
 			return
 		}
+		const code = {
+			html: `<svelte:head>${head}</svelte:head>` + symbol.code.html,
+			css: symbol.code.css,
+			js: symbol.code.js
+		}
+		const data = transform_content(symbol)[$locale]
 		const res = await axios
 			.post(`/api/render`, {
 				id: symbol.id,
-				code: {
-					html: `<svelte:head>${head}</svelte:head>` + symbol.code.html,
-					css: symbol.code.css,
-					js: symbol.code.js
-				},
-				content: transform_content(symbol),
+				code,
+				data,
 				dev_mode: false
 			})
 			.catch((e) => console.error(e))
@@ -105,6 +109,17 @@
 			}
 
 			component_error = null
+		} else {
+			// fallback if cloud render doesn't work (i.e. browser dependencies)
+			const compiled = await block_html({
+				code,
+				data
+			})
+			const updated_componentCode = compiled
+			if (!_.isEqual(componentCode, updated_componentCode)) {
+				componentCode = updated_componentCode
+				cachedSymbol = _.cloneDeep({ code: symbol.code, content: symbol.content })
+			}
 		}
 	}
 
@@ -203,6 +218,7 @@
 						{
 							label: 'Delete',
 							icon: 'ic:outline-delete',
+							color: 'var(--primo-color-danger)',
 							on_click: () => dispatch('delete')
 						}
 					]}
@@ -238,7 +254,8 @@
 			justify-content: space-between;
 			padding-bottom: 0.5rem;
 			color: #e7e7e7;
-			transition: opacity 0.2s;
+			transition: opacity 0.1s;
+			gap: 1rem;
 
 			.name {
 				overflow: hidden;

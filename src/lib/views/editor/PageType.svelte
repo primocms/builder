@@ -9,18 +9,16 @@
 	import SymbolPalette from './Layout/SymbolPalette.svelte'
 	import LockedOverlay from './Layout/LockedOverlay.svelte'
 	import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME } from 'svelte-dnd-action'
-	import { afterNavigate } from '$app/navigation'
 	import { isEqual, cloneDeep } from 'lodash-es'
 	import { code as siteCode, design as siteDesign } from '../../stores/data/site.js'
 	import { locale, locked_blocks } from '../../stores/app/misc.js'
-	import { active_page } from '../../stores/actions.js'
+	import { active_page, add_page_type_section } from '../../stores/actions.js'
 	import modal from '../../stores/app/modal.js'
 	import {
 		id as pageID,
 		name as pageName,
 		url as pageURL,
 		fields as pageFields,
-		code as pageCode,
 		content as pageContent,
 		page_type
 	} from '../../stores/app/active_page.js'
@@ -43,7 +41,7 @@
 		$active_page_type = page_data
 		// if (!page_data) return
 		// await tick()
-		// $sections = page_data.sections
+		// $active_page_type.sections = page_data.sections
 
 		// $pageID = page_data.id
 		// $pageName = page_data.name
@@ -56,7 +54,8 @@
 
 	const cached = { pageCode: null, siteCode: null, siteDesign: null }
 	let latest_run
-	$: set_page_html($pageCode, $siteCode, $siteDesign)
+	$: console.log({ $active_page_type })
+	$: set_page_html($active_page_type.code, $siteCode, $siteDesign)
 	async function set_page_html(pageCode, siteCode, siteDesign) {
 		if (
 			isEqual(pageCode, cached.pageCode) &&
@@ -110,11 +109,11 @@
 
 	// Fade in page when all components mounted
 	let page_mounted = false
-	$: page_is_empty = $sections.length === 0
+	$: page_is_empty = $active_page_type.sections.length === 0
 
 	// detect when all sections are mounted
 	let sections_mounted = 0
-	$: if (sections_mounted === $sections.length && sections_mounted !== 0) {
+	$: if (sections_mounted === $active_page_type.sections.length && sections_mounted !== 0) {
 		page_mounted = true
 	}
 
@@ -185,10 +184,10 @@
 		// })
 	}
 
-	let draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
-	$: refresh_sections($sections)
+	let draggable_sections = $active_page_type.sections.map((s) => ({ ...s, _drag_id: s.id }))
+	$: refresh_sections($active_page_type.sections)
 	async function refresh_sections(_) {
-		draggable_sections = $sections.map((s) => ({ ...s, _drag_id: s.id }))
+		draggable_sections = $active_page_type.sections.map((s) => ({ ...s, _drag_id: s.id }))
 	}
 
 	const flipDurationMs = 100
@@ -218,9 +217,9 @@
 	async function finalize_dnd() {
 		moving = true
 		if (dragged_symbol.is_primo_block) {
-			active_page.add_primo_block(dragged_symbol, dragged_symbol.index)
+			// active_page.add_primo_block(dragged_symbol, dragged_symbol.index)
 		} else {
-			active_page.add_block(dragged_symbol, dragged_symbol.index)
+			add_page_type_section(dragged_symbol, dragged_symbol.index)
 		}
 		refresh_sections()
 		setTimeout(() => {
@@ -266,7 +265,7 @@
 
 	function edit_component(block_id, showIDE = false) {
 		lock_block(block_id)
-		const block = $sections.find((s) => s.id === block_id) // get updated block (necessary if actively editing on-page)
+		const block = $active_page_type.sections.find((s) => s.id === block_id) // get updated block (necessary if actively editing on-page)
 		modal.show(
 			'SECTION_EDITOR',
 			{
@@ -323,7 +322,7 @@
 </script>
 
 <!-- Loading Spinner -->
-{#if !page_mounted && $sections.length > 0}
+{#if !page_mounted && $active_page_type.sections.length > 0}
 	<div class="spinner">
 		<UI.Spinner variant="loop" />
 	</div>

@@ -6,11 +6,11 @@
 	import { page_types as actions } from '../../../../stores/actions'
 	import { id as active_pageID } from '../../../../stores/app/active_page'
 	import { id as site_id } from '../../../../stores/data/site'
-	import PageForm from './PageForm.svelte'
+	import PageForm from './PageTypeForm.svelte'
 	import modal from '../../../../stores/app/modal'
 
 	async function create_page(new_page) {
-		const { id: page_type_id } = await actions.create(new_page)
+		const page_type_id = await actions.create(new_page)
 		goto(`/${$site_id}/page-type--${page_type_id}`)
 		modal.hide()
 	}
@@ -66,17 +66,11 @@
 		display: grid;
 		gap: 0.5rem;
 		color: var(--primo-color-white);
-		/* background: #1a1a1a; */
 		border-radius: var(--primo-border-radius);
 		margin-bottom: 1rem;
 
 		li {
 			border-radius: 0.25rem;
-			/* overflow: hidden; */
 		}
-
-		/* &.root > li:not(:first-child) {
-			border-top: 1px solid #222;
-		} */
 	}
 </style>

@@ -10,6 +10,7 @@
 	export let value
 	export let disabled = false
 	export let title = null
+	export let autofocus = false
 
 	function selectAll({ target }) {
 		if (field.default === field.value) target.select()
@@ -35,6 +36,7 @@
 	{disabled}
 	{title}
 	grow={true}
+	{autofocus}
 	on:focus={selectAll}
 	on:keydown={handleSave}
 	on:input={({ detail }) => {

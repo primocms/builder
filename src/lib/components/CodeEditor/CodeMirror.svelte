@@ -17,14 +17,13 @@
 <script>
 	import { flattenDeep as _flattenDeep } from 'lodash-es'
 	import { createEventDispatcher } from 'svelte'
-	import { fade } from 'svelte/transition'
 	import { createDebouncer } from '../../utils'
 	const slowDebounce = createDebouncer(1000)
 	import { abbreviationTracker } from '../../libraries/emmet/plugin'
 
 	import { highlightedElement } from '../../stores/app/misc'
 	import { code as site_code } from '../../stores/data/site'
-	import { code as page_code } from '../../stores/app/active_page'
+	import page_type from '../../stores/app/active_page_type'
 	import { basicSetup } from 'codemirror'
 	import { EditorView, keymap } from '@codemirror/view'
 	import { standardKeymap, indentWithTab } from '@codemirror/commands'
@@ -88,7 +87,7 @@
 	const language = getLanguage(mode)
 
 	const css_completions_compartment = new Compartment()
-	let css_variables = extract_css_variables($site_code.css + $page_code.css + value)
+	let css_variables = extract_css_variables($site_code.css + $page_type.css + value)
 
 	const state = EditorState.create({
 		selection: {
@@ -192,7 +191,7 @@
 	})
 
 	// re-configure css-variables autocomplete when variables change
-	$: css_variables = extract_css_variables($site_code.css + $page_code.css + value)
+	$: css_variables = extract_css_variables($site_code.css + $page_type.css + value)
 	$: mode === 'css' &&
 		Editor &&
 		Editor.dispatch({
