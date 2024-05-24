@@ -11,12 +11,29 @@
 	export let label
 	export let options = []
 	export let value = options[0]['value']
+	export let fallback_label = null
 	export let dividers = []
 	export let placement = 'bottom-start'
+	export let variant = 'small' // or 'large'
+	export let fullwidth = false
 
 	const [popperRef, popperContent] = createPopperActions({
 		placement,
-		strategy: 'fixed'
+		strategy: 'fixed',
+		modifiers: fullwidth
+			? [
+					{ name: 'offset', options: { offset: [0, 3] } },
+					{
+						name: 'sameWidth',
+						enabled: true,
+						fn: ({ state }) => {
+							state.styles.popper.width = `${state.rects.reference.width}px`
+						},
+						phase: 'beforeWrite',
+						requires: ['computeStyles']
+					}
+			  ]
+			: [{ name: 'offset', options: { offset: [0, 3] } }]
 	})
 
 	let showing_dropdown = false
@@ -47,7 +64,7 @@
 </script>
 
 <div
-	class="Select"
+	class="Select {variant}"
 	use:clickOutside
 	on:click_outside={() => (showing_dropdown = false)}
 	role="menu"
@@ -64,23 +81,23 @@
 			use:popperRef
 			on:click={() => (showing_dropdown = !showing_dropdown)}
 		>
-			{#if selected.icon}
-				<Icon icon={selected.icon} />
+			{#if selected}
+				{#if selected.icon}
+					<div class="icon">
+						<Icon icon={selected.icon} />
+					</div>
+				{/if}
+				<p>{selected.label}</p>
+			{:else}
+				<p>{fallback_label}</p>
 			{/if}
-			<p>{selected.label}</p>
 			<span class="dropdown-icon">
 				<Icon icon="mi:select" />
 			</span>
 		</button>
 	</div>
 	{#if showing_dropdown}
-		<div
-			class="popup"
-			in:fade={{ duration: 100 }}
-			use:popperContent={{
-				modifiers: [{ name: 'offset', options: { offset: [0, 3] } }]
-			}}
-		>
+		<div class="popup" in:fade={{ duration: 100 }} use:popperContent>
 			{#if !active_submenu}
 				<div class="options">
 					{#each options as option, i}
@@ -182,11 +199,22 @@
 		flex: 1;
 		position: relative;
 		opacity: var(--Select-opacity, 1);
+
+		&.large {
+			.icon,
+			.popup,
+			p {
+				font-size: 1rem !important;
+			}
+		}
 	}
 	.select-container {
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
+	}
+	.icon {
+		font-size: 0.75rem;
 	}
 	button.primary {
 		display: flex;

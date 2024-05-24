@@ -25,31 +25,6 @@
 	export let head = ''
 	export let append = ''
 
-	function edit_symbol(symbol) {
-		modal.show(
-			'BLOCK_EDITOR',
-			{
-				symbol,
-				header: {
-					title: `Edit ${symbol.title || 'Block'}`,
-					icon: 'fas fa-check',
-					button: {
-						label: `Save Block`,
-						icon: 'fas fa-check',
-						onclick: () => {
-							modal.hide()
-						}
-					}
-				},
-				tab: 'code'
-			},
-			{
-				showSwitch: true,
-				disabledBgClose: true
-			}
-		)
-	}
-
 	let name_el
 
 	// move cursor to end of name
@@ -194,7 +169,7 @@
 						{
 							label: 'Edit Symbol',
 							icon: 'material-symbols:code',
-							on_click: () => edit_symbol(symbol)
+							on_click: () => dispatch('edit')
 						},
 						...($userRole === 'DEV'
 							? [
@@ -218,7 +193,7 @@
 						{
 							label: 'Delete',
 							icon: 'ic:outline-delete',
-							color: 'var(--primo-color-danger)',
+							is_danger: true,
 							on_click: () => dispatch('delete')
 						}
 					]}

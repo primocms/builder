@@ -91,23 +91,7 @@ export function transform_content({ fields, content }) {
 				// get matching field to use key
 				const field = fields.find((f) => f.id === entry.field)
 
-				// // TODO remove this code, handle below
-				// // if root-level entries, add to root
-				// if (!entry.parent && field) {
-				// 	if (field.type === 'repeater') {
-				// 		// TODO: add to every locale
-				// 		structured_content['en'][field.key] = []
-				// 	} else if (field.type === 'group') {
-				// 		structured_content['en'][field.key] = {}
-				// 	} else {
-				// 		structured_content['en'][field.key] = entry.value
-				// 	}
-				// 	done.add(entry.id)
-				// 	continue
-				// }
-
 				const parent_node = get_parent_node(entry.parent)
-				const parent_content = content.find((i) => i.id === entry.parent)
 
 				// initialize repeater container
 				if (field?.type === 'repeater') {
@@ -133,42 +117,15 @@ export function transform_content({ fields, content }) {
 				// set value item
 				parent_node[field.key] = entry.value
 				done.add(entry.id)
-
-				// // parent is a repeater item
-				// if (parent_content.index !== null) {
-				// 	// repeater container
-
-				// 	if (field.type === 'repeater') {
-				// 		parent_node[field.key] = []
-				// 		done.add(entry.id)
-				// 		continue
-				// 	}
-
-				// 	if (field.type === 'group') {
-				// 		parent_node[field.key] = {}
-				// 		done.add(entry.id)
-				// 		continue
-				// 	}
-
-				// 	// value content
-				// 	parent_node[field.key] = entry.value
-				// 	done.add(entry.id)
-				// 	continue
-				// }
-
-				// // parent is a group container
-				// if (_.isNil(parent_content.index)) {
-				// 	parent_node[field.key] = entry.value
-				// 	done.add(entry.id)
-				// 	continue
-				// }
 			}
 
 			count++
 		}
 		const finished = Array.from(done.values())
 		const looking = content.filter((r) => !finished.includes(r.id))
-		console.log({ looking, content, fields })
+		if (looking.length > 0) {
+			console.error('ERROR')
+		}
 	} catch (e) {
 		console.error(e)
 		structured_content = null

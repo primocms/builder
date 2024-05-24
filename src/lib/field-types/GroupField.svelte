@@ -4,6 +4,7 @@
 	import { slide } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
 	import { fieldTypes } from '../stores/app'
+	import { is_regex } from '../utils'
 
 	const dispatch = createEventDispatcher()
 
@@ -12,14 +13,40 @@
 	export let content
 	export let level = 0
 
-	$: subfields = fields.filter((f) => f.parent === field.id)
-	$: console.log({ subfields, content })
+	$: subfields = fields.filter((f) => f.parent === field.id).sort((a, b) => a.index - b.index)
 
 	let hidden = false
 
 	function getFieldComponent(subfield) {
 		const field = _find($fieldTypes, ['id', subfield.type])
 		return field ? field.component : null
+	}
+
+	function check_condition(field) {
+		if (!field.options.condition) return true // has no condition
+
+		const { field: field_id, value, comparison } = field.options.condition
+		const field_to_compare = fields.find((f) => f.id === field_id)
+		if (!field_to_compare) {
+			// field has been deleted, reset condition
+			field.options.condition = null
+			return false
+		}
+
+		const { value: comparable_value } = content.find((e) => e.field === field_id)
+		if (is_regex(value)) {
+			const regex = new RegExp(value.slice(1, -1))
+			if (comparison === '=' && regex.test(comparable_value)) {
+				return true
+			} else if (comparison === '!=' && !regex.test(comparable_value)) {
+				return true
+			}
+		} else if (comparison === '=' && value === comparable_value) {
+			return true
+		} else if (comparison === '!=' && value !== comparable_value) {
+			return true
+		}
+		return false
 	}
 </script>
 
@@ -33,29 +60,32 @@
 	{#if !hidden}
 		<div class="group-entries" transition:slide|local={{ duration: 100 }}>
 			{#each subfields as subfield}
+				{@const is_visible = check_condition(subfield)}
 				{@const { id, value } = content.find((r) => r.field === subfield.id)}
-				<div class="group-item">
-					<svelte:component
-						this={getFieldComponent(subfield)}
-						{id}
-						{value}
-						field={subfield}
-						{fields}
-						{content}
-						level={level + 1}
-						on:save
-						on:add
-						on:remove
-						on:move
-						on:input={({ detail }) => {
-							if (detail.id) {
-								dispatch('input', detail)
-							} else {
-								dispatch('input', { id, data: detail })
-							}
-						}}
-					/>
-				</div>
+				{#if is_visible}
+					<div class="group-item">
+						<svelte:component
+							this={getFieldComponent(subfield)}
+							{id}
+							{value}
+							field={subfield}
+							{fields}
+							{content}
+							level={level + 1}
+							on:save
+							on:add
+							on:remove
+							on:move
+							on:input={({ detail }) => {
+								if (detail.id) {
+									dispatch('input', detail)
+								} else {
+									dispatch('input', { id, data: detail })
+								}
+							}}
+						/>
+					</div>
+				{/if}
 			{/each}
 		</div>
 	{/if}

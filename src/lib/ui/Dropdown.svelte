@@ -73,7 +73,7 @@
 						<div class="item">
 							<button
 								class:active={label === option.label}
-								style:color={option.color}
+								class:danger={option.is_danger}
 								on:click={(e) => {
 									if (option.on_click) {
 										showing_dropdown = false
@@ -261,6 +261,7 @@
 		/* width: 100%; */
 		text-align: left;
 		white-space: nowrap;
+		transition: 0.1s;
 
 		&:first-child {
 			flex: 1;
@@ -275,6 +276,15 @@
 		&.active {
 			cursor: initial;
 			opacity: 0.5;
+		}
+
+		&.danger {
+			color: var(--primo-color-danger);
+
+			&:hover {
+				color: white;
+				background: var(--primo-color-danger);
+			}
 		}
 	}
 </style>

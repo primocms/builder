@@ -1,7 +1,7 @@
 import {
 	Deploy,
 	SectionEditor,
-	SymbolEditor,
+	BlockEditor,
 	SiteEditor,
 	SitePages,
 	Dialog,
@@ -24,7 +24,7 @@ export const modalTypes = {
 		}
 	},
 	BLOCK_EDITOR: {
-		component: SymbolEditor,
+		component: BlockEditor,
 		header: {
 			title: 'Create Symbol',
 			icon: 'fas fa-code'

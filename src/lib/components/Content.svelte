@@ -47,23 +47,27 @@
 
 	function check_condition(field) {
 		if (!field.options.condition) return true // has no condition
-		const field_to_compare = fields.find((f) => f.id === field.options.condition?.field)
+
+		const { field: field_id, value, comparison } = field.options.condition
+		const field_to_compare = fields.find((f) => f.id === field_id)
 		if (!field_to_compare) {
 			// field has been deleted, reset condition
 			field.options.condition = null
 			return false
 		}
-		const { value, comparison } = field.options.condition
+
+		// TODO: ensure correct field (considering repeaters)
+		const { value: comparable_value } = content.find((e) => e.field === field_id)
 		if (is_regex(value)) {
 			const regex = new RegExp(value.slice(1, -1))
-			if (comparison === '=' && regex.test(field_to_compare.value)) {
+			if (comparison === '=' && regex.test(comparable_value)) {
 				return true
-			} else if (comparison === '!=' && !regex.test(field_to_compare.value)) {
+			} else if (comparison === '!=' && !regex.test(comparable_value)) {
 				return true
 			}
-		} else if (comparison === '=' && value === field_to_compare.value) {
+		} else if (comparison === '=' && value === comparable_value) {
 			return true
-		} else if (comparison === '!=' && value !== field_to_compare.value) {
+		} else if (comparison === '!=' && value !== comparable_value) {
 			return true
 		}
 		return false
@@ -105,12 +109,9 @@
 		updated_content = updated_content.filter((entry) => {
 			const is_descendent = get_ancestors(entry).includes(item.id)
 			if (is_descendent) {
-				console.log(entry, is_descendent)
 				return false
 			} else return true
 		})
-
-		console.log({ content, updated_content, siblings })
 
 		dispatch_update({
 			content: updated_content,
@@ -147,8 +148,6 @@
 		})
 	}
 
-	$: console.log('content changes', { changes })
-
 	function validate_changes(new_changes = []) {
 		let validated_changes = _.cloneDeep(changes)
 
@@ -184,9 +183,7 @@
 
 					// remove insert/updates on entry descendents
 					const entry = content.find((e) => e.id === c.id)
-					console.log('HERE', { entry, content, c, change, ancestors: get_ancestors(entry) })
 					if (get_ancestors(entry).includes(change.id)) {
-						console.log('removing change', { entry, c })
 						return false
 					}
 
@@ -198,7 +195,6 @@
 	}
 
 	function dispatch_update(updated) {
-		console.log({ updated })
 		dispatch('input', {
 			content: _.cloneDeep(updated.content),
 			changes: validate_changes(updated.changes)
@@ -229,7 +225,7 @@
 						{field}
 						{fields}
 						autocomplete={matching_content_row.value === ''}
-						on:save
+						on:keydown
 						on:add={({ detail }) => add_repeater_item(detail)}
 						on:remove={({ detail }) => remove_repeater_item(detail)}
 						on:move={({ detail }) => move_repeater_item(detail)}
@@ -245,30 +241,6 @@
 								content: updated_content,
 								changes: [{ action: 'update', id: row_id, data }]
 							})
-
-							// if (existing_content_row) {
-							// 	const updated_content = content.map((row) =>
-							// 		row.id === row_id ? { ...row, ...(detail.data || detail) } : row
-							// 	)
-							// 	console.log({ row_id, data, updated_content })
-							// 	dispatch_update({
-							// 		content: updated_content,
-							// 		changes: [{ action: 'update', id: row_id, data }]
-							// 	})
-							// } else {
-							// 	const updated_content_row = { ...matching_content_row, ...data }
-							// 	const updated_content = [...content, updated_content_row]
-							// 	console.log('UPDATE - INSERT', {
-							// 		row_id,
-							// 		data,
-							// 		updated_content,
-							// 		updated_content_row
-							// 	})
-							// 	dispatch_update({
-							// 		content: updated_content,
-							// 		changes: [{ action: 'insert', id: row_id, data: updated_content_row }]
-							// 	})
-							// }
 						}}
 					/>
 				</div>

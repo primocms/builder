@@ -4,11 +4,19 @@
 	import { fade } from 'svelte/transition'
 	import Icon from '@iconify/svelte'
 	import axios from 'axios'
+	import { createPopperActions } from 'svelte-popperjs'
+	import { clickOutside } from '../utilities'
 
 	const dispatch = createEventDispatcher()
 
 	export let icon
 	export let search_query = ''
+	export let variant = 'large' // or 'small'
+
+	const [popperRef, popperContent] = createPopperActions({
+		placement: 'bottom-start',
+		strategy: 'fixed'
+	})
 
 	let searched = false
 
@@ -35,28 +43,93 @@
 				searched = true
 			})
 	}
+
+	let showing_popover = false
 </script>
 
-<div class="IconPicker">
+<div class="IconPicker {variant}">
 	<div class="container">
-		<div class="icon-preview">
-			<Icon {icon} />
-		</div>
-		<!-- {#if icon.startsWith('<svg')}
+		{#if variant === 'large'}
 			<div class="icon-preview">
-				{@html icon}
+				<Icon {icon} />
 			</div>
-		{/if} -->
-		<form on:submit|preventDefault={search}>
-			<TextInput
-				bind:value={search_query}
-				prefix_icon="tabler:search"
-				label="Search icons"
-				button={{ label: 'Search', type: 'submit', disabled: !search_query }}
-			/>
-		</form>
+			<form on:submit|preventDefault={search}>
+				<TextInput
+					bind:value={search_query}
+					prefix_icon="tabler:search"
+					label="Search icons"
+					button={{ label: 'Search', type: 'submit', disabled: !search_query }}
+				/>
+			</form>
+		{:else if variant === 'small'}
+			<button
+				class="icon-preview"
+				aria-label="select icon"
+				use:popperRef
+				on:click={() => (showing_popover = !showing_popover)}
+			>
+				<Icon {icon} />
+			</button>
+		{/if}
 	</div>
-	{#if searched}
+	{#if showing_popover}
+		<div
+			class="popup"
+			in:fade={{ duration: 100 }}
+			use:clickOutside
+			on:click_outside={() => (showing_popover = false)}
+			use:popperContent={{
+				modifiers: [{ name: 'offset', options: { offset: [0, 3] } }]
+			}}
+		>
+			<form on:submit|preventDefault={search}>
+				<TextInput
+					autofocus={true}
+					bind:value={search_query}
+					prefix_icon="tabler:search"
+					label="Search icons"
+					button={{ label: 'Search', type: 'submit', disabled: !search_query }}
+				/>
+			</form>
+			{#if searched}
+				<div class="icons" in:fade>
+					<button
+						class="close"
+						aria-label="Close"
+						on:click={() => {
+							searched = false
+							search_query = ''
+						}}
+					>
+						<Icon icon="material-symbols:close" />
+					</button>
+					{#each icons as item}
+						<button
+							class="icon"
+							class:active={item === icon}
+							on:click={() => {
+								dispatch('input', item)
+								showing_popover = false
+							}}
+							type="button"
+						>
+							<Icon icon={item} width="50px" />
+						</button>
+					{:else}
+						<span
+							style="grid-column: 1 / -1;
+					padding: 0.5rem;
+					font-size: 0.875rem;
+					border-left: 3px solid red;"
+						>
+							No icons found
+						</span>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	{/if}
+	{#if searched && variant === 'large'}
 		<div class="icons" in:fade>
 			<button
 				class="close"
@@ -92,6 +165,11 @@
 </div>
 
 <style lang="postcss">
+	.IconPicker.small {
+		.icon-preview {
+			font-size: 22px;
+		}
+	}
 	.container {
 		display: flex;
 		flex-direction: row;
@@ -107,6 +185,12 @@
 
 	form {
 		flex: 1;
+	}
+
+	.popup {
+		background: var(--color-gray-9);
+		padding: 0.5rem;
+		z-index: 1;
 	}
 
 	.icons {

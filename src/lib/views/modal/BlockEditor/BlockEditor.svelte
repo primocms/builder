@@ -22,13 +22,13 @@
 	import { processCode, getEmptyValue } from '../../../utils.js'
 	import { locale, onMobile, userRole } from '../../../stores/app/misc.js'
 	import { site_design_css } from '../../../code_generators.js'
-	import * as actions from '../../../stores/actions.js'
 	import { design as siteDesign, code as siteCode } from '../../../stores/data/site.js'
 	import { Symbol } from '../../../factories.js'
 	import { transform_content } from '../../../transform_data.js'
+	import hotkey_events from '../../../stores/app/hotkey_events.js'
 
 	/** @type {import('$lib').Section} */
-	export let symbol = Symbol()
+	export let block = Symbol()
 	export let tab = 'content'
 
 	export let header = {
@@ -43,15 +43,17 @@
 		}
 	}
 
-	let local_code = _.cloneDeep(symbol.code)
-	let local_fields = _.cloneDeep(symbol.fields)
-	let local_content = _.cloneDeep(symbol.content)
+	let fields_changes = []
+	let content_changes = []
+
+	let local_code = _.cloneDeep(block.code)
+	let local_fields = _.cloneDeep(block.fields)
+	let local_content = _.cloneDeep(block.content)
 
 	$: console.log({
+		component_data,
 		local_content,
 		local_fields,
-		content_changes,
-		fields_changes,
 		content_changes,
 		fields_changes
 	})
@@ -67,7 +69,6 @@
 	let raw_js = local_code.js
 
 	$: component_data = transform_content({ fields: local_fields, content: local_content })[$locale]
-	$: console.log({ component_data, local_fields, local_content })
 
 	// changing codes triggers compilation
 	$: $autoRefresh &&
@@ -80,7 +81,7 @@
 	let componentApp // holds compiled component
 	let compilationError // holds compilation error
 
-	$: compilationError && component_data && refresh_preview() // recompile when there's a compilation error or data changes
+	// $: compilationError && component_data && refresh_preview() // recompile when there's a compilation error or data changes
 
 	let disable_save = false
 	async function compile_component_code({ html, css, js }) {
@@ -132,8 +133,34 @@
 		previewUpToDate = true
 	}
 
-	let fields_changes = []
-	let content_changes = []
+	hotkey_events.on('tab-switch', (n) => {
+		tab = {
+			1: 'code',
+			2: 'fields',
+			3: 'content'
+		}[n]
+	})
+
+	// detect hotkeys from within inputs
+	function handle_hotkey(e) {
+		const { metaKey, key } = e
+		if (metaKey && key === 's') {
+			e.preventDefault()
+			save_component()
+		}
+		if (metaKey && key === '1') {
+			e.preventDefault()
+			tab = 'code'
+		}
+		if (metaKey && key === '2') {
+			e.preventDefault()
+			tab = 'fields'
+		}
+		if (metaKey && key === '3') {
+			e.preventDefault()
+			tab = 'content'
+		}
+	}
 
 	async function save_component() {
 		if (!previewUpToDate) {
@@ -143,7 +170,6 @@
 		if (!disable_save) {
 			header.button.onclick(
 				{
-					...symbol,
 					code: local_code,
 					content: local_content,
 					fields: local_fields
@@ -162,9 +188,9 @@
 		{...header}
 		warn={() => {
 			const component_unchanged =
-				_.isEqual(symbol.code, local_code) &&
-				_.isEqual(symbol.content, local_content) &&
-				_.isEqual(symbol.fields, local_fields)
+				_.isEqual(block.code, local_code) &&
+				_.isEqual(block.content, local_content) &&
+				_.isEqual(block.fields, local_fields)
 			if (!component_unchanged) {
 				const proceed = window.confirm('Undrafted changes will be lost. Continue?')
 				return proceed
@@ -205,13 +231,13 @@
 		{...header}
 		warn={() => {
 			const component_changed = true
-			// !isEqual(local_content, get_local_content()) || !isEqual(local_code, symbol.code)
+			// !isEqual(local_content, get_local_content()) || !isEqual(local_code, block.code)
 			if (component_changed) {
 				const proceed = window.confirm('Undrafted changes will be lost. Continue?')
 				return proceed
 			} else return true
 		}}
-		title="Edit {symbol.name || 'Block'}"
+		title="Edit {block.name || 'Block'}"
 		button={{
 			...header.button,
 			onclick: save_component,
@@ -229,12 +255,12 @@
 			content={local_content}
 			{content_changes}
 			on:input={({ detail }) => {
-				console.log({ detail })
 				local_fields = detail.fields
 				fields_changes = detail.fields_changes
 				local_content = detail.content
 				content_changes = detail.content_changes
 			}}
+			on:keydown={handle_hotkey}
 		/>
 	{:else}
 		<HSplitPane
@@ -256,6 +282,7 @@
 							local_content = detail.content
 							content_changes = detail.changes
 						}}
+						on:keydown={handle_hotkey}
 					/>
 				{:else if tab === 'code'}
 					<FullCodeEditor

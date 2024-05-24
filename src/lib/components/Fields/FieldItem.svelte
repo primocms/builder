@@ -17,23 +17,14 @@
 	export let fields
 	export let level = 0
 	export let top_level = true
-	export let autofocus = false
 
-	function update_field_label({ detail: label }) {
-		dispatch_update({
-			type: field_type_changed ? field.type : update_field_type(label)
-			// key: key_edited ? field.key : validateFieldKey(label)
-		})
+	function dispatch_update(data) {
+		dispatch('input', { id: field.id, data })
 	}
 
 	function validateFieldKey(key) {
 		// replace dash and space with underscore
 		return key.replace(/-/g, '_').replace(/ /g, '_').toLowerCase()
-	}
-
-	function dispatch_update(updated_props) {
-		const updated_field = cloneDeep({ ...field, ...updated_props })
-		dispatch('input', updated_field)
 	}
 
 	// Auto-fill key when setting label
@@ -70,11 +61,27 @@
 			return 'select'
 		} else if (label.includes('group')) {
 			return 'group'
+		} else if (label.includes('toggle')) {
+			return 'toggle'
 		} else return 'text'
-		// dispatch_update({ type: selected_field_type_id })
+	}
+
+	function add_condition() {
+		dispatch_update({
+			options: {
+				...field.options,
+				condition: {
+					field: null,
+					comparison: '=',
+					value: ''
+				}
+			}
+		})
 	}
 
 	$: child_fields = fields.filter((f) => f.parent === field.id)
+
+	let is_new_field = field.key === ''
 </script>
 
 <div class="top-container" class:top_level class:collapsed>
@@ -122,130 +129,98 @@
 					label="Label ({field.id})"
 					bind:value={field.label}
 					placeholder="Heading"
-					{autofocus}
+					autofocus={is_new_field}
+					on:keydown
 					on:input={({ detail }) => {
-						console.log({ detail })
+						// only auto-set key and type on new fields
 						dispatch_update({
-							type: field_type_changed ? field.type : update_field_type(detail),
-							key: key_edited ? field.key : validateFieldKey(detail)
+							label: detail,
+							key: key_edited || !is_new_field ? field.key : validateFieldKey(detail),
+							type: field_type_changed || !is_new_field ? field.type : update_field_type(detail)
 						})
 					}}
+					on:blur={() => (is_new_field = false)}
 				/>
 			</div>
 			<!-- svelte-ignore a11y-label-has-associated-control -->
-			<div class="field column-container">
+			<div class="column-container">
 				<UI.TextInput
 					label="Key"
 					placeholder="heading"
 					value={field.key}
+					on:keydown
 					on:input={({ detail: value }) => {
 						key_edited = true
-						// field.key = validateFieldKey(value)
 						dispatch_update({
 							key: validateFieldKey(value)
 						})
 					}}
 				/>
+				<div class="field-options">
+					{#if $showKeyHint}
+						<button on:click={add_condition}>
+							<Icon icon="mdi:show" />
+						</button>
+						<button on:click={() => dispatch('duplicate', field)}>
+							<Icon icon="bxs:duplicate" />
+						</button>
+						<button class="delete" on:click={() => dispatch('delete', field)}>
+							<Icon icon="ic:outline-delete" />
+						</button>
+					{:else}
+						<UI.Dropdown
+							variant="large-button"
+							options={[
+								{
+									label: 'Move up',
+									icon: 'material-symbols:arrow-circle-up-outline',
+									on_click: () => dispatch('move', { direction: 'up', field })
+								},
+								{
+									label: 'Move down',
+									icon: 'material-symbols:arrow-circle-down-outline',
+									on_click: () => dispatch('move', { direction: 'down', field })
+								},
+								...(has_condition
+									? []
+									: [
+											{
+												label: 'Add Condition',
+												icon: 'mdi:show',
+												on_click: () => {
+													// TODO: set default field
+													add_condition()
+												}
+											}
+									  ]),
+								{
+									label: 'Sync Field Value', // or 'Mirror Content Value'
+									icon: 'fluent-mdl2:dependency-add',
+									on_click: () => {
+										console.log('sync')
+										// TODO: add 'source' to field row
+										dispatch_update()
+									}
+								},
+								{
+									label: 'Duplicate',
+									icon: 'bxs:duplicate',
+									on_click: () => dispatch('duplicate', field)
+								},
+								{
+									label: 'Delete',
+									icon: 'ic:outline-delete',
+									is_danger: true,
+									on_click: () => dispatch('delete', field)
+								}
+							]}
+							placement="bottom-end"
+						/>
+					{/if}
+				</div>
 			</div>
 		{/if}
-		<div class="field-options">
-			{#if $showKeyHint}
-				<button class="delete" on:click={() => dispatch('delete', field)}>
-					<Icon icon="ic:outline-delete" />
-				</button>
-			{:else}
-				<UI.Dropdown
-					variant="large-button"
-					options={[
-						{
-							label: 'Move up',
-							icon: 'material-symbols:arrow-circle-up-outline',
-							on_click: () => dispatch('move', { direction: 'up', field })
-						},
-						{
-							label: 'Move down',
-							icon: 'material-symbols:arrow-circle-down-outline',
-							on_click: () => dispatch('move', { direction: 'down', field })
-						},
-						...(has_condition || !top_level
-							? []
-							: [
-									{
-										label: 'Add Condition',
-										icon: 'mdi:show',
-										on_click: () => {
-											// field.options.condition = {
-											// 	field: null,
-											// 	comparison: '=',
-											// 	value: ''
-											// }
-											dispatch_update({
-												options: {
-													...field.options,
-													condition: {
-														field: null,
-														comparison: '=',
-														value: ''
-													}
-												}
-											})
-										}
-									}
-							  ]),
-						{
-							label: 'Sync Field Value', // or 'Mirror Content Value'
-							icon: 'fluent-mdl2:dependency-add',
-							on_click: () => {
-								console.log('sync')
-								// add 'source' to field row
-								dispatch_update()
-							}
-						},
-						{
-							label: 'Duplicate',
-							icon: 'bxs:duplicate',
-							on_click: () => dispatch('duplicate', field)
-						},
-						{
-							label: 'Delete',
-							icon: 'ic:outline-delete',
-							color: 'var(--primo-color-danger)',
-							on_click: () => dispatch('delete', field)
-						}
-					]}
-					placement="bottom-end"
-				/>
-			{/if}
-		</div>
 	</div>
-	{#if has_subfields}
-		<div class="children-container" style:padding-left="{level + 1}rem">
-			{#each child_fields.sort((a, b) => a.index - b.index) as subfield (subfield.id)}
-				<svelte:self
-					field={cloneDeep(subfield)}
-					{fields}
-					top_level={false}
-					level={level + 1}
-					autofocus={subfield.label === ''}
-					on:duplicate
-					on:delete
-					on:move
-					on:createsubfield
-					on:input
-				/>
-			{/each}
-			{#if field.type === 'repeater' || field.type === 'group'}
-				<button
-					class="subfield-button"
-					data-level={level}
-					on:click={() => dispatch('createsubfield', field)}
-				>
-					<Icon icon="fa-solid:plus" />
-					<span>Create {field.label} Subfield</span>
-				</button>
-			{/if}
-		</div>
-	{/if}
 	<div class="footer" class:hidden={field.type !== 'select' && !field.options.condition}>
 		{#if field.type === 'select'}
 			<SelectField
@@ -258,15 +233,20 @@
 			/>
 		{/if}
 		{#if field.options.condition}
+			{@const comparable_fields = fields
+				.filter((f) => {
+					const is_valid_type = ['text', 'number', 'switch', 'url', 'select'].includes(f.type)
+					const is_previous_sibling = f.parent === field.parent && f.index < field.index
+					return is_valid_type && is_previous_sibling
+				})
+				.sort((a, b) => a.index - b.index)}
 			<Condition
 				{field}
 				field_to_compare={fields.find((f) => f.id === field.options.condition.field)}
-				comparable_fields={fields?.filter(
-					(f) => ['text', 'number', 'switch', 'url', 'select'].includes(f.type) && f.id !== field.id
-				)}
+				{comparable_fields}
 				{collapsed}
-				on:input={({ detail }) => {
-					console.log({ detail })
+				on:input={({ detail: condition }) => {
+					dispatch_update({ options: { ...field.options, condition } })
 				}}
 			/>
 		{/if}
@@ -283,6 +263,35 @@
 			/>
 		{/if}
 	</div>
+
+	{#if has_subfields}
+		<div class="children-container" style:padding-left="{level + 1}rem">
+			{#each child_fields.sort((a, b) => a.index - b.index) as subfield (subfield.id)}
+				<svelte:self
+					field={cloneDeep(subfield)}
+					{fields}
+					top_level={false}
+					level={level + 1}
+					on:duplicate
+					on:delete
+					on:move
+					on:createsubfield
+					on:keydown
+					on:input
+				/>
+			{/each}
+			{#if field.type === 'repeater' || field.type === 'group'}
+				<button
+					class="subfield-button"
+					data-level={level}
+					on:click={() => dispatch('createsubfield', field)}
+				>
+					<Icon icon="fa-solid:plus" />
+					<span>Create {field.label} Subfield</span>
+				</button>
+			{/if}
+		</div>
+	{/if}
 </div>
 
 <style lang="postcss">
@@ -291,7 +300,7 @@
 	}
 	.top-container {
 		display: grid;
-		gap: 1.5rem;
+		gap: 1rem;
 		position: relative;
 
 		&.top_level {
@@ -309,17 +318,30 @@
 			}
 		}
 	}
+	.footer {
+		margin-left: 2rem;
+	}
 	.field-options {
+		display: flex;
+		gap: 0.5rem;
 		margin-top: 1rem; /* line up with inputs */
 
-		button.delete {
+		button {
 			font-size: 15px;
 			padding: 0.5rem;
 			border-radius: 0.25rem;
-			color: var(--primo-color-danger);
+			transition: 0.1s;
 
 			&:hover {
 				background: var(--color-gray-8);
+			}
+		}
+
+		button.delete {
+			color: var(--primo-color-danger);
+			&:hover {
+				color: white;
+				background: var(--primo-color-danger);
 			}
 		}
 	}
@@ -352,20 +374,6 @@
 			border-color: var(--primo-color-brand);
 			outline: 0;
 		}
-
-		/* &:hover,
-		&:focus-visible {
-			border-color: var(--primo-color-brand);
-			outline: 0;
-		} */
-
-		/* &:hover {
-			background: #333333;
-		}
-		&:focus {
-			border-color: var(--primo-color-brand);
-			outline: 0;
-		} */
 	}
 
 	.children-container {
@@ -377,13 +385,14 @@
 
 	.column-container {
 		display: flex;
-		flex-direction: column;
+		/* flex-direction: column; */
 		flex: 1;
+		gap: 0.5rem;
 	}
 
 	.field-container {
 		display: grid;
-		grid-template-columns: 1fr 3fr 3fr auto;
+		grid-template-columns: minmax(150px, 1fr) 3fr 3fr;
 		gap: 0.5rem;
 		place-items: start normal;
 

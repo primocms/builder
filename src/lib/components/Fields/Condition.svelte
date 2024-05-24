@@ -4,87 +4,81 @@
 	const dispatch = createEventDispatcher()
 
 	import UI from '../../ui/index.js'
+	import fieldTypes from '../../stores/app/fieldTypes.js'
 
 	export let field
 	export let field_to_compare
 	export let comparable_fields
 	export let collapsed
 
-	$: condition_value = field.options.condition?.value
+	$: condition = field.options.condition
 
 	const comparisons = [
 		{ icon: 'ph:equals-bold', label: 'Equals', value: '=' },
 		{ icon: 'ph:not-equals-bold', label: `Doesn't equal`, value: '!=' }
 	]
+
+	function dispatch_update(props) {
+		dispatch('input', { ...condition, ...props })
+	}
+
+	function delete_condition() {
+		dispatch('input', null)
+	}
 </script>
 
 <div class="Condition" class:collapsed>
-	<p style="margin-bottom: 0.25rem; font-size: var(--font-size-1); color: #9d9d9d;">Condition</p>
+	<span class="primo--field-label">Show if</span>
 	<div class="container">
 		<!-- Sibling field to compare to -->
-		<UI.Dropdown
+		<UI.Select
+			fallback_label="Field"
 			on:input={({ detail: field_id }) => {
-				field.options.condition.field = field_id
-				dispatch('input')
+				let default_value = ''
+				const selected_field = comparable_fields.find((f) => f.id === field_id)
+				if (selected_field.type === 'select') {
+					default_value = selected_field.options.options[0]?.value
+				} else {
+					default_value = selected_field.value
+				}
+				dispatch_update({ field: field_id, value: default_value })
 			}}
-			icon={comparable_fields.find((f) => f.id === field.options.condition?.field)?.icon}
-			label={comparable_fields.find((f) => f.id === field.options.condition?.field)?.label ||
-				'Field'}
+			value={condition.field}
 			options={comparable_fields.map((f) => ({
+				icon: $fieldTypes.find((t) => t.id === f.type).icon,
 				label: f.label,
 				value: f.id,
 				disabled: f.options.condition
 			}))}
 		/>
 		<!-- Comparison -->
-		<UI.Dropdown
-			on:input={({ detail: comparison }) => {
-				field.options.condition.comparison = comparison
-				dispatch('input')
-			}}
-			label={comparisons.find((c) => c.value === field.options.condition?.comparison)?.label}
-			icon={comparisons.find((c) => c.value === field.options.condition?.comparison)?.icon}
+		<UI.Select
+			on:input={({ detail: comparison }) => dispatch_update({ comparison })}
+			value={condition.comparison}
 			options={comparisons}
 		/>
 		<!-- Value -->
 		{#if field_to_compare?.type === 'select'}
-			<UI.Dropdown
-				label={condition_value || field_to_compare.options?.options[0]?.id}
-				on:input={({ detail: value }) => {
-					field.options.condition.value = value
-					dispatch('input')
-				}}
-				options={field_to_compare.options?.options?.map((option) => ({
-					value: option.id,
-					label: option.label
-				}))}
+			<UI.Select
+				fullwidth={true}
+				value={condition.value}
+				on:input={({ detail: value }) => dispatch_update({ value })}
+				options={field_to_compare.options?.options || []}
 			/>
 		{:else if field_to_compare?.type === 'switch'}
 			<UI.Switch
-				value={field.options.condition?.value}
-				on:input={() => {
-					field.options.condition.value = !field.options.condition?.value
-					dispatch('input')
-				}}
+				value={condition.value}
+				on:input={() => dispatch_update({ value: !condition.value })}
 			/>
 		{:else}
 			<UI.TextInput
 				placeholder="Value"
-				value={condition_value || ''}
-				on:input={({ detail: value }) => {
-					field.options.condition.value = value
-					dispatch('input')
-				}}
+				value={condition.value || ''}
+				on:input={({ detail: value }) => dispatch_update({ value })}
 			/>
 		{/if}
 		<!-- Delete -->
-		<button
-			class="delete"
-			on:click={() => {
-				field.options.condition = null
-				dispatch('input')
-			}}
-		>
+		<button class="delete" on:click={delete_condition}>
 			<Icon icon="ion:trash" />
 		</button>
 	</div>
@@ -99,19 +93,21 @@
 		display: grid;
 		grid-template-columns: auto auto 1fr auto;
 		gap: 0.5rem;
-		place-items: center;
+		/* place-items: center; */
 	}
 	.delete {
 		height: 100%;
 		padding-inline: 10px;
-		border: 1px solid var(--color-gray-7);
+		/* border: 1px solid var(--color-gray-7); */
 		border-radius: 0.25rem;
 		font-size: 0.75rem;
+		color: var(--primo-color-danger);
 
 		&:hover {
-			border: 1px solid #c62828;
+			/* border: 1px solid #c62828; */
 			transition: 0.1s;
-			color: #c62828;
+			background: var(--primo-color-danger);
+			color: white;
 		}
 	}
 </style>

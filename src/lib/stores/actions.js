@@ -42,7 +42,7 @@ export function redo_change() {
 }
 
 export const symbols = {
-	create: async (symbol, changes, index = 0) => {
+	create: async (symbol, changes = { fields: [], content: [] }, index = 0) => {
 		await update_timeline({
 			doing: async () => {
 				console.log({ symbol, changes })
@@ -51,13 +51,10 @@ export const symbols = {
 				// insert symbol field rows
 				// insert symbol content rows
 
-				// stores.symbols.update((store) => [...store.slice(0, index), symbol, ...store.slice(index)])
-
 				const symbol_db_id = await dataChanged({
 					table: 'symbols',
 					action: 'insert',
 					data: {
-						name: symbol.name,
 						code: symbol.code,
 						index,
 						site: get(site).id
@@ -66,111 +63,219 @@ export const symbols = {
 
 				stores.symbols.update((store) => [
 					...store.slice(0, index),
-					{ ...symbol, id: symbol_db_id },
+					{ ...symbol, name: '', id: symbol_db_id },
 					...store.slice(index)
 				])
 
-				const fields_db_ids = {}
-				for (const { action, id, data } of changes.fields) {
-					console.log('update fields', {
-						fields_db_ids: cloneDeep(fields_db_ids),
-						action,
-						id,
-						data
+				const field_db_ids = await dataChanged({
+					table: 'fields',
+					action: 'insert',
+					data: changes.fields.map(({ data }) => ({
+						key: data.key,
+						label: data.label,
+						type: data.type,
+						index: data.index,
+						options: data.options,
+						symbol: symbol_db_id
+					}))
+				}).then((rows) => {
+					const obj = {}
+					rows.forEach((row, i) => {
+						const field = changes.fields[i]
+						obj[field.id] = row.id
 					})
-					const db_id = await dataChanged({
-						table: 'fields',
-						action,
-						id: fields_db_ids[id],
-						data: {
-							...data,
-							parent: fields_db_ids[data.parent] || null,
-							symbol: symbol_db_id
-						}
-					})
-					if (db_id) {
-						fields_db_ids[id] = db_id
-					}
-				}
+					return obj
+				})
 
-				const content_db_ids = {}
-				for (const { action, id, data } of changes.content) {
-					console.log('update content', {
-						fields_db_ids,
-						content_db_ids: cloneDeep(content_db_ids),
-						action,
-						id,
-						data
-					})
+				// update parent and condition w/ db ids
+				await Promise.all(
+					changes.fields
+						.filter((c) => c.data.parent || c.data.options.condition?.field)
+						.map(({ id, data }) => {
+							const updated_data = {}
+							if (data.parent) {
+								updated_data.parent = field_db_ids[data.parent]
+							}
+							if (data.options.condition?.field) {
+								updated_data.options = data.options
+								_.set(
+									updated_data,
+									'options.condition.field',
+									field_db_ids[data.options.condition.field]
+								)
+								// updated_data.options.condition.field = field_db_ids[data.options.condition.field]
+								console.log('UPDATED CONDITION', updated_data)
+							}
 
-					const db_id = await dataChanged({
-						table: 'content',
-						action,
-						id,
-						data: {
-							...data,
-							field: fields_db_ids[data.field] || null,
-							symbol: symbol_db_id,
-							parent: content_db_ids[data.parent] || null
-						}
+							return dataChanged({
+								table: 'fields',
+								action: 'update',
+								id: field_db_ids[id],
+								data: updated_data
+							})
+						})
+				)
+
+				const content_db_ids = await dataChanged({
+					table: 'content',
+					action: 'insert',
+					data: changes.content.map(({ data }) => ({
+						value: data.value,
+						index: data.index,
+						metadata: data.metadata,
+						locale: data.locale,
+						symbol: symbol_db_id
+					}))
+				}).then((rows) => {
+					const obj = {}
+					rows.forEach((row, i) => {
+						const entry = changes.content[i]
+						obj[entry.id] = row.id
 					})
-					if (db_id) {
-						content_db_ids[data.id] = db_id
-					}
-				}
+					return obj
+				})
+				console.log({ content_db_ids })
+
+				// update parent and field w/ db ids
+				await Promise.all(
+					changes.content.map(({ id, data }) => {
+						const updated_data = {}
+						if (data.parent) {
+							updated_data.parent = content_db_ids[data.parent]
+						}
+						if (data.field) {
+							updated_data.field = field_db_ids[data.field]
+						}
+						return dataChanged({
+							table: 'content',
+							action: 'update',
+							id: content_db_ids[id],
+							data: updated_data
+						})
+					})
+				)
 
 				await symbols.rearrange(get(stores.symbols))
 			},
 			undoing: async () => {
-				stores.symbols.update((store) => store.filter((s) => s.id !== symbol.id))
-				await dataChanged({
-					table: 'symbols',
-					action: 'delete',
-					id: symbol.id
-				})
-				await symbols.rearrange(get(stores.symbols))
+				// TODO
+				// stores.symbols.update((store) => store.filter((s) => s.id !== symbol.id))
+				// await dataChanged({
+				// 	table: 'symbols',
+				// 	action: 'delete',
+				// 	id: symbol.id
+				// })
+				// await symbols.rearrange(get(stores.symbols))
 			}
 		})
 	},
-	update: async (updated_symbol_id, updated_symbol_props) => {
+	update: async (symbol_id, updated_data, changes = { fields: [], content: [] }) => {
 		const original_symbols = _.cloneDeep(get(stores.symbols))
-		const original_symbol = _.cloneDeep(
-			original_symbols.find((symbol) => symbol.id === updated_symbol_id)
-		)
+		const original_symbol = original_symbols.find((symbol) => symbol.id === symbol_id)
+		const updated_symbol = _.cloneDeep({ ...original_symbol, ...updated_data })
+
 		const original_sections = _.cloneDeep(get(stores.sections))
 
 		// TODO: get updated content rows
 		// separate fields into rows (no parent)
 
-		console.log({ updated_symbol_props })
+		console.log({ original_symbol, symbol_id, updated_data, changes })
 
 		await update_timeline({
 			doing: async () => {
 				stores.symbols.update((store) =>
-					store.map((symbol) =>
-						symbol.id === updated_symbol_id ? { ...symbol, ...updated_symbol_props } : symbol
-					)
+					store.map((symbol) => (symbol.id === symbol_id ? updated_symbol : symbol))
 				)
+
+				// DB - delete content & fields
+				delete updated_data.content
+				delete updated_data.fields
 				dataChanged({
 					table: 'symbols',
 					action: 'update',
-					data: updated_symbol_props,
-					id: updated_symbol_id
+					data: updated_data,
+					id: symbol_id
 				})
+
+				const fields_db_ids = {}
+				for (const { action, id, data = {} } of changes.fields) {
+					// since we're only passing updated data now, parent will be empty for updates
+
+					if (action === 'update') {
+						await dataChanged({ table: 'fields', action, id, data })
+					}
+
+					if (action === 'delete') {
+						await dataChanged({ table: 'fields', action, id })
+					}
+
+					if (action === 'insert') {
+						// TODO: insert first, then update w/ parent & options
+						// to prevent race conditions where a dependent field inserts before the field it depends on
+						// and fix conditions field id
+						const parent_id = fields_db_ids[data.parent] || data.parent || null
+						const db_id = await dataChanged({
+							table: 'fields',
+							action,
+							data: {
+								label: data.label,
+								key: data.key,
+								index: data.index,
+								type: data.type,
+								options: data.options,
+								parent: parent_id,
+								symbol: symbol_id
+							}
+						})
+						fields_db_ids[id] = db_id
+					}
+				}
+
+				const content_db_ids = {}
+				for (const { action, id, data = {} } of changes.content) {
+					if (action === 'update') {
+						await dataChanged({ table: 'content', action, id, data })
+					}
+
+					if (action === 'delete') {
+						await dataChanged({ table: 'content', action, id })
+					}
+
+					if (action === 'insert') {
+						// breaks if parent already exists (because not in fields_db_ids) ?
+						const field_id = fields_db_ids[data.field] || data.field || null
+						const parent_id = content_db_ids[data.parent] || data.parent || null
+
+						const db_id = await dataChanged({
+							table: 'content',
+							action,
+							data: {
+								value: data.value,
+								index: data.index,
+								metadata: data.metadata,
+								field: field_id,
+								symbol: symbol_id,
+								parent: parent_id
+							}
+						})
+						content_db_ids[id] = db_id
+					}
+				}
 			},
 			undoing: async () => {
-				stores.symbols.set(original_symbols)
-				stores.sections.set(original_sections)
-				await dataChanged({
-					table: 'symbols',
-					action: 'update',
-					data: original_symbol,
-					id: original_symbol.id
-				})
+				// TODO
+				// stores.symbols.set(original_symbols)
+				// stores.sections.set(original_sections)
+				// await dataChanged({
+				// 	table: 'symbols',
+				// 	action: 'update',
+				// 	data: original_symbol,
+				// 	id: original_symbol.id
+				// })
 			}
 		})
 	},
-	delete: async (symbol_to_delete) => {
+	delete: async (block_id) => {
 		const original_symbols = _.cloneDeep(get(stores.symbols))
 		const original_sections = _.cloneDeep(get(stores.sections))
 
@@ -178,35 +283,34 @@ export const symbols = {
 
 		await update_timeline({
 			doing: async () => {
-				stores.sections.update((store) =>
-					store.filter((section) => section.symbol !== symbol_to_delete.id)
-				)
-				stores.symbols.update((symbols) => symbols.filter((s) => s.id !== symbol_to_delete.id))
+				stores.sections.update((store) => store.filter((section) => section.symbol !== block_id))
+				stores.symbols.update((symbols) => symbols.filter((s) => s.id !== block_id))
 
 				deleted_sections = await dataChanged({
 					table: 'sections',
 					action: 'delete',
-					match: { symbol: symbol_to_delete.id }
+					match: { symbol: block_id }
 				})
 				await dataChanged({
 					table: 'symbols',
 					action: 'delete',
-					id: symbol_to_delete.id
+					id: block_id
 				})
 			},
 			undoing: async () => {
-				stores.symbols.set(original_symbols)
-				stores.sections.set(original_sections)
-				await dataChanged({
-					table: 'symbols',
-					action: 'insert',
-					data: symbol_to_delete
-				})
-				await dataChanged({
-					table: 'sections',
-					action: 'insert',
-					data: deleted_sections
-				})
+				// TODO
+				// stores.symbols.set(original_symbols)
+				// stores.sections.set(original_sections)
+				// await dataChanged({
+				// 	table: 'symbols',
+				// 	action: 'insert',
+				// 	data: symbol_to_delete
+				// })
+				// await dataChanged({
+				// 	table: 'sections',
+				// 	action: 'insert',
+				// 	data: deleted_sections
+				// })
 			}
 		})
 	},
@@ -230,13 +334,14 @@ export const symbols = {
 				)
 			},
 			undoing: async () => {
-				stores.sections.set(original_sections)
-				await dataChanged({ table: 'sections', action: 'delete', id: new_section.id })
-				await dataChanged({
-					table: 'sections',
-					action: 'upsert',
-					data: original_sections.map((s) => ({ ...s, symbol: s.symbol }))
-				})
+				// TODO
+				// stores.sections.set(original_sections)
+				// await dataChanged({ table: 'sections', action: 'delete', id: new_section.id })
+				// await dataChanged({
+				// 	table: 'sections',
+				// 	action: 'upsert',
+				// 	data: original_sections.map((s) => ({ ...s, symbol: s.symbol }))
+				// })
 			}
 		})
 	}

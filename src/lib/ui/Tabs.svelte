@@ -11,7 +11,7 @@
 	export let variant = 'primary'
 	export let disable_hotkeys = false
 
-	hotkey_events.on('tab-switch', (tab) => (active_tab_id = tabs[tab - 1]?.id))
+	// hotkey_events.on('tab-switch', (tab) => (active_tab_id = tabs[tab - 1]?.id))
 
 	$: dispatch('switch', active_tab_id)
 </script>

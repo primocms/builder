@@ -31,6 +31,8 @@
 				consoleLog = null
 			} else if (event === 'SET_CONSOLE_LOGS') {
 				consoleLog = data.payload.logs
+			} else if (event === 'SET_ERROR') {
+				error = data.payload.error
 			} else if (event === 'SET_ELEMENT_PATH' && payload.loc) {
 				$highlightedElement = payload.loc
 			}
@@ -176,13 +178,13 @@
 
 <div class="code-preview">
 	{#if error}
-		<pre transition:slide={{ duration: 100 }} class="error-container">
+		<pre transition:slide|local={{ duration: 100 }} class="error-container">
       {@html error}
     </pre>
 	{/if}
 
 	{#if consoleLog}
-		<div class="logs" transition:slide>
+		<div class="logs" transition:slide|local>
 			<div class="log">
 				{#if typeof consoleLog === 'object'}
 					<JSONTree value={consoleLog} />
@@ -291,7 +293,7 @@
 
 		.error-container {
 			color: var(--primo-color-white);
-			background: red;
+			background: var(--primo-color-danger);
 			padding: 5px;
 		}
 

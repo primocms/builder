@@ -27,9 +27,7 @@
 	// export let page_type
 	let active_tab = 'BLOCKS'
 
-	$: console.log({ $page_type })
-
-	async function create_symbol() {
+	async function create_block() {
 		// symbol_actions.create(symbol)
 		// refresh_symbols()
 		modal.show(
@@ -41,10 +39,35 @@
 					button: {
 						label: `Save Block`,
 						icon: 'fas fa-check',
-						onclick: (new_symbol, changes) => {
-							console.log({ new_symbol, changes })
-							symbol_actions.create(new_symbol, changes)
+						onclick: (new_block, changes) => {
+							symbol_actions.create(new_block, changes)
 							modal.hide()
+						}
+					}
+				},
+				tab: 'code'
+			},
+			{
+				showSwitch: true,
+				disabledBgClose: true
+			}
+		)
+	}
+
+	function edit_block(block) {
+		modal.show(
+			'BLOCK_EDITOR',
+			{
+				block,
+				header: {
+					title: `Edit ${block.title || 'Block'}`,
+					icon: 'fas fa-check',
+					button: {
+						label: `Save Block`,
+						icon: 'fas fa-check',
+						onclick: (updated_data, changes) => {
+							modal.hide()
+							symbol_actions.update(block.id, updated_data, changes)
 						}
 					}
 				},
@@ -77,19 +100,18 @@
 		)
 	}
 
-	async function rename_symbol(id, name) {
+	async function rename_block(id, name) {
 		symbol_actions.update(id, { name })
 		refresh_symbols()
 	}
 
-	async function delete_symbol(symbol_id) {
-		const symbol = $symbols.find((s) => s.id === symbol_id)
-		symbol_actions.delete(symbol)
+	async function delete_block(block_id) {
+		symbol_actions.delete(block_id)
 		refresh_symbols()
 	}
 
-	async function duplicate_symbol(symbol_id, index) {
-		const symbol = $symbols.find((s) => s.id === symbol_id)
+	async function duplicate_block(block_id, index) {
+		const symbol = $symbols.find((s) => s.id === block_id)
 		const new_symbol = _.cloneDeep(symbol)
 		new_symbol.id = uuidv4()
 		delete new_symbol.created_at
@@ -104,17 +126,17 @@
 		refresh_symbols()
 	}
 
-	async function upload_symbol({ target }) {
+	async function upload_block({ target }) {
 		var reader = new window.FileReader()
 		reader.onload = async function ({ target }) {
 			if (typeof target.result !== 'string') return
 			try {
 				const uploaded = JSON.parse(target.result)
 				const validated = validate_symbol(uploaded)
-				symbol_actions.create({
-					...validated,
-					id: uuidv4(),
-					site: $site.id
+				console.log({ validated })
+				await symbol_actions.create(validated, {
+					content: validated.content.map((e) => ({ action: 'insert', data: e, i: e.id })),
+					fields: validated.fields.map((f) => ({ action: 'insert', data: f, i: f.id }))
 				})
 				refresh_symbols()
 			} catch (error) {
@@ -203,13 +225,13 @@
 						<span>Add</span>
 					</button>
 					{#if $userRole === 'DEV'}
-						<button class="primo-button" on:click={create_symbol}>
+						<button class="primo-button" on:click={create_block}>
 							<Icon icon="mdi:code" />
 							<span>Create</span>
 						</button>
 					{/if}
 					<label class="primo-button">
-						<input on:change={upload_symbol} type="file" accept=".json" />
+						<input on:change={upload_block} type="file" accept=".json" />
 						<Icon icon="mdi:upload" />
 						<span>Upload</span>
 					</label>
@@ -246,10 +268,11 @@
 									})}
 								on:mousedown={() => (dragging = symbol._drag_id)}
 								on:mouseup={() => (dragging = null)}
-								on:rename={({ detail: name }) => rename_symbol(symbol.id, name)}
+								on:edit={() => edit_block(symbol)}
+								on:rename={({ detail: name }) => rename_block(symbol.id, name)}
 								on:download={() => download_symbol(symbol.id)}
-								on:delete={() => delete_symbol(symbol.id)}
-								on:duplicate={() => duplicate_symbol(symbol.id, i + 1)}
+								on:delete={() => delete_block(symbol.id)}
+								on:duplicate={() => duplicate_block(symbol.id, i + 1)}
 							/>
 						</div>
 					{/each}
@@ -264,12 +287,12 @@
 						<Icon icon="mdi:plus" />
 						<span>Add</span>
 					</button>
-					<button class="primo-button" on:click={create_symbol}>
+					<button class="primo-button" on:click={create_block}>
 						<Icon icon="mdi:code" />
 						<span>Create</span>
 					</button>
 					<label class="primo-button">
-						<input on:change={upload_symbol} type="file" accept=".json" />
+						<input on:change={upload_block} type="file" accept=".json" />
 						<Icon icon="mdi:upload" />
 						<span>Upload</span>
 					</label>
@@ -279,9 +302,10 @@
 			<div class="page-type-fields">
 				<Fields
 					fields={$page_type.fields}
+					content={$page_type.content}
 					on:input={debounce(({ detail }) => {
 						console.log({ detail })
-						update_page_type_fields(detail)
+						// update_page_type_fields(detail)
 					})}
 				/>
 			</div>

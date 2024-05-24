@@ -17,10 +17,9 @@
 	export let onclose = () => {}
 
 	hotkey_events.on('escape', () => {
-		console.log('hea')
 		closeModal()
 	})
-	hotkey_events.on('save', button?.onclick)
+	// hotkey_events.on('save', button?.onclick) // need to pass stuff, dispatch from modals
 
 	function closeModal() {
 		if (warn()) {

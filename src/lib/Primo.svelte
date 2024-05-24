@@ -52,7 +52,7 @@
 			? {
 					SITE_PAGES: modals.SitePages,
 					SECTION_EDITOR: modals.SectionEditor,
-					BLOCK_EDITOR: modals.SymbolEditor,
+					BLOCK_EDITOR: modals.BlockEditor,
 					SITE_EDITOR: modals.SiteEditor
 			  }[modalType] || $modal.component
 			: null

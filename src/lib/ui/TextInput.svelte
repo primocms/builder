@@ -75,6 +75,7 @@
 						value = target.value
 						dispatch('input', value)
 					}}
+					on:blur
 					on:keydown
 				/>
 			{:else}
@@ -92,6 +93,7 @@
 						value = target.value
 						dispatch('input', value)
 					}}
+					on:blur
 					on:keydown
 				/>
 			{/if}
@@ -152,7 +154,7 @@
 	.input-container {
 		display: flex;
 		align-items: center;
-		/* gap: 0.25rem; */
+		gap: 0.25rem;
 		width: 100%;
 		background: #1f1f1f; /* TODO: set to variable (this is nice inbetween color) */
 		border: 1px solid var(--color-gray-8);

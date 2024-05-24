@@ -8,6 +8,7 @@
 	import { find as _find, chain as _chain, cloneDeep as _cloneDeep } from 'lodash-es'
 	import Icon from '@iconify/svelte'
 	import { createEventDispatcher, onDestroy, tick } from 'svelte'
+	import { is_regex } from '../utils'
 
 	import * as idb from 'idb-keyval'
 	const dispatch = createEventDispatcher()
@@ -23,29 +24,20 @@
 	export let show_label = false
 	export let hidden_keys = []
 
-	$: subfields = fields.filter((f) => f.parent === field.id)
-	$: repeater_container = build_repeater_container(content)
-	$: console.log({ repeater_container })
+	$: subfields = fields.filter((f) => f.parent === field.id).sort((a, b) => a.index - b.index)
+	$: repeater_entries = content.filter((r) => r.parent === id)
 
-	// $: $locale, getRepeaterFieldValues().then((val) => (repeater_container = val))
-	// $: setTemplateKeys(repeater_container) // to reflect content change when updating locale
-
-	function build_repeater_container(content) {
-		const child_content_rows = content.filter((r) => r.parent === id)
-		return child_content_rows.map((child) => ({
-			subfields,
-			...child
-		}))
-	}
+	// $: $locale, getRepeaterFieldValues().then((val) => (repeater_entries = val))
+	// $: setTemplateKeys(repeater_entries) // to reflect content change when updating locale
 
 	let repeater_item_just_created = null // to autofocus on creation
 	async function add_item() {
-		const n_sibling_entries = repeater_container.length
+		const n_sibling_entries = repeater_entries.length
 		repeater_item_just_created = n_sibling_entries
 		console.log({ repeater_item_just_created })
 		await tick()
-		dispatch('add', { parent: id, index: repeater_container.length, subfields })
-		visibleRepeaters[`${field.key}-${repeater_container.length}`] = true
+		dispatch('add', { parent: id, index: repeater_entries.length, subfields })
+		visibleRepeaters[`${field.key}-${repeater_entries.length}`] = true
 		console.log('done')
 		// repeater_item_just_created = false
 	}
@@ -56,7 +48,7 @@
 
 	// used for tracking locale change I think, delete after configuring locale switching
 	function setTemplateKeys(val) {
-		repeater_container = val.map((f) => {
+		repeater_entries = val.map((f) => {
 			f._key = f._key || createUniqueID()
 			return f
 		})
@@ -70,40 +62,69 @@
 	$: singular_label = $pluralize && $pluralize?.singular(field.label)
 
 	function get_image(repeater_item) {
-		const [first_subfield] = repeater_item.subfields
+		const [first_subfield] = subfields
 		if (first_subfield && first_subfield.type === 'image') {
-			const matching_content_row = content.find(
+			const content_entry = content.find(
 				(r) => r.field === first_subfield.id && r.parent === repeater_item.id
 			)
-			return matching_content_row?.value?.url
+			return content_entry?.value?.url
 		} else return null
 	}
 
 	function get_icon(repeater_item) {
-		const [first_subfield] = repeater_item.subfields
+		const [first_subfield] = subfields
 		if (first_subfield && first_subfield.type === 'icon') {
-			const matching_content_row = content.find(
+			const content_entry = content.find(
 				(r) => r.field === first_subfield.id && r.parent === repeater_item.id
 			)
-			return matching_content_row?.value
+			return content_entry?.value
 		} else return null
 	}
 
 	function get_title(repeater_item) {
-		const first_subfield = repeater_item.subfields.find((subfield) =>
+		const first_subfield = subfields.find((subfield) =>
 			['text', 'markdown', 'link', 'number'].includes(subfield.type)
 		)
 		if (first_subfield) {
-			// let { value } = repeater_item.subfields[0]
-			const matching_content_row = content.find(
+			// let { value } = subfields[0]
+			const content_entry = content.find(
 				(r) => r.field === first_subfield.id && r.parent === repeater_item.id
 			)
-			if (first_subfield.type === 'link') return matching_content_row?.value?.label
-			else if (first_subfield.type === 'markdown') return matching_content_row?.value?.markdown
-			else return matching_content_row?.value
+			if (first_subfield.type === 'link') return content_entry?.value?.label
+			else if (first_subfield.type === 'markdown') return content_entry?.value?.markdown
+			else return content_entry?.value
 		} else {
 			return singular_label
 		}
+	}
+
+	function check_condition(field, entry) {
+		if (!field.options.condition) return true // has no condition
+
+		const { field: field_id, value, comparison } = field.options.condition
+		const field_to_compare = fields.find((f) => f.id === field_id)
+		if (!field_to_compare) {
+			// field has been deleted, reset condition
+			field.options.condition = null
+			return false
+		}
+
+		const { value: comparable_value } = content.find(
+			(e) => e.field === field_id && e.parent === entry.parent
+		)
+		if (is_regex(value)) {
+			const regex = new RegExp(value.slice(1, -1))
+			if (comparison === '=' && regex.test(comparable_value)) {
+				return true
+			} else if (comparison === '!=' && !regex.test(comparable_value)) {
+				return true
+			}
+		} else if (comparison === '=' && value === comparable_value) {
+			return true
+		} else if (comparison === '!=' && value !== comparable_value) {
+			return true
+		}
+		return false
 	}
 
 	let visibleRepeaters = {}
@@ -125,7 +146,7 @@
 		<p class="primo--field-label">{field.label}</p>
 	{/if}
 	<div class="fields">
-		{#each repeater_container as repeater_item, index}
+		{#each repeater_entries as repeater_item, index}
 			{@const subfieldID = `${field.key}-${index}`}
 			{@const item_image = get_image(repeater_item, field)}
 			{@const item_icon = get_icon(repeater_item, field)}
@@ -161,7 +182,7 @@
 								<Icon icon="mdi:arrow-up" />
 							</button>
 						{/if}
-						{#if index !== repeater_container.length - 1}
+						{#if index !== repeater_entries.length - 1}
 							<button
 								title="Move {singular_label} down"
 								on:click={() => move_item(repeater_item, 'down')}
@@ -179,23 +200,24 @@
 				</div>
 				{#if visibleRepeaters[subfieldID]}
 					<div class="field-values">
-						{#each repeater_item.subfields as subfield, subfield_index (repeater_item._key + subfield.key)}
-							{#if !hidden_keys.includes(subfield.key)}
-								{@const matching_content_row = content.find(
-									(r) => r.field === subfield.id && r.parent === repeater_item.id
-								)}
+						{#each subfields as subfield, subfield_index (repeater_item._key + subfield.key)}
+							{@const content_entry = content.find(
+								(e) => e.field === subfield.id && e.parent === repeater_item.id
+							)}
+							{@const is_visible = check_condition(subfield, content_entry)}
+							{#if is_visible && !hidden_keys.includes(subfield.key)}
 								<div class="repeater-item-field" id="repeater-{field.key}-{index}-{subfield.key}">
 									<svelte:component
 										this={getFieldComponent(subfield)}
-										id={matching_content_row.id}
-										value={matching_content_row.value}
+										id={content_entry.id}
+										value={content_entry.value}
 										field={subfield}
 										{fields}
 										{content}
 										level={level + 1}
 										show_label={true}
 										autofocus={index === repeater_item_just_created && subfield_index === 0}
-										on:save
+										on:keydown
 										on:add
 										on:remove
 										on:move
@@ -203,7 +225,7 @@
 											if (detail.id) {
 												dispatch('input', detail)
 											} else {
-												dispatch('input', { id: matching_content_row.id, data: detail })
+												dispatch('input', { id: content_entry.id, data: detail })
 											}
 										}}
 									/>

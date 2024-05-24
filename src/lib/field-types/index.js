@@ -90,7 +90,7 @@ export default [
 	},
 	{
 		id: 'select',
-		icon: 'formkit:select',
+		icon: 'fluent-mdl2:dropdown',
 		label: 'Select',
 		component: Select
 	},

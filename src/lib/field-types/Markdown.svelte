@@ -32,24 +32,16 @@
 		const html = await convert_markdown_to_html(markdown)
 		dispatch('input', { value: { html, markdown } })
 	}
-
-	function handleSave(event) {
-		const { metaKey, key } = event
-		if (metaKey && key === 's') {
-			event.preventDefault()
-			dispatch('save')
-		}
-	}
 </script>
 
 <label for={field.id}>
-	<span>{field.label}</span>
+	<span class="primo--field-label">{field.label}</span>
 	<textarea
 		rows="1"
 		bind:this={element}
 		id={field.id}
 		on:focus={selectAll}
-		on:keydown={handleSave}
+		on:keydown
 		on:input={({ target }) => parseContent(target.value)}
 		value={value.markdown}
 	/>
@@ -63,9 +55,7 @@
 		font-weight: 500;
 
 		span {
-			margin-bottom: 1rem;
-			font-size: var(--label-font-size);
-			font-weight: var(--label-font-weight);
+			margin-bottom: 0.5rem;
 		}
 
 		textarea {

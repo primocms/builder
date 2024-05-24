@@ -47,6 +47,12 @@ export const iframePreview = (locale = 'en') => `
               } catch(e) {
                 document.querySelector('.section').innerHTML = ''
                 console.error(e.toString())
+                channel.postMessage({
+                  event: 'SET_ERROR',
+                  payload: {
+                    error: e.toString()
+                  }
+                });
               }
               channel.postMessage({
                 event: 'SET_HEIGHT',
